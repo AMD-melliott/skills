@@ -120,8 +120,14 @@ should adopt for its hardcoded model IDs.
 
 ## 2. What needs improvement
 
-Sections 2.1–2.3 share one root cause: the skill models lemond as a single flat
-namespace on a single port, and it is three.
+Sections 2.1 and 2.2 are confirmed against a live 11.5.2 server. Both are cases
+where the skill's uniform `{port}/api/v1` model does not match the route table
+the server actually serves.
+
+For context, the full namespace map: `/api/v1/*` and `/v1/*` are aliases on the
+proxy for **every** route except `messages` (`/v1` only) and `metrics` (root
+only). So the skill's `/api/v1` advice is right almost everywhere — which is
+exactly why the two exceptions are easy to miss when writing a uniform table.
 
 ### 2.1 HIGH — The `@anthropic-ai/sdk` base_url produces a guaranteed 404 (confirmed)
 
@@ -164,41 +170,40 @@ trained the reader to suspect an unpulled model or a short timeout instead.
 > `base_url` so the SDK's own path suffix resolves correctly, and verify with
 > one real request before wiring up the rest of the app.
 
-### 2.2 HIGH — Back-ports are missing, and the client table is wrong for `/v1/rerank`
+### 2.2 MEDIUM — Rerank is exposed as `reranking`, diverging from every other implementation (confirmed)
 
-Step 5 says every client points at `http://127.0.0.1:{port}/api/v1`. True for
-chat, images, TTS, and STT — not for everything Lemonade serves. Live here:
+Not a prefix problem — a naming one. Verified functionally at 11.5.2:
 
 ```
-:13305  proxy
-  :8001  Qwen3-Embedding-0.6B-Q8_0        llamacpp/vulkan   embedding
-  :8002  bge-reranker-v2-m3-Q8_0          llamacpp/vulkan   reranking
-  :8003  Qwen2.5-VL-7B-Instruct-Q4_K_M    llamacpp/vulkan   llm (+ mmproj)
+POST /api/v1/reranking  → 200  {"model":"bge-reranker-v2-m3-GGUF","object":"list",
+                                "results":[{"index":0,"relevance_score":-3.714}, ...]}
+POST /v1/reranking      → 200
+POST /api/v1/rerank     → 404
+POST /v1/rerank         → 404
+POST :8002/v1/rerank    → 200   (the llama.cpp back-port serves both spellings)
 ```
 
-`/v1/rerank` is served from the **back-port**, not the proxy, on a dynamically
-assigned port that must be discovered from `GET /api/v1/health` (`backend_url`
-per loaded model).
+`/v1/rerank` is the path used by Jina, Cohere, vLLM, and llama.cpp itself.
+Lemonade's proxy exposes only `reranking`; the back-port it supervises serves
+both. So an app written against the convention — or against the behaviour of the
+back-port it can see in `GET /api/v1/health` — 404s on the proxy.
 
-This matters more here than in the sibling skills because this skill's premise
-is that the existing client gets re-pointed with three changes and nothing else.
-An app doing retrieval — embeddings plus rerank, a very common shape for this
-audience — finds rerank 404ing against the documented base URL, with no hint in
-the skill that a second address exists.
+Retrieval apps (embeddings + rerank) are a common shape for this skill's
+audience, and the skill's premise is that three changes suffice. A silent path
+rename is exactly the kind of thing that premise does not survive.
 
-**Suggested fix.** A note under the Step 5 table:
+**Suggested fix.** One row in the Step 5 table and one in Step 7:
 
-> **Not every endpoint is on the proxy port.** Chat, embeddings, images, audio,
-> and transcription are served from `{port}/api/v1`. Some endpoints — notably
-> `/v1/rerank` — are served directly by the per-model back-end on its own
-> dynamically assigned port. Read `GET /api/v1/health` and use the `backend_url`
-> reported for the loaded model rather than assuming the proxy port.
-
-And a Step 7 recovery row:
+| Modality | Path |
+|---|---|
+| Reranking | `{port}/api/v1/reranking` — **not** `/v1/rerank`, despite that being the common convention |
 
 | Symptom | Cause | Recovery |
 |---|---|---|
-| A modality 404s on `/api/v1` while chat works | Endpoint is served from the model's back-port, not the proxy | `GET /api/v1/health`, read `backend_url` for that model, call it directly |
+| `/v1/rerank` 404s while chat works | Lemonade names the route `reranking` | Use `/api/v1/reranking`. The per-model back-port also serves `/v1/rerank`, but the proxy does not |
+
+Worth noting for AMD's own consideration: aliasing `rerank` → `reranking` on the
+proxy would remove the defect entirely and cost nothing.
 
 ### 2.3 HIGH — Step 1's survey patterns miss hand-rolled HTTP clients
 
@@ -429,16 +434,20 @@ discovery, back-port exposure (§2.2), and cross-consumer concurrency (§2.6).
 
 | # | Test | Effort | Settles |
 |---|---|---|---|
-| T1 | Namespace/endpoint sweep at 11.5.2: which prefix and port serves each documented endpoint | 45 min | §2.1, §2.2, §2.7 |
+| T1 | Namespace/endpoint sweep at 11.5.2 — **done**; confirmed the `messages` 404 and corrected the rerank finding | done | §2.1, §2.2 |
 | T2 | Add a `lemonade:` backend selector to `judge.py` — the minimal real integration and the control for the "three changes" claim | 2 hrs | §2.1, §2.8, §1.4 |
 | T3 | `lemonade backends install flm:npu` on Linux | 30 min | §2.4 |
 | T4 | Skip the pull step; confirm the empty-200 failure reproduces at 11.5.2 | 15 min | §1.2 |
-| T5 | Rerank against the documented base URL, confirm 404; confirm `backend_url` from `/api/v1/health` works | 20 min | §2.2 |
+| T5 | *(folded into T1)* — rerank confirmed working at `/api/v1/reranking`; `/api/v1/rerank` 404s | done | §2.2 |
 | T6 | Full integration into `instinct-dash`, run under `npm run dev:ui` **without** excluding `vendor/` from the Vite watcher | half day | §1.8, §2.8, progress UI |
 
-T1 leads — one sweep settles most of the namespace findings and produces a table
-worth more than the individual probes. T2 is the highest-value single item: a
-real integration on a real client that already meets the precondition.
+T1 is complete. It confirmed §2.1, corrected §2.2 from "rerank needs the
+back-port" to "rerank is named `reranking`", and established that `/api/v1` and
+`/v1` are otherwise aliases — so the skill's uniform advice is right everywhere
+except the two routes now documented above.
+
+T2 is the highest-value remaining item: a real integration on a real client that
+already meets the precondition.
 
 T4 and T6 are deliberately *reproduction* tests of the skill's own warnings.
 Confirming a documented hazard is real at 11.5.2 is as useful as finding a new
@@ -455,12 +464,11 @@ empty-200 diagnosis, the mandatory 120s timeout with its reason, the
 `resources/` warning, and the file-watcher hazard are all things a reader could
 not derive from the API docs.
 
-The substantive gaps share one root cause: the skill models lemond as a single
-flat namespace on a single port serving a single app. It is in fact three
-namespaces (`/api/v1`, `/v1`, per-model back-ports) across multiple ports. From
-that follow the confirmed `@anthropic-ai/sdk` 404 (§2.1), the wrong
-`/v1/rerank` guidance (§2.2), and the absent model of coresidency and
-concurrency (§2.5, §2.6).
+Two confirmed defects come from the skill's uniform `{port}/api/v1` model not
+matching the server's actual route table: the `@anthropic-ai/sdk` 404 (§2.1,
+`messages` is `/v1`-only) and the `reranking` naming divergence (§2.2). Both are
+one-line fixes. The absent model of coresidency and concurrency (§2.5, §2.6) is
+the larger structural gap.
 
 Step 1's survey patterns are the other actionable defect (§2.3): they find
 vendor SDKs but miss hand-rolled HTTP clients — the failure mode most likely to
