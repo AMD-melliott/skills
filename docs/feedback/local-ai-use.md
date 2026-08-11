@@ -157,30 +157,27 @@ download, so metered or slow links may prefer an eager pull (§2.5). The §2.1
 discovery step would let the rule state what is currently loaded, which is a
 better fix than an opt-in flag.
 
-### 2.4 MEDIUM — Back-ports are invisible, so the endpoint picture is incomplete
+### 2.4 LOW — `reference.md` should name the two routes that break the `/api/v1` pattern
 
-The rule template points every call at `http://localhost:13305/api/v1/...`. But
-Lemonade runs per-slot back-ends on their own ports, and not everything is
-proxied. Live here:
+Good news first: the three modalities this skill covers are all correctly
+documented. Verified at 11.5.2, `/api/v1/images/generations`,
+`/api/v1/audio/speech`, and `/api/v1/audio/transcriptions` all resolve, and
+`/api/v1/*` and `/v1/*` are aliases for them — so the skill's internal
+inconsistency (both spellings appear across `SKILL.md` and `reference.md`) is
+harmless and needs no fix.
 
-```
-:8001  Qwen3-Embedding-0.6B-Q8_0        embedding:1
-:8002  bge-reranker-v2-m3-Q8_0          reranking:1
-:8003  Qwen2.5-VL-7B-Instruct-Q4_K_M    llm:1
-```
+Two routes do break the pattern, and matter only because `reference.md` invites
+extension into other modalities:
 
-`/v1/rerank` lives on the back-port, **not** the `:13305` proxy, and the port is
-assigned dynamically — it must be discovered from `/api/v1/health`
-(`backend_url` per loaded model) rather than hardcoded.
+| Route | Reality |
+|---|---|
+| `messages` (Anthropic) | `/v1/messages` only — `/api/v1/messages` 404s |
+| `rerank` | proxy serves `/api/v1/reranking`; `/api/v1/rerank` 404s, though the per-model back-port serves `/v1/rerank` |
 
-This does not break the three modalities the skill covers today (images, TTS,
-STT are proxied). It matters because `reference.md` invites extension, and the
-next modality a user reaches for is embeddings or rerank — and because a reader
-comes away believing `:13305/api/v1` is the whole surface, which is not true.
-
-**Suggested fix.** A paragraph in `reference.md`: Lemonade serves some endpoints
-from per-slot back-ports; discover them from `GET /api/v1/health` rather than
-assuming `:13305`. Name `/v1/rerank` explicitly.
+**Suggested fix.** A short "endpoints beyond the three modalities" note in
+`reference.md` listing those two exceptions, so a user extending the rule to
+embeddings or retrieval does not hit them blind. The sibling
+`local-ai-app-integration` review covers both in more depth.
 
 ### 2.5 MEDIUM — Nothing distinguishes "installed" from "pulled" from "loaded"
 
@@ -305,12 +302,13 @@ configuration.
 | T3 | Cascade: run at a nested dir under a parent that already has the block; which file is written, is the parent detected? | 30 min | §2.2 |
 | T4 | Merge against a throwaway branch of `~/git` with the real cascading `AGENTS.md`; diff the result | 30 min | §2.1, §2.2 |
 | T5 | `lemonade backends install sd-cpp:rocm` on gfx1151 — does the troubleshooting row's fix work on this hardware? | 30 min | troubleshooting table |
-| T6 | Endpoint/namespace sweep: which prefix and port serves each documented endpoint at 11.5.2 | 45 min | §2.4, §2.6 |
+| T6 | Endpoint/namespace sweep — **done**; confirms the three covered modalities are documented correctly, and identifies `messages` and `reranking` as the two exceptions | done | §2.4 |
 
-T5 and T6 are worth calling out. T5 tests a specific remedy the skill asserts
-for AMD hardware, on exactly the hardware that claim is about — a definitive
-yes/no. T6 is shared with the `local-ai-app-integration` review, where the same
-namespace gap produces a confirmed 404.
+T5 is worth calling out: it tests a specific remedy the skill asserts for AMD
+hardware, on exactly the hardware that claim is about — a definitive yes/no.
+
+T6 is complete. Its full output is shared with the `local-ai-app-integration`
+review, where the same sweep produced a confirmed 404.
 
 ---
 
@@ -324,8 +322,8 @@ troubleshooting content is unusually good.
 The weakness is one-directional configuration: the skill writes but never reads.
 No discovery of what is already serving (§2.1), no model for a nested cascade
 (§2.2), no note that image generation shares the GPU with LLM inference (§2.3),
-and an incomplete picture of Lemonade's endpoint surface (§2.4). The first three
-share a root cause and a fix — a single discovery step against
+and two documented endpoints that break the `/api/v1` pattern (§2.4). The first
+three share a root cause and a fix — a single discovery step against
 `GET /api/v1/health` and `/api/v1/models` before deciding anything — which also
 resolves most of §2.5 and §2.6.
 
