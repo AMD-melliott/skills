@@ -349,6 +349,99 @@ runs as a standalone FastFlowLM process outside lemond — which has real
 consequences here, since a standalone process is not something the Step 4
 launcher supervises.
 
+### 2.5 HIGH — No platform preflight: the skill ships to unknown hosts and never says the host is a variable
+
+The skill has **no Prerequisites section**. Step 2 says to bundle Vulkan as "the
+universal fallback so the app works on any machine," and Step 3 says to install
+`llamacpp:rocm` at first run when `system-info` reports `installable`. That
+inherits every host-level requirement an AMD inference box has, with no
+acknowledgement anywhere that the host might not be ready.
+
+Searching all three Lemonade skills for host-layer terms returns **zero** hits:
+`iommu`, kernel or boot parameters, BIOS/UEFI, GTT, VRAM sizing, `power_dpm`,
+`HSA_OVERRIDE_GFX_VERSION`, hugepages, `/dev/kfd`, `/dev/dri`, `crun`,
+`keep-groups`, sysfs, driver or kernel version. Meanwhile `backend` appears 83
+times, `NPU` 48, `ROCm` 17. The skills are thoroughly **backend-aware** and
+entirely **platform-unaware** — everything lives at Lemonade's abstraction, and
+the machine underneath is assumed correct.
+
+**Why this belongs in *this* skill's scope specifically.** It is the one skill
+that ships inference onto a machine the developer will never see. A
+system-wide-server user can be told to fix their own host; an app's end user
+cannot.
+
+#### The gap matters because these are silent failures — the skill's own theme
+
+The best thing about this skill is that it hunts failures which return success.
+There is an entire class of those *below* Lemonade, and they present with the
+same symptoms the skill teaches you to diagnose differently. From tuning notes
+for this hardware:
+
+> "Failure is SILENT and looks like success. With the HIP libs unreachable,
+> `libggml-hip.so` simply never loads and llama.cpp falls back to CPU — exit
+> code 0, sensible-looking output, **16x slower prefill** (65.89 vs 1043.63
+> pp512)." And: "**`rocminfo` succeeding does NOT mean HIP works**."
+
+An app built to this skill would report that as working. The `[local] <modality>
+result:` log line from Step 4 would show a correct answer. Every verification
+checkbox would pass. The user just gets a product that is 16× too slow.
+
+Others in the same family, all of which surface as a crash, a hang, or "it's
+slow" rather than a diagnosable error:
+
+| host condition | how it presents |
+|---|---|
+| rootless podman on `runc` instead of `crun` | `/dev/kfd` maps to `nobody`; container starts fine, no GPU |
+| `--device /dev/dri` passed as a directory | podman does not recurse it; devices silently absent |
+| container ROCm userspace ≠ host kernel driver | segfault, reads as an app bug |
+| `linux-firmware-20251125` on Strix Halo | "instability, crashes, or arbitrary failures" |
+| kernel < 6.16.9 | GPU sees ~15.5 GB instead of the full unified pool |
+| kernel < 6.18.4 | gfx1151 stability bug |
+| GTT aperture == swapout trigger | hard host wedge instead of a clean OOM |
+| stale `HSA_OVERRIDE_GFX_VERSION` in the environment | hard iGPU hang, reboot required |
+
+#### The cheapest fix uses a call the skill already makes
+
+`GET /api/v1/system-info` — invoked eleven times across these skills, always to
+read `recipes[].backends[].state` — also returns the platform:
+
+```json
+"amd_gpu": [{ "available": true, "family": "gfx1151", "integrated": true,
+              "virtual_mem_gb": 124.0, "vram_gb": 0.5 }]
+```
+
+`virtual_mem_gb` and `vram_gb` are the GTT ceiling and the BIOS framebuffer. A
+misconfigured host shows different numbers. Reading `devices` alongside
+`recipes` costs nothing and catches a real class of problem.
+
+It is only a partial preflight — kernel version, firmware version, and IOMMU
+state are not exposed — which is worth saying plainly rather than implying the
+check is complete.
+
+**Suggested fix**, deliberately small:
+
+1. Add a **Prerequisites** section. Even three lines: the host needs a working
+   GPU driver stack; a backend reporting `installed` does not mean it is
+   *functioning*; on Linux, rootless containers need `crun` and
+   `--group-add keep-groups` for `/dev/kfd` access.
+2. In Step 3's `system-info` probe, read `devices` as well as `recipes`, and log
+   the resolved device — it becomes the first line of any support conversation.
+3. Add one Step 7 recovery row:
+
+| Symptom | Cause | Recovery |
+|---|---|---|
+| Inference works but is dramatically slower than expected | Backend installed but not actually engaged — the runtime silently fell back to CPU | Confirm the GPU is in use (`gpu_busy_percent`, backend logs). A green `system-info` state and a successful `rocminfo` both still permit a silent CPU fallback |
+
+#### A caveat worth stating to AMD
+
+Most of the specific values above are genuinely out of scope here, and the
+source material contradicts itself badly — `amd_iommu=off` vs `iommu=pt` *within
+one repository*, two different GTT ceilings, host reserve of 4 GiB vs 12 GiB,
+`ttm.pages_limit` raise-vs-lower, `--mlock` documented unusable yet shipped in
+live configs. That is not an argument for omitting the topic. It is an argument
+that **AMD is the only party who can state it authoritatively**, and that it
+deserves its own home — see §3.3.
+
 ### 2.5 MEDIUM — The one-app-one-server assumption is never stated
 
 Each app spawns a private `lemond` on a random port with a fresh API key. Clean
@@ -487,6 +580,23 @@ There is no shortage of traffic to redirect. What is missing is a skill for the
 topology it runs in. The content would be specific: binding beyond loopback,
 `LEMONADE_API_KEY` as a shared secret rather than a per-launch random, service
 discovery, back-port exposure (§2.2), and cross-consumer concurrency (§2.6).
+
+### 3.3 The other gap: "prepare an AMD host for local inference"
+
+§2.5 identifies content that does not belong in any of the three skills but has
+nowhere else to live: kernel and firmware minimums, IOMMU and unified-memory
+boot parameters, BIOS framebuffer sizing, container runtime requirements for
+`/dev/kfd` access, the ROCm/HIP environment, and how to tell a working GPU path
+from a silent CPU fallback.
+
+This is the natural fourth skill, and the catalog's most defensible gap — every
+other skill in this family assumes its output. It is also the one topic where
+AMD's authority is decisive: a community author guessing at
+`amdgpu.gttsize` values will get them wrong, and the existing published guidance
+already disagrees with itself.
+
+Together with §3.2 (one server, many networked consumers) that is two catalog
+gaps, both sitting *underneath* rather than beside the current skills.
 
 ---
 
