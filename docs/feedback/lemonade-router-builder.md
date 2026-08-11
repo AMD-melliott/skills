@@ -1,16 +1,14 @@
 # Feedback — `lemonade-router-builder`
 
 **Reviewer:** Matt Elliott
-**Date:** 2026-08-11 (initial pass — desk review, live testing pending)
 **Reviewed at:** `amd/skills` @ `cf5e518`
 **Hardware:** AMD Strix Halo (gfx1151), 128 GB unified memory, XDNA NPU, Pop!_OS 24.04
 **Lemonade:** `lemonade-server 11.5.2~24.04` (PPA), system `lemond.service`, `:13305` healthy
 
-> **Status of this document.** Everything in §1 and §2 is a desk review of
-> `SKILL.md`, `reference.md`, `examples.md`, and `scripts/validate.py` against a
-> live 11.5.2 server and a production local-inference stack. Items marked
-> **[unverified]** are hypotheses that the test plan in §4 is designed to settle.
-> They are flagged rather than asserted.
+Desk review of `SKILL.md`, `reference.md`, `examples.md`, and
+`scripts/validate.py` against a live 11.5.2 server and a production
+local-inference stack. Findings marked **[unverified]** are predictions the test
+plan in §4 will settle.
 
 ---
 
@@ -305,13 +303,17 @@ says what to do when it 404s — pull it, substitute, or stop and ask.
 
 | # | Test | Effort | Settles |
 |---|---|---|---|
-| T1 | Run `scripts/validate.py` over shipped `examples.md` pairs + hand-authored policies; run `evals/evals.py`; register one validated policy against live 11.5.2 and compare offline verdict to live parser | ~30 min | §2.4 |
-| T2 | Silent-fallback experiment: two Mode A policies differing only in prompt style (imperative vs. intent-only), N prompts each, `route_trace: true`, count `default_used` | ~2 hrs | §2.3 |
-| T3 | Slot-contention characterisation: 3-candidate policy on a single-`llm`-slot host; measure load/evict behavior and switch latency | ~1 hr | §2.1 |
-| T4 | `semantic_similarity` accuracy against a known-ground-truth corpus (UAP cross-era terminology drift: FBI → 1947-48 "flying disc/saucer"; DOW → modern "UAP" only) | ~1 hr | 3.3, §2.8 |
+| T1 | Run `scripts/validate.py` over shipped `examples.md` pairs + hand-authored policies; run `evals/evals.py`; register one validated policy against live 11.5.2 and compare offline verdict to live parser | 30 min | §2.4 |
+| T2 | Silent-fallback experiment: two Mode A policies differing only in prompt style (imperative vs. intent-only), N prompts each, `route_trace: true`, count `default_used` | 2 hrs | §2.3 |
+| T3 | Slot-contention characterisation: 3-candidate policy on a single-`llm`-slot host; measure load/evict behaviour and switch latency | 1 hr | §2.1 |
+| T4 | `semantic_similarity` accuracy against a known-ground-truth corpus (UAP cross-era terminology drift: FBI → 1947-48 "flying disc/saucer"; DOW → modern "UAP" only) | 1 hr | §2.8, 3.3 |
 
-T2 is the highest-value item — it converts the skill's most distinctive claim
-from assertion into measurement. I will report numbers either way.
+T1 runs first and is cheap — it establishes whether the offline gate still
+matches the live parser at 11.x before any policy authoring depends on it.
+
+T2 is the highest-value item: it converts the skill's most distinctive claim
+from assertion into measurement. Numbers get reported either way. T3 bolts onto
+it, since both need a multi-candidate policy and a prompt harness.
 
 ---
 
