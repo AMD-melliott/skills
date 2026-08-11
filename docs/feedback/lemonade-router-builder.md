@@ -194,17 +194,42 @@ without a version, a model, or a measured rate. Two problems follow:
 Lemonade `<version>`" — and, if there is a measured fallback rate, cite it. I am
 planning to measure this (§4, T2) and will contribute numbers.
 
-### 2.4 MEDIUM — Version currency **[unverified]**
+### 2.4 RESOLVED — Version currency is fine at 11.5.2 (tested)
 
 The skill requires "v10.1.0+". Live here is **11.5.2**. The prerequisites and
 the parser-strictness claims in `reference.md` have presumably not been
 re-checked against 11.x.
 
-**Suggested fix.** Either state a tested-against version explicitly ("validated
-against 10.1.0–11.5.x") or add a note that the offline validator tracks a
-specific parser revision. A user on 11.5.2 currently has no way to know whether
-"the strict server-side parser" description still holds. My T1 will produce a
-concrete answer for 11.5.2.
+**Tested, and the news is good.** I compared the offline validator against the
+live parser on 13 policies — one valid baseline plus 12 mutations, each
+targeting a different documented rule. **13/13 agreement, zero disagreements in
+either direction**, and in particular **no false negatives** (validator says
+ready, server rejects), which is the class that would actually hurt a user.
+
+Mutations rejected by both: Mode A + Mode B together; `default_model` not in
+candidates; `route_to` not a candidate; `semantic_similarity` declaring
+`labels`; `llm` classifier without `labels`; `min_score: 1.5`; `min_chars: -10`;
+`default_label` not in labels; a model referenced but absent from `components`;
+a rule referencing an undeclared classifier id; `version: 1` as an int; and
+`model_name` without the `user.` prefix.
+
+All 7 shipped `examples.md` policies pass offline with zero errors and zero
+warnings, and a hand-authored Mode B policy using only locally-downloaded models
+(with both a `classifier` and a `semantic_similarity` classifier) passes offline
+and registers live.
+
+**Remaining suggestion is small:** state the tested-against range in the
+prerequisites so a future reader knows when the claim was last checked. The
+parser contract the validator mirrors is intact two minor versions on, which is
+worth saying out loud.
+
+**One note for `examples.md`.** Several shipped examples reference models a given
+host will not have, so they validate offline but fail live with
+`400 Collection component not registered: '<model>'. Pull or register it before
+referencing it in a collection.` That is correct, documented behaviour — the
+validator's docstring is explicit that model existence needs a live server, and
+Step 8b's curl #1 covers it. Worth one line in `examples.md` saying the examples
+are shape references, not runnable as-written.
 
 ### 2.5 MEDIUM — No guidance on composing with an external control plane
 
@@ -303,13 +328,16 @@ says what to do when it 404s — pull it, substitute, or stop and ask.
 
 | # | Test | Effort | Settles |
 |---|---|---|---|
-| T1 | Run `scripts/validate.py` over shipped `examples.md` pairs + hand-authored policies; run `evals/evals.py`; register one validated policy against live 11.5.2 and compare offline verdict to live parser | 30 min | §2.4 |
+| T1 | Validator vs live parser — **done**; 13/13 agreement, no false negatives | done | §2.4 resolved |
 | T2 | Silent-fallback experiment: two Mode A policies differing only in prompt style (imperative vs. intent-only), N prompts each, `route_trace: true`, count `default_used` | 2 hrs | §2.3 |
 | T3 | Slot-contention characterisation: 3-candidate policy on a single-`llm`-slot host; measure load/evict behaviour and switch latency | 1 hr | §2.1 |
 | T4 | `semantic_similarity` accuracy against a known-ground-truth corpus (UAP cross-era terminology drift: FBI → 1947-48 "flying disc/saucer"; DOW → modern "UAP" only) | 1 hr | §2.8, 3.3 |
 
-T1 runs first and is cheap — it establishes whether the offline gate still
-matches the live parser at 11.x before any policy authoring depends on it.
+T1 is complete and the offline gate is trustworthy at 11.5.2, so policy
+authoring in T2/T3 can rely on it. `evals/evals.py` was not run: it needs the
+`claude` CLI behavioural harness with an LLM judge, and it grades agent
+behaviour rather than the artifact — the parser-agreement matrix is the
+higher-value, deterministic check.
 
 T2 is the highest-value item: it converts the skill's most distinctive claim
 from assertion into measurement. Numbers get reported either way. T3 bolts onto
