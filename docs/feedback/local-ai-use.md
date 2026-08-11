@@ -95,7 +95,7 @@ Small change, large effect: it turns the skill from "impose defaults" into
 "adopt what's here, fill the gaps," which is what its description already
 promises. It also resolves most of §2.5 and §2.6 as a side effect.
 
-### 2.2 HIGH — "Run once per workspace" is undefined for an `AGENTS.md` cascade **[unverified]**
+### 2.2 HIGH — No cascade detection: running in a subdirectory silently creates a second live block (confirmed)
 
 The skill assumes one flat `AGENTS.md` per workspace. Real setups nest:
 
@@ -110,16 +110,18 @@ interacts with a parent block already present.
 
 - Run at `~/git` and again at `/data/uap-demo` — two live blocks. Which model IDs
   win? The deeper file's, presumably, but nothing says so.
-- Does the script detect an existing `amd-skills:local-ai-use` block in a
-  *parent* `AGENTS.md`? Reading the script, it looks for markers in the target
-  file only. **[unverified]**
+- It does **not** detect an existing block in a parent. Confirmed: with
+  `/tmp/lau/AGENTS.md` already carrying the block, running from
+  `/tmp/lau/nested/deep` printed `created /tmp/lau/nested/deep/AGENTS.md` and
+  produced a second file with a duplicate block — no parent lookup, no warning.
+  Both load in the cascade, and they drift apart on the next run of either.
 - The mirror list offers `CLAUDE.md` / `.cursor/rules/` / `GEMINI.md`. A user
   with two of those now has two copies that drift on the next run.
 
-**Suggested fix.** State the rule: the block goes in the nearest `AGENTS.md` at
-or above the working directory; if one exists in a parent, update that rather
-than adding a second. Have the script print which file it wrote and the resolved
-model IDs — one line that makes the cascade legible.
+**Suggested fix.** Walk up for an existing `amd-skills:local-ai-use` block before
+creating a new file. If one is found, update it in place and say so, or require
+an explicit `--here` to create a nested override. Print the resolved model IDs
+alongside the path — one line that makes the cascade legible.
 
 ### 2.3 MEDIUM — The image-generation rule fires unconditionally, with no note on GPU contention **[unverified]**
 
@@ -223,12 +225,24 @@ the troubleshooting table, or the Step 1 flow — despite being the correct flag
 for a common case: a managed or shared machine where the agent should not run
 `sudo apt-get install`. Worth a row in Step 1.
 
-### 2.9 LOW — State what the idempotence claim excludes **[unverified]**
+### 2.9 MEDIUM — A bare re-run silently reverts customisation (confirmed)
 
 "Re-running it on a fully configured workspace is a no-op apart from a
-healthcheck" is a strong claim. If a re-run also re-resolves model IDs from
-flags, then a bare re-run after a customised first run would silently revert to
-defaults. If true, call it out; if false, saying so explicitly would reassure.
+healthcheck" holds only when the first run used no flags. Confirmed:
+
+| step | command | STT model written |
+|---|---|---|
+| 1 | `setup_local_ai.py --no-install` | `Whisper-Tiny` |
+| 2 | `--no-install --stt-model Whisper-Large-v3-Turbo` | `Whisper-Large-v3-Turbo` |
+| 3 | `--no-install` *(bare)* | **`Whisper-Tiny`** — reverted |
+
+No warning, no diff. This compounds §2.1: the script neither remembers prior
+choices nor discovers what is serving, so the *safe-looking* action — re-running
+an idempotent setup script — is the one that downgrades the configuration.
+
+**Suggested fix.** Persist the resolved model IDs and reuse them when flags are
+absent, or read the existing block's values and print
+`keeping Whisper-Large-v3-Turbo (pass --stt-model to change)`.
 
 ---
 
@@ -297,18 +311,18 @@ configuration.
 
 | # | Test | Effort | Settles |
 |---|---|---|---|
-| T1 | `setup_local_ai.py` in an empty scratch dir: clean-slate behaviour, output legibility, correct no-op against an already-running **system** `lemond` (vs `--user`) | 30 min | §2.9, general |
-| T2 | Re-run idempotence: run with `--stt-model X`, then re-run bare; does the customisation survive? | 10 min | §2.9 |
-| T3 | Cascade: run at a nested dir under a parent that already has the block; which file is written, is the parent detected? | 30 min | §2.2 |
+| T1 | `setup_local_ai.py` scratch run — **done**; clean slate works, correctly detects the system `lemond`, reports each step, 1 marker block | done | general |
+| T2 | Re-run idempotence — **done**; block does not duplicate, but customisation is reverted | done | §2.9 |
+| T3 | Cascade — **done**; parent not detected, second block created | done | §2.2 |
 | T4 | Merge against a throwaway branch of `~/git` with the real cascading `AGENTS.md`; diff the result | 30 min | §2.1, §2.2 |
-| T5 | `lemonade backends install sd-cpp:rocm` on gfx1151 — does the troubleshooting row's fix work on this hardware? | 30 min | troubleshooting table |
+| T5 | `sd-cpp:rocm` on gfx1151 — **partially answered** read-only: `system-info` reports it `installable` on `amd_gpu`, so the command is right and offered. Performance unverified | partial | troubleshooting table |
 | T6 | Endpoint/namespace sweep — **done**; confirms the three covered modalities are documented correctly, and identifies `messages` and `reranking` as the two exceptions | done | §2.4 |
 
-T5 is worth calling out: it tests a specific remedy the skill asserts for AMD
-hardware, on exactly the hardware that claim is about — a definitive yes/no.
+T4 is the remaining item — merging against a real cascading `AGENTS.md`. T3
+already establishes what it will find; T4 only measures the blast radius.
 
-T6 is complete. Its full output is shared with the `local-ai-app-integration`
-review, where the same sweep produced a confirmed 404.
+T5's remaining half needs a backend install plus a ~5 GB model, so it is
+deferred rather than skipped.
 
 ---
 
