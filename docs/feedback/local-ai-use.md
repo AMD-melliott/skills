@@ -103,41 +103,61 @@ This is a small change with a large effect: it turns the skill from
 "impose defaults" into "adopt what's here, fill the gaps," which is what its own
 description ("route the agent's tool calls to a local model") actually promises.
 
-### 2.2 HIGH — The image-generation rule can evict a running LLM, and nothing warns about it
+### 2.2 MEDIUM — The image-generation rule fires unconditionally, with no note on GPU contention **[unverified]**
+
+> **Revised 2026-08-11.** An earlier draft of this section claimed the rule
+> could *evict* a running LLM and rated it HIGH. That was wrong on two counts
+> and is corrected below. The residual concern is real but smaller.
 
 The installed rule instructs the agent to call
 `POST /api/v1/images/generations` for *any* image request, with no conditions,
 and to pull `SD-Turbo` (~5 GB) on first use.
 
-On this host that is actively hazardous. Image generation and LLM serving
-contend for the same iGPU; my control plane (`mtctl`) models this explicitly
-with a `GpuArbiter` that swaps the iGPU between `llm` and `img` modes, and the
-image path *yields* the iGPU by design. An agent that fires SD-Turbo mid-session
-because someone asked for a diagram can evict the model serving a long-running
-ingest.
+**What the earlier draft got wrong:**
 
-Separately, the local capability matrix on this box **deliberately defers local
-image generation** as out of scope. So the skill would install a rule enabling a
-capability that the host's own documentation says not to use — and it would win,
-because the rule is loaded on every turn.
+1. **Capacity is not the constraint on this class of hardware.** Strix Halo has
+   128 GB unified memory, of which ~120 GB is addressable for model weights. A
+   quantized chat model and a quantized diffusion model comfortably coresident
+   is plausible, not exotic. Framing this as a memory conflict was wrong.
+2. **The arbiter is not in this code path.** My control plane's `GpuArbiter`
+   swaps the iGPU between `llm` and `img` for **ComfyUI**, which runs as a
+   separate podman container that takes the GPU by design. `local-ai-use` routes
+   to Lemonade's own `image:1` slot via `sd-cpp` — a different mechanism
+   entirely, and one that per Lemonade's slot model does **not** evict other
+   slots. I conflated the two.
 
-**Why this generalises:** on any single-GPU machine — which is most of the
-target hardware — a 5 GB image model and a chat model compete. The skill treats
-the three modalities as independent when they share one scarce resource.
+**What the residual concern actually is** — three smaller things, none fatal:
 
-**Suggested fixes**, in order of preference:
+- **Concurrent inference, not coresidency.** Two models resident is fine; two
+  models *inferring* on one iGPU at the same time will degrade both. The
+  question is scheduling, not capacity.
+- **An unprompted ~5 GB pull.** The first image request downloads SD-Turbo at
+  whatever moment the agent decides to generate a diagram.
+- **The agent decides, not the operator.** The rule is unconditional and loaded
+  every turn, so an image request mid-ingest is generated without anyone
+  weighing the tradeoff.
 
-1. **Make image generation opt-in.** TTS and STT are cheap, CPU-friendly, and
-   uncontended; image generation is none of those. `--enable-image` (default
-   off) would match the actual cost profile. At minimum, invert the current
-   default on hosts where an LLM is already loaded.
-2. **Add a contention warning to the rule template** so the agent sees it at
-   call time, not just at setup:
-   > Image generation may occupy the GPU that is serving chat or embeddings. If
-   > a long-running job is in flight, ask before generating.
-3. **Add a Prerequisites note** that on single-GPU hosts, image generation and
-   LLM serving contend, and point at `GET /api/v1/health` to check what would be
-   displaced.
+Worth stating plainly: **this is unvalidated in both directions.** My own
+planning docs defer local image generation as out of scope, but that was a
+scoping decision, not a measured result. "Approach carefully, plan, and test" is
+the honest characterisation — not "will not work."
+
+**Revised suggestion**, much lighter than the original:
+
+Add one sentence to the rule template so the tradeoff is visible at call time
+rather than buried in setup:
+
+> Image generation and LLM inference share the GPU. Coresident models are
+> generally fine on high-memory hosts; **concurrent inference is not**. If a
+> long-running job is in flight, ask before generating.
+
+And one line to Prerequisites noting that the first image request triggers a
+~5 GB download, so hosts on metered or slow links may prefer an eager pull (see
+§2.5).
+
+I no longer think image generation needs to be opt-in by default. The
+`GET /api/v1/health` discovery step from §2.1 would let the rule state what is
+currently loaded, which is a better fix than a flag.
 
 ### 2.3 HIGH — "Run once per workspace" is undefined for an `AGENTS.md` cascade **[unverified]**
 
@@ -348,12 +368,12 @@ is the design decision that earned that. The AGENTS.md mechanism is sound, and
 the troubleshooting content is unusually good.
 
 The weakness is one-directional configuration: the skill writes but never reads.
-No discovery of what is already serving (§2.1), no awareness that image
-generation contends with the LLM for one GPU (§2.2), and no model for a nested
-`AGENTS.md` cascade (§2.3). All three have the same root cause and the same
-shape of fix — a single discovery step against `GET /api/v1/health` and
-`/api/v1/models` before deciding anything — which would also resolve most of
-§2.5 and §2.6 as a side effect.
+No discovery of what is already serving (§2.1), no note that image generation
+shares the GPU with LLM inference (§2.2), and no model for a nested `AGENTS.md`
+cascade (§2.3). All three have the same root cause and the same shape of fix — a
+single discovery step against `GET /api/v1/health` and `/api/v1/models` before
+deciding anything — which would also resolve most of §2.5 and §2.6 as a side
+effect.
 
 That one addition would take this from "good for a fresh machine" to "safe on a
 machine that already matters."
