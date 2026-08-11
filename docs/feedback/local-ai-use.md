@@ -181,6 +181,45 @@ extension into other modalities:
 embeddings or retrieval does not hit them blind. The sibling
 `local-ai-app-integration` review covers both in more depth.
 
+### 2.4b MEDIUM — The slow-image-generation remedy assumes the only cause is a missing backend
+
+The troubleshooting table has exactly one performance row:
+
+| Symptom | Cause | Recovery |
+|---|---|---|
+| Image generation is slow on CPU (~4–5 min) | sd-cpp on CPU backend | `lemonade backends install sd-cpp:rocm` |
+
+Right symptom, right command — `system-info` confirms `sd-cpp:rocm` is
+`installable` on `amd_gpu` for gfx1151, so the advice is sound as far as it
+goes. But it names one cause for a symptom that has several, and the others all
+look identical:
+
+> "Failure is SILENT and looks like success. With the HIP libs unreachable,
+> `libggml-hip.so` simply never loads and llama.cpp falls back to CPU — exit
+> code 0, sensible-looking output, **16x slower prefill**." And:
+> "**`rocminfo` succeeding does NOT mean HIP works**."
+
+A user who runs the suggested install, sees it report success, and is still slow
+has been left with nowhere to go — the table's one row is spent. Other causes
+with the same presentation: rootless containers on `runc` instead of `crun` (so
+`/dev/kfd` maps to `nobody`), a container ROCm userspace mismatched to the host
+driver, known-bad firmware, or a kernel below the gfx1151 minimum.
+
+**Suggested fix.** Split the row so the second half has somewhere to go:
+
+| Symptom | Cause | Recovery |
+|---|---|---|
+| Image generation is slow on CPU (~4–5 min) | `sd-cpp` running on the CPU backend | `lemonade backends install sd-cpp:rocm` |
+| Still slow after installing the GPU backend | The backend is installed but not actually engaged — the runtime fell back to CPU silently | An `installed` state in `system-info` and a successful `rocminfo` both still permit a silent CPU fallback. Check real GPU utilisation (`gpu_busy_percent`) during a request, and confirm the host's GPU driver stack rather than re-installing the backend |
+
+This is the local-ai-use-sized slice of a larger gap: none of the three skills
+mentions any host-layer prerequisite — no kernel or firmware minimums, no
+`/dev/kfd` or `/dev/dri`, no `crun`, no `HSA_OVERRIDE_GFX_VERSION`, no
+unified-memory sizing. The full argument, and a proposal for where that content
+should actually live, is in the `local-ai-app-integration` review (§2.5, §3.3);
+it belongs there because that skill ships onto machines its author never sees.
+For this skill, the one troubleshooting row above is the whole ask.
+
 ### 2.5 MEDIUM — Nothing distinguishes "installed" from "pulled" from "loaded"
 
 The verification checklist ends at server running + rule block present + a
