@@ -31,24 +31,33 @@ of a broken-looking integration." Most integration guides stop at the health
 check. Naming the four things that must *also* be true, and giving each a step,
 is what makes this worth following rather than skimming.
 
-### 1.2 The silent-empty diagnosis
+### 1.2 The silent-empty diagnosis — excellent instinct, but see §2.0
 
 > If inference returns an empty string / blank output with no HTTP error, the
 > model was not downloaded.
 
-An unpulled model returning **HTTP 200 with a blank body** is exactly the failure
-that costs a day, because every instinct says to debug the client, the prompt,
-or the parsing. The skill names it, gives the root cause and the idempotent fix,
-states it three times (Step 6, the Step 7 table, the checklist), and — best —
-makes it diagnosable *in advance* by requiring the first inference result be
-logged verbatim. That is the difference between documenting a failure and
-preventing one.
+The *shape* of this is the best thing in the skill: naming a failure that
+returns HTTP 200, stating it three times, and making it diagnosable in advance
+by requiring the first inference result be logged verbatim. That is the
+difference between documenting a failure and preventing one.
+
+It no longer reproduces at 11.5.2 — see **§2.0**, which is a correction to the
+mechanism, not to the instinct.
 
 ### 1.3 "Do not call `/api/v1/load` at startup"
 
 Counter-intuitive, correct, and justified rather than asserted: the request body
 shape has changed between releases and a malformed call can destabilise the
-server. Pairing it with "loading is the one step you let lemond do lazily —
+server. **Confirmed at 11.5.2** — `/api/v1/load` no longer accepts
+`{"model": "..."}`:
+
+```
+POST /api/v1/load {"model":"Definitely-Not-A-Real-Model-XYZ"}
+  → 400 {"error":{"code":"invalid_request",
+         "message":"Invalid request: [json.exception.type_error.302] type must be string, but is null"}}
+```
+
+Keep this advice regardless of what else changes. Pairing it with "loading is the one step you let lemond do lazily —
 pulling is not" draws a sharp line between two things that sound identical.
 
 ### 1.4 The 120-second timeout, with its reason
@@ -128,6 +137,57 @@ For context, the full namespace map: `/api/v1/*` and `/v1/*` are aliases on the
 proxy for **every** route except `messages` (`/v1` only) and `metrics` (root
 only). So the skill's `/api/v1` advice is right almost everywhere — which is
 exactly why the two exceptions are easy to miss when writing a uniform table.
+
+### 2.0 HIGH — The silent-empty failure does not reproduce at 11.5.2; a worse one replaced it (confirmed)
+
+Step 6, the Step 7 recovery table, and the verification checklist all rest on:
+
+> Lazy-load only loads weights that are **already downloaded**. If the model was
+> never pulled, the first inference does not error — lemond returns an empty /
+> blank result with HTTP 200.
+
+Tested directly. `Tiny-Test-Model-GGUF` is in the catalog with
+`downloaded: false`:
+
+```
+POST /api/v1/chat/completions {"model":"Tiny-Test-Model-GGUF","messages":[...]}
+  → HTTP 200   time=9.61s   657 bytes
+  → {"choices":[{"message":{"content":"I'm glad to be sure!","role":"assistant"}}], ...}
+
+GET /api/v1/models?show_all=true  →  Tiny-Test-Model-GGUF downloaded: True
+```
+
+**Lemonade downloaded the weights inside the inference request and returned a
+correct completion.** No empty body.
+
+**The replacement hazard is worse, and the skill does not cover it.** First
+inference can now block for the duration of a model download. The tiny test
+model took 9.6 s; a 4B GGUF over a domestic link is minutes. So the
+**mandatory 120-second timeout (§1.4) is likely insufficient** in exactly the
+first-run scenario it was written for — and the symptom is a client timeout with
+no output, which looks identical to the failure it replaced.
+
+**Suggested fix**, three parts:
+
+1. Replace the empty-200 rows in Step 6, Step 7, and the checklist with the
+   auto-pull behaviour.
+2. **Keep the explicit `POST /api/v1/pull` step** — it is still right, for
+   better reasons: predictable timing, a progress indicator that can cover the
+   download, and offline installs. Rewrite its justification around *latency
+   control* rather than *silent failure*.
+3. Revisit the 120 s figure, or say plainly that the timeout must exceed a
+   worst-case model download unless the model is pulled up front.
+
+Scope: one model, one recipe (`llamacpp`), one host, at 11.5.2. Which release
+changed this is unknown, and some recipe or size may still produce empty-200.
+Reported as "did not reproduce here", not "cannot happen".
+
+Related, and confirmed in the same run: **`/api/v1/models` alone is not the full
+catalog.** It returns only local models (23 here); the registry has 145.
+`GET /api/v1/models?show_all=true` returns all of them. The skill calls
+`/api/v1/models` "the only authoritative model list" — a reader validating a
+user-supplied model name gets a false negative for any of the 122 catalog models
+not yet downloaded.
 
 ### 2.1 HIGH — The `@anthropic-ai/sdk` base_url produces a guaranteed 404 (confirmed)
 
@@ -260,7 +320,7 @@ backend.
 > A hand-rolled client is still a client. If the app already routes model calls
 > through one config point, it may be *easier* to re-point than an SDK-based app.
 
-### 2.4 HIGH — The Linux NPU row is questionable **[unverified]**
+### 2.4 HIGH — The Linux NPU row is wrong (confirmed)
 
 Step 2's profile table lists:
 
