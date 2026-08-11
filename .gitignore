@@ -14,3 +14,6 @@ eval/runs/
 
 # Behavioral matrix results
 eval/behavioral/results/
+
+# Local-only scratch area (analysis, plans, review notes). Never committed.
+.local/
