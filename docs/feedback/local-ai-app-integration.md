@@ -183,6 +183,55 @@ And add a row to the Step 7 recovery table:
 |---|---|---|
 | A modality 404s on `/api/v1` while chat works | Endpoint is served from the model's back-port, not the proxy | `GET /api/v1/health`, read `backend_url` for that model, call it directly |
 
+### 2.1b HIGH — The `@anthropic-ai/sdk` row in the Step 5 table produces a guaranteed 404 (confirmed)
+
+Separate from §2.1 and more clear-cut: this one is a reproducible defect, not a
+gap.
+
+The Step 5 client table says:
+
+| Existing client | New `base_url` |
+|---|---|
+| `@anthropic-ai/sdk` | `http://127.0.0.1:{port}/api/v1` |
+
+The Anthropic SDK appends `/v1/messages` to `base_url`. That configuration
+therefore requests `/api/v1/v1/messages`. Probed against live 11.5.2:
+
+```
+POST /api/v1/messages     → 404  {"error":{"message":"The requested endpoint does not exist", ...}}
+POST /api/v1/v1/messages  → 404  {"error":{"message":"The requested endpoint does not exist", ...}}
+POST /v1/messages         → 200  {"content":[{"text":"Hello! How can I assist you today","type":"text"}], ...}
+```
+
+(Control: `POST /api/v1/chat/completions` with a real model returns 200, so the
+server and the model are fine — it is the path that is wrong.)
+
+**Lemonade does speak Anthropic Messages, but it serves it from `/v1/messages`,
+outside the `/api/v1` prefix.** The correct `base_url` for `@anthropic-ai/sdk`
+is therefore `http://127.0.0.1:{port}` with no path suffix.
+
+This matters more than a typo because the skill presents `/api/v1` as a uniform
+base for every client in the table, and an Anthropic-SDK app following it
+verbatim gets a 404 on its very first call — during the exact cold-start window
+where the skill has trained the reader to suspect an unpulled model or a short
+timeout instead.
+
+**Suggested fix.** Correct the row, and add a note that Lemonade exposes more
+than one path prefix:
+
+| Existing client | New `base_url` | Resulting path |
+|---|---|---|
+| `openai-python` / `openai-node` | `http://127.0.0.1:{port}/api/v1` | `/api/v1/chat/completions` |
+| `@anthropic-ai/sdk` | `http://127.0.0.1:{port}` | `/v1/messages` |
+
+> **Path prefixes are not uniform.** OpenAI-compatible routes live under
+> `/api/v1`; the Anthropic Messages route is served at `/v1/messages`. Set
+> `base_url` to whatever makes the SDK's own path suffix resolve correctly, and
+> verify with one real request before wiring up the rest of the app.
+
+Together with §2.1 (back-ports) this is the same underlying theme: the skill
+models lemond as one flat namespace on one port, and it is three.
+
 ### 2.2 HIGH — The Linux NPU row is questionable **[unverified]**
 
 Step 2's profile table lists:
@@ -325,32 +374,94 @@ matters.
 
 ## 3. Applicability finding
 
-### 3.1 The skill's precondition is unmet across a substantial local codebase
+### 3.1 HIGH — Step 1's survey patterns miss a real cloud-AI client
 
-Worth reporting as a data point about the skill's addressable audience.
+> **Revised 2026-08-11.** An earlier draft claimed the skill's precondition was
+> unmet across every repo I checked, based on a grep using the skill's own Step
+> 1 patterns. That conclusion was wrong — and *why* it was wrong turns out to be
+> a finding about Step 1.
 
-The stated precondition is: *"The app already calls a cloud AI service over HTTP
-(OpenAI Chat Completions, Anthropic Messages, or Ollama)."* Grepping my
-AI-adjacent repos for the skill's own Step 1 survey patterns
-(`api.openai.com`, `api.anthropic.com`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
-`from openai`, `localhost:11434`), excluding `node_modules`:
+Step 1 tells the surveyor to search for:
 
-| Repo | What it is | Cloud AI client? |
-|---|---|---|
-| `instinct-dash` | GPU/inference monitoring dashboard (Fastify + React + Vite) | none |
-| `multitool` | Lemonade/podman control plane (`mtctl`) | none |
-| `strix-halo-bench` | benchmark + routing harness | none in source |
-| `octant-private` | homelab IaC — litellm, CCR, open-webui, embedchain, qdrant | services, not an app |
+```
+openai, OpenAI(, chat.completions, responses.create
+anthropic, Anthropic(, messages.create
+api.openai.com, api.anthropic.com, localhost:11434
+OPENAI_API_KEY, ANTHROPIC_API_KEY
+```
 
-Zero source hits. The pattern is not "apps that call the cloud and should go
-local" — it is "infrastructure that is already local, and services deployed for
-other people to call."
+Running exactly that across `instinct-dash`, `multitool`, `strix-halo-bench`,
+and `octant-private` returns **zero source hits**. I initially reported that as
+"no host application exists here."
 
-**This is not a criticism of the skill's design.** It is a note that the
-"desktop app with a cloud API, bundle inference into the installer" shape may be
-narrower than the catalog assumes, and that a sizeable adjacent audience —
-people who already run local inference and want *more things* to use it — is not
-served by either this skill or `local-ai-use`.
+It is wrong. `strix-halo-bench/scripts/common/judge.py` is a first-class cloud
+AI client:
+
+```python
+"""Configurable LLM judge for benchmark prompt outputs.
+... calls a configured judge backend over the Anthropic Messages wire format ...
+
+Backend selectors:
+  none                     -- emit a skip verdict; no network calls.
+  local:<provider,model>   -- POST to JUDGE_LOCAL_BASE_URL (default
+                              http://127.0.0.1:3456) using the local CCR key
+  gateway:<model>          -- POST to JUDGE_BASE_URL ... with JUDGE_API_KEY
+"""
+```
+
+It sends `POST /v1/messages` with `x-api-key` and `anthropic-version:
+2023-06-01` headers. It is squarely the shape this skill targets. Every Step 1
+pattern misses it because it uses **raw HTTP with project-specific env var
+names** (`JUDGE_API_KEY`, `JUDGE_BASE_URL`) rather than a vendor SDK.
+
+The same is true more broadly: my litellm deployment and daily workflow use
+commercial models constantly. The addressable audience is *not* narrow — my grep
+was.
+
+**Why this is a defect in the skill, not just my mistake.** Step 1 is the step
+that decides whether the skill applies at all. An agent that runs those patterns,
+gets nothing, and concludes "this app has no cloud AI to replace" will decline a
+job it should have taken. Vendor-SDK imports are the easy case; hand-rolled HTTP
+clients with local naming conventions are common in exactly the
+research/benchmark/internal-tooling code most likely to want a local backend.
+
+**Suggested fix.** Add a second, behavioural tier to the Step 1 search:
+
+> **If the SDK patterns above return nothing, search by wire protocol instead —
+> the app may use raw HTTP:**
+>
+> - Path literals: `/v1/messages`, `/v1/chat/completions`, `/v1/embeddings`
+> - Anthropic headers: `anthropic-version`, `x-api-key`
+> - Generic config names: `*_API_KEY`, `*_BASE_URL`, `*_MODEL`, `base_url=`
+> - Any HTTP client (`httpx`, `requests`, `fetch`, `curl`) posting JSON with a
+>   `messages` array
+>
+> A hand-rolled client is still a client. If the app already routes model calls
+> through one config point, it may in fact be *easier* to re-point than an
+> SDK-based app.
+
+### 3.1b `judge.py` is a strong candidate host, and better than my earlier suggestion
+
+Worth recording because it changes the test plan. `judge.py` satisfies Step 1's
+hardest requirement out of the box:
+
+> **One single place** where the base URL and API key are constructed. If there
+> isn't one, refactor to one before going further.
+
+It already has that — `_resolve_backend()` returns an `(kind, model, endpoint,
+headers)` tuple, and the backend is chosen by a selector string. It even already
+has a `local:` option pointing at a local CCR. Adding a `lemonade:` selector is
+close to the minimal possible version of this integration, which makes it a good
+control: if the skill's "three changes" claim is going to hold anywhere, it
+holds here.
+
+It also exercises §2.1b directly, since the judge speaks Anthropic Messages —
+the exact client whose `base_url` row is wrong.
+
+Caveat on framing: `judge.py` is a batch harness, not a desktop app, so it will
+not exercise the progress-UI or key-gating requirements. Using "Claude as a
+judge" there was a deliberate design decision rather than a constraint, so a
+local judge backend is a legitimate thing to want, not a contrivance.
 
 ### 3.2 The gap: one server, many networked consumers
 
@@ -365,10 +476,16 @@ team box — a GPU machine serving several apps, agents, and containers over
 Tailscale/Consul.
 
 Evidence it is an unserved gap: my homelab repo has litellm, claude-code-router,
-open-webui, and embedchain all deployed, and
-`grep -rilE 'lemonade|13305|strix' terraform/` returns **zero hits**. The fleet
-has no on-ramp to the local Lemonade box, and neither skill provides one. This
-skill explicitly routes that user to a docs link and stops.
+open-webui, and embedchain all deployed — all of them routinely calling
+commercial models — and `grep -rilE 'lemonade|13305|strix' terraform/` returns
+**zero hits**. The fleet has no on-ramp to the local Lemonade box, and neither
+skill provides one. This skill explicitly routes that user to a docs link and
+stops.
+
+Note this sharpens §3.1 rather than contradicting it: there is plenty of
+commercial-model traffic to redirect here. What is missing is not demand or
+candidate applications — it is a skill for the topology those applications
+actually run in.
 
 The missing content is real and specific: binding beyond loopback, `LEMONADE_API_KEY`
 as a shared secret rather than a per-launch random, service discovery, back-port
@@ -387,12 +504,19 @@ gate the result.
 
 | # | Test | Effort | Settles |
 |---|---|---|---|
+| T0 | **Add a `lemonade:` backend selector to `strix-halo-bench/scripts/common/judge.py`** — the minimal real integration, and the natural control for the "three changes" claim | ~2 hrs | §2.1b, §2.6, §1.4 |
 | T1 | Endpoint smoke against live 11.5.2: `/api/v1/pull`, `/api/v1/install`, `/api/v1/system-info` field names, `lemonade backends install` | ~45 min | §2.5 |
 | T2 | `lemonade backends install flm:npu` on Linux — does the Step 2 Linux NPU row work at all? | ~30 min | §2.2 |
 | T3 | Full integration into `instinct-dash` ("summarise this GPU telemetry locally"): vendor the package, reference launcher, three client changes, pull step | ~half day | §2.6, §1.4, general |
 | T4 | Deliberately skip the pull step and confirm the empty-200 failure reproduces at 11.5.2 | ~15 min | §1.2 |
 | T5 | Run T3 under `npm run dev:ui` **without** excluding `vendor/` from the Vite watcher, and confirm the restart/orphan hazard | ~20 min | §1.8 |
 | T6 | Rerank against the documented base URL, confirm it 404s, confirm `backend_url` from `/api/v1/health` works | ~20 min | §2.1 |
+
+T0 is new and now leads: `judge.py` is a better first host than `instinct-dash`
+because it is a real existing cloud client with the single-config-point
+precondition already satisfied, and it speaks the wire format whose `base_url`
+row is wrong (§2.1b). It also produces something independently useful — an
+offline judge path for benchmark reruns.
 
 T4 and T5 are deliberately *reproduction* tests of the skill's own warnings —
 confirming a documented hazard is real at 11.5.2 is as useful as finding a new
@@ -409,13 +533,21 @@ The empty-200 diagnosis, the mandatory 120s timeout with its reason, the
 `resources/` warning, and the file-watcher hazard are all things a reader could
 not derive from the API docs.
 
-Two substantive gaps, both from the same assumption that lemond is a single
-proxy serving a single app: back-ports are absent and the client table is
-consequently wrong for `/v1/rerank` (§2.1), and there is no model of
-coresidency, concurrency, or multiple lemond instances on one GPU (§2.3, §2.4).
-The Linux NPU row also needs verification (§2.2).
+The substantive gaps share one root cause: the skill models lemond as a single
+flat namespace on a single port serving a single app. In fact it is three
+namespaces (`/api/v1`, `/v1`, and per-model back-ports) on multiple ports. From
+that follow the confirmed `@anthropic-ai/sdk` 404 (§2.1b), the missing
+back-ports and the consequently wrong `/v1/rerank` guidance (§2.1), and the
+absent model of coresidency and concurrency (§2.3, §2.4). The Linux NPU row also
+needs verification (§2.2).
 
-Separately — and more strategically — the precondition it depends on was unmet
-across every candidate repo I checked (§3.1), while the topology I actually run
-is served by neither this skill nor `local-ai-use` (§3.2). Worth a conversation
-about catalog coverage independent of any edit to this skill.
+Step 1's survey patterns are the other actionable defect: they find vendor SDKs
+but miss hand-rolled HTTP clients, which caused me to wrongly conclude the skill
+had no candidate host here when in fact a good one was sitting in
+`strix-halo-bench` (§3.1). That is the failure mode most likely to make an agent
+decline a job it should take.
+
+Separately and more strategically: the topology I actually run — one server,
+many networked consumers, plenty of commercial traffic to redirect — is served
+by neither this skill nor `local-ai-use` (§3.2). Worth a conversation about
+catalog coverage independent of any edit here.
