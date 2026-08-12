@@ -209,6 +209,19 @@ POST /v1/messages          → 200  {"content":[{"text":"Hello! How can I assist
 Control: `POST /api/v1/chat/completions` with a real model returns 200, so the
 server and model are fine — the path is wrong.
 
+**Reproduced end-to-end in a real client.** Implementing this skill's Step 5
+against an existing Anthropic-Messages application (see §3.1) and setting the
+base URL to the documented value produces exactly the doubled path:
+
+```
+$ JUDGE_LEMONADE_BASE_URL=http://127.0.0.1:13305/api/v1 python3 judge.py …
+transport: status=404 error=HTTP Error 404: Not Found;
+raw={"error":{"message":"The requested endpoint does not exist",
+              "path":"/api/v1/v1/messages","type":"not_found"}}
+```
+
+With the bare host and port, the same client returns a parseable verdict.
+
 **Lemonade does speak Anthropic Messages, but serves it from `/v1/messages`,
 outside the `/api/v1` prefix.** The correct `base_url` for `@anthropic-ai/sdk`
 is `http://127.0.0.1:{port}` with no path suffix.
@@ -555,8 +568,28 @@ minimal possible version of this integration, which makes it a good control: if
 the "three changes" claim holds anywhere, it holds here. It also exercises §2.1
 directly, since the judge speaks Anthropic Messages.
 
-Caveat: it is a batch harness, not a desktop app, so it will not exercise the
-progress-UI or key-gating requirements. `instinct-dash` (Fastify + React + Vite,
+**Tested — it works, and the "three changes" claim broadly holds.** A
+`lemonade:<model>` selector alongside the existing `none` / `local:` /
+`gateway:` came to **+40 lines**, all additive, and returned a parseable verdict
+with a correctly written sidecar on the first run. Against the three prescribed
+changes:
+
+| change | outcome |
+|---|---|
+| `base_url` | needed — but **not the documented value** (§2.1) |
+| `api_key` | needed, inverted: loopback lemond is unauthenticated, so the right move was to send a key *only if* `LEMONADE_API_KEY` is set, rather than always |
+| 120 s timeout | **already satisfied** — the client's `JUDGE_TIMEOUT_S` happened to default to exactly 120 |
+
+Two qualifications. This was the easiest possible host — it already had the
+single config point Step 1 demands *and* a pluggable-backend abstraction; an app
+with neither would pay the refactor the skill mentions only in passing. And the
+`api_key` row suggests the skill's framing assumes its own Step 4 launcher, which
+mints a per-launch key; a system-wide server has no key at all, and the skill's
+"set `api_key` to the launcher key" has no counterpart there.
+
+Caveat: it is a batch harness, not a desktop app, so it did not exercise the
+progress-UI or key-gating requirements, nor Steps 3–4 (vendoring, subprocess
+launcher). This validates **Step 5 only**. `instinct-dash` (Fastify + React + Vite,
 Playwright harness) is the secondary host for those, and is the right instrument
 for the §1.8 watcher hazard since Vite is precisely the case that warns about.
 
@@ -605,13 +638,13 @@ gaps, both sitting *underneath* rather than beside the current skills.
 | # | Test | Effort | Settles |
 |---|---|---|---|
 | T1 | Namespace/endpoint sweep at 11.5.2 — **done**; confirmed the `messages` 404 and corrected the rerank finding | done | §2.1, §2.2 |
-| T2 | Add a `lemonade:` backend selector to `judge.py` — the minimal real integration and the control for the "three changes" claim | 2 hrs | §2.1, §2.8, §1.4 |
+| T2 | `lemonade:` backend for `judge.py` — **done**; works in +40 lines, §2.1 reproduced as a negative control | done | §2.1, §2.8 |
 | T3 | `lemonade backends install flm:npu` on Linux | 30 min | §2.4 |
 | T4 | Skip the pull step; confirm the empty-200 failure reproduces at 11.5.2 | 15 min | §1.2 |
 | T5 | *(folded into T1)* — rerank confirmed working at `/api/v1/reranking`; `/api/v1/rerank` 404s | done | §2.2 |
 | T6 | Full integration into `instinct-dash`, run under `npm run dev:ui` **without** excluding `vendor/` from the Vite watcher | half day | §1.8, §2.8, progress UI |
 
-T1 is complete. It confirmed §2.1, corrected §2.2 from "rerank needs the
+T2 is also complete — see §3.1. T1 confirmed §2.1, corrected §2.2 from "rerank needs the
 back-port" to "rerank is named `reranking`", and established that `/api/v1` and
 `/v1` are otherwise aliases — so the skill's uniform advice is right everywhere
 except the two routes now documented above.
