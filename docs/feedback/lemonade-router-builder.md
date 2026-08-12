@@ -130,6 +130,18 @@ The skill's whole value proposition is "the JSON is accepted on the first try" �
 but accepted-and-valid is not the same as *operationally sane*, and right now
 the skill implies the former guarantees the latter.
 
+**Measured at 11.5.2.** Directly requesting three LLM-class models in sequence
+evicts each time — `/api/v1/health` reports **1** resident after each, with
+load+infer of 3.6 s (tiny), 6.3 s (E4B), 7.0 s (9B). But a *router* policy holds
+**two** LLM-class models: alternating its two candidates over six requests gave
+constant ~3.7 s latency with no reload penalty and 2 resident throughout, on
+separate back-ports. Cold route with everything unloaded was 2.90 s against
+0.69 s warm.
+
+So a Mode A policy needs room for **judge + candidate**, not one model — and on
+a host where candidates cannot be coresident, every alternation pays a load. On
+this 124 GiB host the effect was invisible; on a laptop it would not be.
+
 **Suggested fix.** Add a short "Step 3a — candidates and slots" note, and one
 row to the defaults table:
 
@@ -176,23 +188,76 @@ curl -sS -X POST http://localhost:13305/api/v1/chat/completions \
 
 That connects the warning to its diagnostic, which is currently the missing link.
 
-### 2.3 MEDIUM — The silent-fallback claim needs a stated basis **[unverified]**
+### 2.3 HIGH — The silent-fallback hazard is real, but the prescribed fix does not prevent it (measured)
 
-Step 4 makes a strong, specific, falsifiable claim: imperative prompts cause
-weaker judge models to reply with a bare string, which "causes … silently
-falling back to `default_model` on every request with no visible error."
+Step 4 makes a strong, falsifiable claim: an *imperative* router prompt
+("Pick X…", "Reply with ONLY the model name") makes weaker judges emit a bare
+string, fail the engine's JSON parse, and fall back to `default_model` **on
+every request with no visible error** — and that writing *intent-only* prompts
+prevents this.
 
-I believe it, and it is the most valuable thing in the skill. But it is stated
-without a version, a model, or a measured rate. Two problems follow:
+I measured it. Four Mode A policies, identical but for two variables — prompt
+style and judge model — over the same 24 prompts (12 with obvious PII, 12
+plainly generic). Candidates `Gemma-3-4b-it-GGUF` and `Tiny-Test-Model-GGUF`.
+96 routed requests at 11.5.2:
 
-1. A reader cannot tell whether it applies to their judge model. "Weaker models"
-   is not actionable — is a 4B judge weak? A 0.6B?
-2. If a future parser gets more forgiving, nothing tells the reader the guidance
-   is stale.
+| judge | prompt style | n | default_used | accuracy |
+|---|---|---|---|---|
+| `Gemma-3-4b-it-GGUF` | imperative | 24 | **0 (0%)** | 23/24 (96%) |
+| `Gemma-3-4b-it-GGUF` | intent-only | 24 | **0 (0%)** | 24/24 (100%) |
+| `Tiny-Test-Model-GGUF` | imperative | 24 | **24 (100%)** | 12/24 (50%) |
+| `Tiny-Test-Model-GGUF` | intent-only | 24 | **24 (100%)** | 12/24 (50%) |
 
-**Suggested fix.** Add a one-line provenance note — "observed with `<model>` on
-Lemonade `<version>`" — and, if there is a measured fallback rate, cite it. I am
-planning to measure this (§4, T2) and will contribute numbers.
+(50% accuracy under fallback is an artefact — always serving `default_model`
+scores the 12 generic prompts correct by accident.)
+
+**The warning is vindicated.** With a weak judge, 100% of requests fell back,
+and the failure is exactly as quiet as the skill says:
+
+```json
+{ "header": "default", "route_to": "Tiny-Test-Model-GGUF",
+  "default_used": true, "matched_rule": "", "rationale": "", "score": 0.0 }
+```
+
+HTTP 200, no error field. Invisible without `route_trace` — which is precisely
+why §2.2 argues that instrument deserves promotion.
+
+**The remedy is refuted.** The intent-only prompt the skill prescribes fell back
+**100% of the time** with a weak judge, identically to the imperative prompt it
+warns against. With a capable 4B judge, *both* styles worked and neither ever
+fell back. The determinant is **judge capability, not phrasing**.
+
+**And the skill's own default is the failure mode.** Step 4 says `router.model`
+"defaults to the smallest candidate." Here the smallest candidate as judge
+produced 100% silent fallback *while following the prompt guidance exactly*. A
+user who takes both defaults gets the documented catastrophe.
+
+**Suggested changes.**
+
+- **Keep** the failure description and the emphasis on `route_trace`.
+- **Replace** prompt style as the primary control with **judge selection**: the
+  judge must reliably emit strict JSON; verify with `route_trace` before
+  shipping; a model too small to hold the format falls back on every request no
+  matter how the prompt is worded.
+- **Change the `router.model` default.** "Smallest candidate" is the riskiest
+  available choice. Note the tension with memory (§2.1): the smallest judge
+  minimises resident footprint, which is a genuine benefit — so state the
+  trade-off rather than presenting it as free.
+- **Demote the banned-verb list** ("pick", "output", "reply with") to a style
+  preference. Measured effect was 24/24 vs 23/24 with a capable judge — within
+  noise, and the single miss was a judgement call (`matched_rule: __route_1`, a
+  valid decision), not a parse failure.
+
+*Caveat:* `Tiny-Test-Model-GGUF` is a deliberate floor — a test fixture weaker
+than anything realistically deployed. It establishes that capability is the
+boundary, not where the boundary sits. A ladder of judge sizes would locate the
+threshold; not run.
+
+*Trace-reading gotcha worth documenting:* `matched_rule` uses synthetic ids
+`__route_0` / `__route_1`, one per candidate. Routing to candidate index 1
+returns `score: 0.0` and an **empty rationale even on success**, so an empty
+rationale is not a fallback signal. Only `default_used: true` with
+`matched_rule: ""` and `x-lemonade-route: default` indicates fallback.
 
 ### 2.4 RESOLVED — Version currency is fine at 11.5.2 (tested)
 
