@@ -4,11 +4,14 @@
 **Reviewed at:** `amd/skills` @ `cf5e518`
 **Hardware:** AMD Strix Halo (gfx1151), 128 GB unified memory, XDNA NPU, Pop!_OS 24.04
 **Lemonade:** `lemonade-server 11.5.2~24.04` (PPA), system `lemond.service`, `:13305` healthy
+**Embeddable artifact:** `lemonade-embeddable-11.5.2-ubuntu-x64.tar.gz` — `6843693` B, sha256 `936220519193a5cb6d3ac2199a8a8630bf87f36e297e2a5948a056e4c539340a`, both matching release metadata — extracted and run standalone on `:13399` alongside the system instance
 
-Review of `SKILL.md` and `reference.md` against a live 11.5.2 stack and a set of
+Review of `SKILL.md` and `reference.md` against a live 11.5.2 stack, the
+embeddable `lemond` artifact the skill tells you to vendor, and a set of
 candidate host applications. Everything below is confirmed against the running
-server unless marked **[unverified]**; §4 records what was measured and what was
-deliberately not run.
+server or the extracted artifact unless marked **[unverified]** or explicitly
+labelled as inferred; §4 records what was measured and what was deliberately not
+run.
 
 **This document holds design feedback, open questions, and research results
 only.** Reproduced mechanical defects were submitted separately as a pull
@@ -42,6 +45,9 @@ and says outright that treating health=200 as ready is "the single biggest cause
 of a broken-looking integration." Most integration guides stop at the health
 check. Naming the four things that must *also* be true, and giving each a step,
 is what makes this worth following rather than skimming.
+
+The sequence is one stage short — health 200 also precedes model-cache-ready
+(**§2.12**) — which extends the principle rather than contradicting it.
 
 ### 1.2 The silent-empty diagnosis — excellent instinct, but see §2.0
 
@@ -449,6 +455,23 @@ read `recipes[].backends[].state` — also returns the platform:
 misconfigured host shows different numbers. Reading `devices` alongside
 `recipes` costs nothing and catches a real class of problem.
 
+One caveat on `vram_gb`, visible in the embeddable binary's own startup log:
+
+```
+[Info] (ModelManager) Backend availability:
+[Info] (ModelManager)   - NPU hardware: Yes
+[Info] (ModelManager)   - System RAM: 125.1 GB (max model size: 100.1 GB)
+[Info] (ModelManager)   - Largest memory pool: 0.5
+[Info] (ModelManager)   - NVIDIA GPU: detection error: No NVIDIA discrete GPU found
+```
+
+"Largest memory pool: 0.5" is `vram_gb` again — on a machine with 124 GB of
+GTT-backed unified memory. Lemonade's own sizing logic consumes that field, so an
+app that builds a preflight on it inherits the same wrong number; pair it with
+`virtual_mem_gb` or the reading is meaningless on an APU. Separately, the NVIDIA
+line is logged at `Info` on an AMD-only machine — any app that surfaces lemond's
+log to users will field support tickets for a non-error.
+
 It is only a partial preflight — kernel version, firmware version, and IOMMU
 state are not exposed — which is worth saying plainly rather than implying the
 check is complete.
@@ -564,6 +587,330 @@ more likely to be finished, not less likely to be started.
   `wait(timeout=5)` → kill, which is what the skill's own "lemond flushes config
   and exits cleanly within a couple of seconds" implies.
 
+### 2.11 HIGH — Nothing in the skill can conclude "do not integrate" (confirmed against a real host)
+
+Step 1 asks whether the app calls cloud AI, and if it does, every later step
+assumes the swap should happen. No step asks the prior question: **can Lemonade
+supply what the app's current inference path already supplies?**
+
+Run against a real host, the answer can be no. `thewh1teagle/vibe` is about as
+close to this skill's ideal host as public code gets — an MIT Tauri v2 desktop
+transcription app that already vendors an OpenAI-compatible local inference
+sidecar (`sona`) as an `externalBin`, spawns it as a subprocess, and talks to it
+over HTTP. §3.5 records the full swap analysis; the conclusion is that the swap
+should not ship. Four independent mismatches, none of them fixable in
+integration code, and **each discoverable in minutes before any code is
+written**:
+
+| Mismatch | Cheap check that finds it first | Section |
+|---|---|---|
+| `stream=true` on `/api/v1/audio/transcriptions` is accepted and silently ignored | one timed request — measure time to first *body* byte | §2.17 |
+| No `speaker` field in any response format — no diarization | one request, `grep -i speaker` | §3.5 |
+| `GLIBC_2.38` / `GLIBCXX_3.4.32` floor in the binary you vendor | `objdump -T lemond` | §2.15 |
+| Config mutation, shared model cache, LAN broadcast | read the startup log once | §2.13, §2.14 |
+
+The cost of not having that gate is not a bad integration — it is a *finished*
+integration that ships a product with fewer features than it had, discovered
+after Steps 3–5 are done and the packaging is rebuilt.
+
+**Suggested fix — a Step 0, before the survey.**
+
+> **Step 0 — Confirm Lemonade can supply what the app already has.** Before
+> vendoring anything, exercise the endpoint the app will use against any running
+> Lemonade and check four things:
+>
+> 1. **Streaming.** Does the response arrive incrementally? Time the first
+>    *body* byte, not the headers. That a request accepts `stream=true` is not
+>    evidence that it streams (§2.17).
+> 2. **Response fields.** Diff the response schema against the fields the app
+>    renders today. A field Lemonade does not return is a feature the app loses,
+>    not a mapping problem.
+> 3. **ABI floor.** `objdump -T lemond | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1`
+>    against the oldest distro the app packages for (§2.15).
+> 4. **Side effects.** Ports opened, files written, packets sent (§2.13, §2.14).
+>
+> Record anything that removes a currently shipped capability, and decide before
+> Step 3. **"Integrate the batch path only" and "do not integrate" are
+> legitimate outcomes of this skill**, and it should say so.
+
+This is a gap in the guide, not a verdict on Lemonade — for a host without a
+live transcript or speaker labels the same swap is straightforwardly feasible.
+The problem is that the skill is written as a one-way procedure with no exit, so
+an agent following it produces a swap whether or not the swap is an improvement.
+
+### 2.12 HIGH — `health` 200 precedes model-cache-ready, and there is no machine-readable ready signal (confirmed)
+
+Step 4 is unambiguous:
+
+> Poll `GET /api/v1/health` … until HTTP 200 — **this is the only correct
+> readiness check.**
+
+Measured on the embeddable binary, it is not the last gate. lemond's stdout is
+human-readable log text with no structured ready line:
+
+```
+2026-08-13 11:29:05.991 [Info] (main) Starting Lemonade Server...
+2026-08-13 11:29:05.993 [Info] (Server) Starting HTTP server on 127.0.0.1:13399
+2026-08-13 11:29:05.994 [Info] (ModelManager) Building models cache...
+2026-08-13 11:29:05.998 [Info] (Server) IPv4 HTTP server listening on 127.0.0.1:13399
+2026-08-13 11:29:07.128 [Info] (ModelManager) Cache built: 132 total, 13 downloaded
+```
+
+**Health returned 200 at ~1 s after spawn; the model cache finished building at
+~1.14 s.** A ~140 ms window on this machine — but an app that does exactly what
+Step 4 says (poll health, then `GET /api/v1/models` to choose a model) can
+observe an empty or partial catalog inside it. The window scales with catalog
+size and a cold page cache, and it presents as "the model list came back empty",
+which Step 7's recovery table attributes to an unpulled model.
+
+Two related findings from the same measurement:
+
+- **No `--port 0` ephemeral mode** is advertised in `--help`, so the Step 4
+  launcher's bind-to-0-then-close trick is the only option — a TOCTOU race the
+  reference launcher can only paper over with retries.
+- **A real desktop host already expects better.** Vibe's sidecar prints
+  `{"status":"ready","port":N}` as the first line of stdout, and
+  `SonaProcess::spawn` blocks reading exactly that one line
+  (`desktop/src-tauri/src/sona/process.rs`). Replacing that sidecar with lemond
+  means replacing a deterministic handshake with a poll plus a heuristic.
+
+**Suggested fix.** Extend §1.1's own sequence by one stage and make the readiness
+check compound:
+
+```
+server spawn → health 200 → model cache built → backend install → model download → model load → first result
+```
+
+i.e. ready means health 200 **and** `GET /api/v1/models` returning a non-empty
+list. That is two lines in the reference launcher.
+
+**Worth AMD's consideration:** one structured line on stdout after the cache is
+built — or a `--ready-fd` — removes the race and the log-scraping at once, and
+would let embeddable `lemond` drop straight into the Tauri `externalBin` slot
+that competing sidecars already occupy.
+
+### 2.13 HIGH — The private-instance framing does not hold: the cache directory does not isolate models, and `--port` rewrites `config.json` (confirmed)
+
+Step 4 spawns
+`[LEMOND_BIN, LEMOND_DIR, "--port", str(port)]`. Both of those arguments behave
+differently from what the surrounding prose implies.
+
+**`LEMOND_DIR` does not isolate anything.** `--help` describes the positional as
+"Lemonade cache directory containing config.json **and model data**". Started
+against a brand-new empty directory:
+
+```
+$ ./lemond --port 13399 --host 127.0.0.1 <fresh-empty-dir>
+[Info] (ModelManager) Cache built: 132 total, 13 downloaded
+$ curl -s 127.0.0.1:13399/api/v1/models | ...
+listed: 13   whisper entries: ['Whisper-Large-v3-Turbo', 'Whisper-Tiny']
+```
+
+The fresh directory ended up holding exactly `config.json` and an empty `bin/`.
+The 13 models came from the user's **shared Hugging Face cache**, because
+`models_dir` defaults to `"auto"`. The skill does mention `models_dir` — but in
+Step 3, as a *privacy preference* ("leave as `auto` only if the user explicitly
+wants to share weights"), far from the Step 4 launcher that makes the directory
+argument look like the isolation boundary. It is not one. Without an explicit
+`models_dir`, an embedded instance reads models it never downloaded, contends
+with the user's own Lemonade install for them, and leaves weights behind on
+uninstall. §2.5b argues that the shared-cache choice deserves to be a stated
+trade-off; this is the stronger version of the same point — the trade-off is
+currently made *for* the reader, by a default, in the direction the Step 4
+launcher makes look impossible.
+
+**`--port` and `--host` are persisted, not overridden:**
+
+```
+[Info] (main) Persisted port=13399 to config.json
+[Info] (main) Persisted host=127.0.0.1 to config.json
+```
+
+`reference.md` says of the `port` config key: "Override at launch with `--port`
+instead", which reads as ephemeral. It is not. The Step 4 launcher picks a fresh
+random free port **every launch**, so every launch rewrites `config.json` — which
+is exactly the file churn §1.8's watcher hazard is about. The skill's own port
+strategy guarantees the write its watcher warning tells you to avoid.
+
+**Suggested fix.** SKILL.md's layout block calls `config.json` "generated on
+first run; commit a seed copy". Make the seed mandatory and non-empty, and move
+`reference.md`'s "Recommended embedded defaults" block into Step 3 — `models_dir`,
+`no_broadcast` and `host` all have to be set *before* first launch, not observed
+after it.
+
+**Worth AMD's consideration:** the `--help` text for the positional argument is
+wrong and should be fixed at the source; and `--port`/`--host` should either be
+documented as persisting or made genuinely ephemeral. A dynamically-ported
+embedded server is the flagship use case for that flag.
+
+### 2.14 MEDIUM — Two network surfaces the skill never mentions: a second listener, and LAN broadcast from a loopback-bound server (confirmed)
+
+`--port` controls one of **two** listening sockets. The embedded instance also
+opened a WebSocket listener:
+
+```
+[Info] (WebSocket) Configured port: 9001
+[Info] (Server) WebSocket server started on port 9001
+```
+
+confirmed with `ss`:
+
+```
+127.0.0.1:9001   lemond pid=291962   (embedded)
+127.0.0.1:13399  lemond pid=291962   (embedded)
+127.0.0.1:13305  lemond pid=2336     (system)
+```
+
+The system instance holds 9000 and the embedded one selected 9001, so collision
+avoidance works. But this is a socket the launcher does not choose, cannot
+report, and does not know exists. It matters for firewall prompts, flatpak/snap
+sandbox manifests, endpoint-security agents, and port budgeting. Neither
+`SKILL.md` nor `reference.md` contains the strings `websocket`, `9000`, or
+`9001`.
+
+Second, with `--host 127.0.0.1` and a default config:
+
+```
+[Server] [Net Broadcast] Broadcasting on 5 RFC1918 interface(s):
+  127.0.0.1 (bcast 255.255.255.255) 192.168.252.24 (bcast 192.168.252.255)
+  192.168.122.1 172.17.0.1 172.18.0.1
+```
+
+Binding to loopback does not suppress the discovery beacon — it went out on the
+LAN and on the docker and libvirt bridges. `reference.md` does carry the
+mitigation (`no_broadcast`, "**Set `true` for embedded apps**, disables UDP
+discovery beacon"), but only as a row in a config table plus a line in a
+recommended-defaults block that `SKILL.md` never tells the reader to apply, and
+the default is on. An app built exactly as the skill describes emits UDP
+broadcast frames from every RFC1918 interface without its developer being told.
+That is a finding that surfaces in a customer security review rather than in
+testing.
+
+**Suggested fix.** Name the second port in Step 4's launcher description, and
+promote `no_broadcast: true` out of the reference table into the Step 3 seed
+config with its reason attached.
+
+### 2.15 HIGH — The vendored binary has an undocumented glibc floor that excludes currently-supported distros (confirmed)
+
+The skill tells the reader to download and ship `lemond` and says nothing about
+what it links against. Measured on the artifact named in the header:
+
+```
+$ objdump -T lemond | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1
+GLIBC_2.38
+$ objdump -T lemond | grep -oE 'GLIBCXX_[0-9.]+' | sort -uV | tail -1
+GLIBCXX_3.4.32
+```
+
+Dynamic dependencies: `libz`, `libzstd`, `libssl.so.3`, `libcrypto.so.3`,
+`libdrm_amdgpu.so.1`, `libdrm.so.2`, `libstdc++.so.6`, `libm`, `libgcc_s`,
+`libc`.
+
+`GLIBC_2.38` is a hard floor. Only the first row below was executed; the rest is
+**inferred** from each distro's shipped glibc, not tested:
+
+| Distro | glibc | Runs? |
+|---|---|---|
+| Ubuntu 24.04 LTS | 2.39 | yes — measured |
+| Ubuntu 22.04 LTS (supported to 2027) | 2.35 | **no** — inferred |
+| Debian 13 trixie | 2.41 | yes — inferred |
+| Debian 12 bookworm | 2.36 | **no** — inferred |
+
+This is a distribution-blocking property of the exact artifact this skill tells
+you to produce. A `.deb` or AppImage carrying no glibc floor in its metadata
+installs cleanly on Ubuntu 22.04 and then fails at first launch with a
+dynamic-linker error — silent until runtime, which is the skill's own genre of
+failure. Lemonade's release workflow carries a comment stating the deps are
+FetchContent-static "so the embeddable binary is portable across Ubuntu
+versions"; measured, it is not.
+
+Smaller, same neighbourhood: the archive's `resources/` holds **six** JSON files
+— `server_models.json`, `backend_versions.json`, `defaults.json`,
+`vllm_model_config.json`, `bench_scenarios.json`, `toolDefinitions.json` — and
+Step 3's layout block shows two. Cosmetic beside the ABI floor, except that §1.7
+exists specifically to warn about incomplete copies of that directory, so the
+list should be right or explicitly marked non-exhaustive.
+
+**Suggested fix.** State the floor in Step 3 together with the command to
+re-check it against whatever release the reader actually downloads — the skill
+tells them to fetch *latest*, so the number will drift — and add a packaging
+line: set the glibc dependency in `.deb` control metadata, build AppImages
+against the oldest supported base, or document the minimum distro.
+
+**Worth AMD's consideration:** publishing the floor in the embeddable release
+notes, or building the Linux embeddable artifact against an older base, fixes
+this once for every downstream app instead of once per integrator.
+
+### 2.16 LOW — No fetchable OpenAPI document (confirmed)
+
+`/docs` and `/redoc` return 200 HTML, but it is the SPA shell; `/openapi`
+returns the same. `/openapi.json`, `/api/v1/openapi.json`, `/swagger.json`,
+`/api/openapi.json` and `/v1/openapi.json` all 404. There is no machine-readable
+spec, so an integrator cannot codegen a client or introspect request shapes and
+must work from prose — which is how §2.1 and §2.2 survived into a shipped skill.
+(Linux embeddable builds set `BUILD_WEB_APP=OFF`, so the bundled UI is absent
+there in any case.)
+
+Incidentally this confirms the 404-discrimination rule the skill uses in Step 7:
+`/openapi.json` 404s as `text/plain` "File not found" from the static handler,
+while `/api/v1/openapi.json` 404s as `application/json` from the API router.
+
+**Worth AMD's consideration:** serving the OpenAPI document is the cheapest
+available fix for a whole class of doc-drift defects, this review included.
+
+### 2.17 MEDIUM — `/api/v1/audio/transcriptions` diverges from OpenAI in three ways, all silent (confirmed)
+
+`reference.md` describes the route as "OpenAI Whisper-style transcription".
+Measured at 11.5.2 with `whispercpp:vulkan` and `Whisper-Large-v3-Turbo` on a
+371.6 s audio file.
+
+**1. `stream=true` is accepted and ignored.**
+
+| | `stream=true` | `stream=false` |
+|---|---|---|
+| Content-Type | `application/json` | `application/json` |
+| Top-level keys | `['text']` | `['text']` |
+| Time to first byte | 0.00047 s (headers only) | 0.00045 s |
+| Time to body | 12.36 s | 11.42 s |
+
+No SSE, no NDJSON, no chunked incremental delivery — the whole body lands at the
+end, and nothing in the response says the parameter was dropped. Note that the
+server's own log line `BackendWatchdog … (streaming=on, non_streaming=on)`
+describes the *backend's* capability, not the HTTP surface, so an integrator
+reading the log reasonably concludes streaming is available.
+
+**2. `response_format=srt` and `=vtt` return correct payloads wrapped in a JSON
+envelope:**
+
+```
+srt  → {"text":"1\n00:00:00,000 --> 00:00:29,980\n Thank you.\n\n"}
+vtt  → {"text":"WEBVTT\n\n00:00:00.000 --> 00:00:29.980\n Thank you.\n\n"}
+```
+
+OpenAI returns both as raw `text/plain`. Any OpenAI-compatible client that writes
+the response body straight to a `.srt` file — the obvious thing to do — produces
+a JSON blob with escaped newlines instead of a subtitle file.
+
+**3. `json` and `text` are indistinguishable** — both return `{"text": …}`,
+where OpenAI's `text` returns a bare string.
+
+`verbose_json`, by contrast, is *richer* than OpenAI: 92 segments on the test
+file with `avg_logprob`, `no_speech_prob`, `temperature`, `tokens` and populated
+per-word timestamps (`{start, end, probability, t_dtw, word}`), plus
+`detected_language`, `detected_language_probability`, `duration` and `task` at
+top level.
+
+**Suggested fix (skill).** Step 5's client table presents the surface as
+uniformly OpenAI-compatible. It should name, per modality, which OpenAI features
+do not carry over — streaming transcription being the concrete one, since an app
+that streams today loses a shipped feature (§3.5).
+
+**Worth AMD's consideration:** 2 and 3 are small self-contained conformance fixes
+— return the payload as `text/plain` for `srt`, `vtt` and `text`. 1 is a larger
+decision, but accepting a parameter and silently not honouring it is the worst of
+the available options; rejecting `stream=true` with a 400 would be strictly
+better than ignoring it.
+
 ---
 
 ## 3. Candidate hosts and a catalog gap
@@ -674,13 +1021,73 @@ that vendors embeddable `lemond`, spawns it, shows cold-start progress, and shut
 it down. It would make the skill checkable, give the twelve config-level guides a
 counterpart, and pin the version drift the rest of §2.7 asks about.
 
-I am forking [`thewh1teagle/vibe`](https://github.com/thewh1teagle/vibe) as a
-candidate — a Tauri transcription app whose `tauri.conf.json` already declares
+The candidate was [`thewh1teagle/vibe`](https://github.com/thewh1teagle/vibe) — a
+Tauri transcription app whose `tauri.conf.json` already declares
 `"externalBin": ["binaries/sona"]`. It is the same shape the skill prescribes
 (desktop app supervising a vendored inference binary), so substituting embeddable
 `lemond` for the existing sidecar tests Steps 3–4 as a swap rather than a
-greenfield build, on the exact stack §1.8's watcher warning names. Findings will
-follow separately.
+greenfield build, on the exact stack §1.8's watcher warning names. **The swap was
+analysed and rejected; §3.5 records why, and that outcome is itself the most
+useful thing this review produced.**
+
+### 3.5 The Vibe swap: a worked case for *not* integrating
+
+`thewh1teagle/vibe` (MIT, Tauri v2, app version 3.0.23, surveyed at `1c5466b`)
+is as close to this skill's ideal host as public code gets: a desktop
+transcription app that already vendors an OpenAI-compatible local inference
+server (`sona`, MIT, pinned by `.sona-version`) as a Tauri `externalBin`, spawns
+it as a plain `std::process::Command` subprocess, and drives it over HTTP.
+Substituting embeddable `lemond` is a like-for-like exchange of one local
+inference server for another.
+
+**The seam is clean and small.** `SonaProcess`
+(`desktop/src-tauri/src/sona/process.rs`, `sona/mod.rs:139`) is the *only*
+transcription implementation — no `whisper-rs`, no `vibe_core`, no
+`pyannote-rs` remain in `Cargo.lock` — and all three user entry points (home,
+batch, hotkey dictation) converge on one `transcribe` Tauri command. Everything
+above that line is backend-agnostic. A lemond-backed implementation has to
+satisfy three HTTP calls, one CLI call (`sona devices` → JSON GPU list), and one
+stdout ready handshake. On the skill's own terms this should be the easy case.
+
+**It should not ship.** Four independent grounds, none of them an
+integration-code problem:
+
+1. **Streaming is lost (§2.17).** `transcribe_stream` reads NDJSON and emits
+   `progress` and `segment` events into the UI as they arrive; the frontend
+   renders a live transcript and drives a taskbar progress bar from them.
+   Lemonade delivers nothing for 12 s and then everything, and `stream=true`
+   does not change that. There is no signal to compute a percentage from, so the
+   honest port is a spinner: two shipped features collapse into one
+   indeterminate one.
+2. **Diarization is lost.** Vibe's `Segment` is `{start, stop, text, speaker}`.
+   `grep -i speaker` over the full Lemonade response matches nothing, in any
+   `response_format`. This is the larger regression and it is structural: Vibe
+   deleted `pyannote-rs` *because* sona diarizes in-process. Swapping to
+   Lemonade means shipping a diarization-free build or re-adding a separate
+   diarization stage the app had already retired.
+3. **The distribution matrix shrinks (§2.15).** Vibe ships a `.deb` today with a
+   system `ffmpeg` dependency and no glibc floor. Vendoring this binary breaks
+   Ubuntu 22.04 LTS and Debian 12 users at runtime, not at install time.
+4. **The side effects are wrong for a packaged app (§2.13, §2.14).**
+   `config.json` rewritten on every launch, the user's global HF cache shared
+   rather than isolated, and UDP broadcast on every RFC1918 interface. All are
+   mitigable; none is mentioned where the reader will hit them; and all three
+   are properties this app had already got right with its existing sidecar.
+
+The field mapping — the part the skill *does* prepare you for — is trivial by
+comparison: `start`/`stop` in centiseconds against Lemonade's `start`/`end` in
+float seconds (a rename and a ×100), `text` direct, and strictly more
+per-segment data returned than Vibe consumes.
+
+**The point is about the guide, not the backend.** For a batch or offline
+transcription tool with no live transcript and no speaker labels, this swap is
+straightforwardly feasible: the ABI floor is satisfied on a current distro, the
+artifact is Apache-2.0 and carries its LICENSE, `whispercpp:vulkan` can be staged
+offline on Linux, and `verbose_json` returns more than Vibe uses. The skill has
+no step at which those two cases are distinguished. A Step 0 (§2.11) reaches
+"do not integrate — or integrate the batch path only, behind a setting" in under
+an hour, before any vendoring, launcher, or packaging work. Without one, the
+procedure runs to completion and delivers a downgrade.
 
 ---
 
@@ -693,13 +1100,17 @@ follow separately.
 | T3 | `lemonade backends install {whispercpp,ryzenai-llm,flm}:npu` on Linux | **done**; all three refuse, exact strings in §2.4 | §2.4 |
 | T4 | Skip the pull step; check whether empty-200 reproduces at 11.5.2 | **done**; it does not — first inference blocks and downloads instead | §1.2, §2.0 |
 | T5 | *(folded into T1)* | done | §2.2 |
-| T6 | Full integration into `instinct-dash` under `npm run dev:ui` without excluding `vendor/` from the Vite watcher | **not run** | §1.8, §2.8, progress UI |
+| T6 | Full vendored integration into a watcher-driven desktop host: Steps 3–4 end to end (vendoring, launcher, shutdown), progress UI, key gating, `vendor/` left in the watched tree | **not run** — deliberately, see below | §1.8, §2.8, progress UI |
+| T7 | Embeddable artifact: download, checksum, extract, run standalone on `:13399` beside the system instance | **done**; readiness race, shared model cache, config mutation, second listener, LAN broadcast, ABI floor, no OpenAPI | §2.12–§2.16 |
+| T8 | Vibe swap survey — locate the seam, enumerate what a lemond-backed implementation must satisfy | **done**; the seam is `SonaProcess`, everything above it is backend-agnostic | §2.11, §3.5 |
+| T9 | `/api/v1/audio/transcriptions` contract measured field-by-field against Vibe's `Segment`: `stream=true`, every `response_format`, diarization | **done**; streaming ignored, no `speaker`, `srt`/`vtt` JSON-wrapped | §2.17, §3.5 |
 
-**T6 is the one real gap.** It is the only test that would exercise Steps 3–4
-(vendoring, the subprocess launcher, shutdown) plus the progress-UI and
-key-gating requirements — everything T2 could not reach, since `judge.py` is a
-batch harness with a pre-existing config point. It is also the only way to
-confirm the file-watcher hazard in §1.8 rather than taking it on trust.
+**T6 is still the one real gap, but it is now a deliberate one.** It is the only
+test that would exercise Steps 3–4 (vendoring, the subprocess launcher,
+shutdown) plus the progress-UI and key-gating requirements — everything T2 could
+not reach, since `judge.py` is a batch harness with a pre-existing config point.
+It is also the only way to confirm the file-watcher hazard in §1.8 rather than
+taking it on trust.
 
 **The host has been changed, and the reason is worth recording.** T6 was
 originally scoped against `instinct-dash`, a local dashboard already talking to
@@ -716,12 +1127,29 @@ distinguishes has-cloud-AI from has-none, but nothing distinguishes
 consumes-inference from observes-inference, and the second is common in exactly
 the tooling-and-dashboard code around an inference host.
 
-T6 now targets a fork of `thewh1teagle/vibe` (see §3.4). Reporting separately.
+**Why T6 was not run against Vibe either.** T8 and T9 established that the
+finished integration would ship a product with fewer user-visible features than
+it has today (§3.5). Running T6 would have meant building and packaging an
+integration in order to test a guide, knowing the result should not merge — so
+the launcher, vendoring and shutdown steps remain unverified by me at the
+application level. T7 covers part of the same ground from below: it tests the
+*binary* those steps produce, which is where §2.12–§2.16 came from. What is still
+untested is the app-side half — progress UI, key gating, and the watcher
+interaction.
+
+That gap has a silver lining worth stating: the reason T6 stalled twice, on two
+different hosts and for two different reasons, is itself the §2.11 finding.
+Neither `instinct-dash` (observes inference, does not consume it) nor Vibe
+(consumes it, but needs capabilities Lemonade does not expose) is a host this
+skill should be run against — and the skill has no step that would have said so
+in either case.
 
 Everything else is settled. T4 was a reproduction test of the skill's own
-headline warning and came back negative, which is the most consequential single
-result here — confirming a documented hazard is real is as useful as finding a
-new one, and finding it *replaced* is more useful still.
+headline warning and came back negative, which is the most consequential result
+about content the skill *has* — confirming a documented hazard is real is as
+useful as finding a new one, and finding it *replaced* is more useful still. T9
+is its counterpart for content the skill does not have: a measured capability
+gap that no amount of correct integration code closes.
 
 ---
 
@@ -744,6 +1172,23 @@ preflight), §2.5b (one-app-one-server), and §2.6 (no concurrency or slot model
 are all the same absence. The skill is thoroughly backend-aware and entirely
 platform-unaware, and it is the one skill in the family that ships inference
 onto a machine its author will never see.
+
+To that list the embeddable-binary and Vibe work adds a fourth absence, and it
+is the one with the largest consequence: **the skill has no exit.** It can
+decide that an app has cloud AI to replace, but not that Lemonade cannot supply
+what the app already ships. Attempting a real swap into Vibe — the closest thing
+to this skill's ideal host in public code — produced four independent blockers
+(§3.5), every one of which a four-item pre-flight would have surfaced in minutes
+(§2.11). "Do not integrate" and "integrate the batch path only" need to be
+outcomes the skill can reach.
+
+Related and cheap to fix: §2.12–§2.16 all came from extracting the embeddable
+archive and reading the first two seconds of its startup log. The readiness race,
+the shared model cache, the persisted `--port`, the second listening socket, the
+LAN broadcast and the `GLIBC_2.38` floor are all visible there. That none of them
+appears in the skill suggests the embeddable path has been documented from its
+design rather than from its behaviour — the same asymmetry §3.4 identifies from
+the other direction, and the reason a reference app would pay for itself.
 
 Step 1's survey patterns are the other actionable design gap (§2.3): they find
 vendor SDKs but miss hand-rolled HTTP clients — the failure mode most likely to
