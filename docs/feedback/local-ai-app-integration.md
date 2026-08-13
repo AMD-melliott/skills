@@ -5,10 +5,22 @@
 **Hardware:** AMD Strix Halo (gfx1151), 128 GB unified memory, XDNA NPU, Pop!_OS 24.04
 **Lemonade:** `lemonade-server 11.5.2~24.04` (PPA), system `lemond.service`, `:13305` healthy
 
-Desk review of `SKILL.md` and `reference.md` against a live 11.5.2 stack and a
-set of candidate host applications. Findings marked **[unverified]** are
-predictions the test plan in §4 will settle; everything else is confirmed
-against the running server.
+Review of `SKILL.md` and `reference.md` against a live 11.5.2 stack and a set of
+candidate host applications. Everything below is confirmed against the running
+server unless marked **[unverified]**; §4 records what was measured and what was
+deliberately not run.
+
+**This document holds design feedback, open questions, and research results
+only.** Reproduced mechanical defects were submitted separately as a pull
+request:
+
+| PR | Covers |
+|---|---|
+| `fix(local-ai-app-integration): correct endpoint paths, Linux NPU row, and unpulled-model behaviour` | `@anthropic-ai/sdk` `base_url` 404 (§2.1); `reranking` vs `rerank` (§2.2); the Linux NPU row (§2.4); the unpulled-model behaviour change and its collision with the 120 s timeout (§2.0); `?show_all=true` for full-catalog validation (§2.0); the Step 1 "three things"/four-item miscount (§2.9); the shutdown-signal framing (§2.10) |
+
+The sections those cover are kept below in short form, because the *reasoning*
+is what makes each fix reviewable — but the edits themselves are already in the
+PR and need no action here.
 
 ---
 
@@ -167,27 +179,22 @@ model took 9.6 s; a 4B GGUF over a domestic link is minutes. So the
 first-run scenario it was written for — and the symptom is a client timeout with
 no output, which looks identical to the failure it replaced.
 
-**Suggested fix**, three parts:
+*Fixed in the PR:* both behaviours are now documented, both cured by the same
+explicit pull, and the pull step is rejustified around **latency control**
+rather than silent failure — it was always the right instruction, just for a
+different reason. The related catalog point is fixed there too:
+`GET /api/v1/models` returns downloaded models only (23 here against 145
+catalogued), so validating a user-supplied model name needs `?show_all=true`.
 
-1. Replace the empty-200 rows in Step 6, Step 7, and the checklist with the
-   auto-pull behaviour.
-2. **Keep the explicit `POST /api/v1/pull` step** — it is still right, for
-   better reasons: predictable timing, a progress indicator that can cover the
-   download, and offline installs. Rewrite its justification around *latency
-   control* rather than *silent failure*.
-3. Revisit the 120 s figure, or say plainly that the timeout must exceed a
-   worst-case model download unless the model is pulled up front.
-
-Scope: one model, one recipe (`llamacpp`), one host, at 11.5.2. Which release
-changed this is unknown, and some recipe or size may still produce empty-200.
-Reported as "did not reproduce here", not "cannot happen".
-
-Related, and confirmed in the same run: **`/api/v1/models` alone is not the full
-catalog.** It returns only local models (23 here); the registry has 145.
-`GET /api/v1/models?show_all=true` returns all of them. The skill calls
-`/api/v1/models` "the only authoritative model list" — a reader validating a
-user-supplied model name gets a false negative for any of the 122 catalog models
-not yet downloaded.
+**What the PR does not settle, and AMD should.** Scope of my test was one model,
+one recipe (`llamacpp`), one host, at 11.5.2 — so this is "did not reproduce
+here", not "cannot happen". Which release changed the behaviour is unknown, and
+some recipe or model size may still produce empty-200. The open design question
+is the **120-second figure itself**: it is now a number that must exceed a
+worst-case model download over an unknown link, which is not a number anyone can
+pick. Either the skill tells the reader to pull before setting a timeout at all
+(making 120 s a post-pull inference budget, which is defensible), or the pull
+step needs to be non-optional rather than recommended.
 
 ### 2.1 HIGH — The `@anthropic-ai/sdk` base_url produces a guaranteed 404 (confirmed)
 
@@ -231,17 +238,13 @@ base for every client in the table. An Anthropic-SDK app following it verbatim
 404s on its first call — during the exact cold-start window where the skill has
 trained the reader to suspect an unpulled model or a short timeout instead.
 
-**Suggested fix.** Correct the row and note that prefixes are not uniform:
+*Fixed in the PR* — the row is corrected, the whole Step 5 table now shows what
+each `base_url` resolves to rather than only the base, and a 404 body carrying a
+`path` field is named in Step 7 as a routing mistake rather than a missing model.
 
-| Existing client | New `base_url` | Resulting path |
-|---|---|---|
-| `openai-python` / `openai-node` | `http://127.0.0.1:{port}/api/v1` | `/api/v1/chat/completions` |
-| `@anthropic-ai/sdk` | `http://127.0.0.1:{port}` | `/v1/messages` |
-
-> **Path prefixes are not uniform.** OpenAI-compatible routes live under
-> `/api/v1`; the Anthropic Messages route is served at `/v1/messages`. Set
-> `base_url` so the SDK's own path suffix resolves correctly, and verify with
-> one real request before wiring up the rest of the app.
+**Worth AMD's consideration beyond the doc fix:** the underlying cause is that
+`messages` is the one route that does not exist under `/api/v1`. Aliasing it
+there would make the skill's uniform-prefix model true, and would cost nothing.
 
 ### 2.2 MEDIUM — Rerank is exposed as `reranking`, diverging from every other implementation (confirmed)
 
@@ -265,18 +268,13 @@ Retrieval apps (embeddings + rerank) are a common shape for this skill's
 audience, and the skill's premise is that three changes suffice. A silent path
 rename is exactly the kind of thing that premise does not survive.
 
-**Suggested fix.** One row in the Step 5 table and one in Step 7:
+*Fixed in the PR* — the route table now carries `/api/v1/reranking` and names
+what 404s.
 
-| Modality | Path |
-|---|---|
-| Reranking | `{port}/api/v1/reranking` — **not** `/v1/rerank`, despite that being the common convention |
-
-| Symptom | Cause | Recovery |
-|---|---|---|
-| `/v1/rerank` 404s while chat works | Lemonade names the route `reranking` | Use `/api/v1/reranking`. The per-model back-port also serves `/v1/rerank`, but the proxy does not |
-
-Worth noting for AMD's own consideration: aliasing `rerank` → `reranking` on the
-proxy would remove the defect entirely and cost nothing.
+**Worth AMD's consideration:** aliasing `rerank` → `reranking` on the proxy
+would remove the defect at the source rather than documenting around it. The
+back-port already serves both spellings, so the proxy is the only place where
+the convention breaks.
 
 ### 2.3 HIGH — Step 1's survey patterns miss hand-rolled HTTP clients
 
@@ -356,11 +354,35 @@ accounting.
 Note the skill only shows `flm:npu` in a **Windows** packaging example
 (`# Windows NPU path only`), which contradicts the Linux row above it.
 
-**Suggested fix.** Either confirm and document the Linux `flm` install command
-explicitly, or mark the row "Windows only" and note that Linux NPU ASR currently
-runs as a standalone FastFlowLM process outside lemond — which has real
-consequences here, since a standalone process is not something the Step 4
-launcher supervises.
+**Confirmed functionally.** All three NPU backends refuse to install at 11.5.2:
+
+```
+lemonade backends install whispercpp:npu   → Requires Windows
+lemonade backends install ryzenai-llm:npu  → Requires Windows
+lemonade backends install flm:npu          → Requires AMD XDNA 2 AMD NPU
+```
+
+The first two are honest platform gates. The third is misleading: it names a
+*hardware* requirement this machine meets — a Ryzen AI MAX+ PRO 395 with an
+XDNA 2 NPU — while the actual blocker is that `system-info` reports
+`amd_npu.family: ""` on Linux, so the device check cannot pass regardless of the
+hardware. A user with the exact NPU the message asks for is told they do not
+have it.
+
+*The wrong row is removed in the PR.* Two things are left for AMD:
+
+1. **The `flm:npu` message should name the real gate.** "Requires Windows"
+   would be accurate and would cost one string; as written it sends a user
+   with correct hardware to look for a hardware problem.
+2. **Linux NPU ASR does work — outside lemond.** It runs as a standalone
+   FastFlowLM host process (`flm serve qwen3-tk:4b --embed 1 --asr 1`, `:52625`)
+   serving `/v1/chat/completions`, `/v1/embeddings`, and
+   `/v1/audio/transcriptions` from one process that owns the single AMDXDNA
+   context. That has a real architectural consequence for *this* skill: a
+   standalone process is not something the Step 4 launcher supervises, so the
+   whole spawn/health/shutdown lifecycle the skill builds does not cover it.
+   Either the skill says Linux NPU is out of scope, or it needs a second
+   supervision path.
 
 ### 2.5 HIGH — No platform preflight: the skill ships to unknown hosts and never says the host is a variable
 
@@ -455,7 +477,7 @@ live configs. That is not an argument for omitting the topic. It is an argument
 that **AMD is the only party who can state it authoritatively**, and that it
 deserves its own home — see §3.3.
 
-### 2.5 MEDIUM — The one-app-one-server assumption is never stated
+### 2.5b MEDIUM — The one-app-one-server assumption is never stated
 
 Each app spawns a private `lemond` on a random port with a fresh API key. Clean
 and correct for a single desktop app. What happens when that breaks is not
@@ -496,16 +518,17 @@ coresident rather than evicting each other, so a multi-modality app should size
 memory for the sum, not the max. Turns an unstated risk into a stated design
 input.
 
-### 2.7 MEDIUM — Version currency **[unverified]**
+### 2.7 MEDIUM — Version currency (partly verified)
 
-Examples reference `v10.8.0`; live is 11.5.2. Unverified at 11.x: `POST
-/api/v1/install` body shape, `POST /api/v1/pull` behaviour, `GET
-/api/v1/system-info` field names (the skill leans on it for the recipe/backend
-`installed` / `installable` probe), and the Step 2 model IDs.
+Examples reference `v10.8.0`; live is 11.5.2. Checked here and **holding**:
+`GET /api/v1/system-info` field names (the recipe/backend
+`installed` / `installable` probe the skill leans on), `POST /api/v1/pull`
+behaviour, and `GET /api/v1/models`. Still **unverified**: `POST /api/v1/install`
+body shape, and the Step 2 model IDs beyond the ones I exercised.
 
 The skill is already appropriately humble about `/api/v1/load` changing shape
-between releases; the same caution should extend to the endpoints it does tell
-you to call.
+between releases — and that humility was earned, since it did change. The same
+caution should extend to the endpoints it does tell you to call.
 
 **Suggested fix.** State a tested-against version range. Since the skill
 instructs the reader to fetch the *latest* release, a note that model IDs and
@@ -529,25 +552,17 @@ the skill warns about.
 handling — budget a day for a first integration." Honest scoping makes the skill
 more likely to be finished, not less likely to be started.
 
-### 2.9 LOW — Step 1 numbering
+### 2.9–2.10 LOW — Two wording fixes, both in the PR
 
-"Record three things before continuing" is followed by a four-item list. The
-fourth (API-key gating) is important and should be counted.
-
-### 2.10 LOW — Shutdown guidance is inverted from the usual convention
-
-> On app exit, `proc.terminate()` (Unix) or `proc.kill()` (Windows).
-
-On POSIX, `terminate()` sends SIGTERM (graceful) and `kill()` sends SIGKILL. On
-Windows, Python's `subprocess` maps both to `TerminateProcess`, so they are
-equivalent. Written as an OS split, it reads as though Windows requires the
-harsher call, when the real distinction is that Windows has no graceful
-equivalent.
-
-**Suggested fix.** Rewrite as: `terminate()`, then `wait(timeout=…)`, then
-`kill()` as a fallback — and note that on Windows the two are the same call, so
-the wait is what actually matters. This also fits "lemond flushes config and
-exits cleanly within a couple of seconds."
+- **Step 1 numbering.** "Record three things before continuing" is followed by a
+  four-item list; the fourth (API-key gating) is load-bearing and should be
+  counted.
+- **Shutdown guidance.** "`proc.terminate()` (Unix) or `proc.kill()` (Windows)"
+  reads as though Windows requires the harsher call. On POSIX `terminate()` is
+  SIGTERM and `kill()` is SIGKILL; on Windows Python maps both to
+  `TerminateProcess`, so they are the same call. Now written as terminate →
+  `wait(timeout=5)` → kill, which is what the skill's own "lemond flushes config
+  and exits cleanly within a couple of seconds" implies.
 
 ---
 
@@ -633,28 +648,36 @@ gaps, both sitting *underneath* rather than beside the current skills.
 
 ---
 
-## 4. Planned testing
+## 4. Testing performed
 
-| # | Test | Effort | Settles |
+| # | Test | Status | Settles |
 |---|---|---|---|
-| T1 | Namespace/endpoint sweep at 11.5.2 — **done**; confirmed the `messages` 404 and corrected the rerank finding | done | §2.1, §2.2 |
-| T2 | `lemonade:` backend for `judge.py` — **done**; works in +40 lines, §2.1 reproduced as a negative control | done | §2.1, §2.8 |
-| T3 | `lemonade backends install flm:npu` on Linux | 30 min | §2.4 |
-| T4 | Skip the pull step; confirm the empty-200 failure reproduces at 11.5.2 | 15 min | §1.2 |
-| T5 | *(folded into T1)* — rerank confirmed working at `/api/v1/reranking`; `/api/v1/rerank` 404s | done | §2.2 |
-| T6 | Full integration into `instinct-dash`, run under `npm run dev:ui` **without** excluding `vendor/` from the Vite watcher | half day | §1.8, §2.8, progress UI |
+| T1 | Namespace/endpoint sweep at 11.5.2 across all three namespaces | **done**; `messages` is `/v1`-only, rerank is `reranking`, everything else aliases | §2.1, §2.2 |
+| T2 | `lemonade:` backend for `judge.py` — a real Anthropic-Messages client | **done**; +40 lines, all additive; §2.1 reproduced end-to-end as a negative control | §2.1, §2.8, §3.1 |
+| T3 | `lemonade backends install {whispercpp,ryzenai-llm,flm}:npu` on Linux | **done**; all three refuse, exact strings in §2.4 | §2.4 |
+| T4 | Skip the pull step; check whether empty-200 reproduces at 11.5.2 | **done**; it does not — first inference blocks and downloads instead | §1.2, §2.0 |
+| T5 | *(folded into T1)* | done | §2.2 |
+| T6 | Full integration into `instinct-dash` under `npm run dev:ui` without excluding `vendor/` from the Vite watcher | **not run** | §1.8, §2.8, progress UI |
 
-T2 is also complete — see §3.1. T1 confirmed §2.1, corrected §2.2 from "rerank needs the
-back-port" to "rerank is named `reranking`", and established that `/api/v1` and
-`/v1` are otherwise aliases — so the skill's uniform advice is right everywhere
-except the two routes now documented above.
+**T6 is the one real gap, and it is deliberate.** It is the only test that would
+exercise Steps 3–4 (vendoring, the subprocess launcher, shutdown) and the
+progress-UI and key-gating requirements — everything T2 explicitly could not
+reach, since `judge.py` is a batch harness with a pre-existing config point. It
+is also the only way to confirm the file-watcher hazard in §1.8 rather than
+taking it on trust.
 
-T2 is the highest-value remaining item: a real integration on a real client that
-already meets the precondition.
+It costs roughly half a day and would land in an unrelated repo. The findings
+already in hand do not depend on it: nothing in §2 is contingent on the launcher
+behaving as documented, and §2.8's "the headline undersells the work" claim is
+*strengthened*, not weakened, by T2 having taken +40 lines on the easiest
+possible host. I would rather flag it as untested than half-run it.
 
-T4 and T6 are deliberately *reproduction* tests of the skill's own warnings.
-Confirming a documented hazard is real at 11.5.2 is as useful as finding a new
-one, and much cheaper.
+If AMD wants one more datapoint from this review, T6 is the one to ask for.
+
+Everything else is settled. T4 was a reproduction test of the skill's own
+headline warning and came back negative, which is the most consequential single
+result here — confirming a documented hazard is real is as useful as finding a
+new one, and finding it *replaced* is more useful still.
 
 ---
 
@@ -667,16 +690,23 @@ empty-200 diagnosis, the mandatory 120s timeout with its reason, the
 `resources/` warning, and the file-watcher hazard are all things a reader could
 not derive from the API docs.
 
-Two confirmed defects come from the skill's uniform `{port}/api/v1` model not
-matching the server's actual route table: the `@anthropic-ai/sdk` 404 (§2.1,
-`messages` is `/v1`-only) and the `reranking` naming divergence (§2.2). Both are
-one-line fixes. The absent model of coresidency and concurrency (§2.5, §2.6) is
-the larger structural gap.
+The reproduced defects — the `@anthropic-ai/sdk` 404, the `reranking` naming
+divergence, the Linux NPU row, and the unpulled-model behaviour — are in the PR
+and need no decision here.
 
-Step 1's survey patterns are the other actionable defect (§2.3): they find
+What is left for AMD is structural, and it is one thing said three ways: the
+skill models a **document** shipping to a **known** machine. §2.5 (no platform
+preflight), §2.5b (one-app-one-server), and §2.6 (no concurrency or slot model)
+are all the same absence. The skill is thoroughly backend-aware and entirely
+platform-unaware, and it is the one skill in the family that ships inference
+onto a machine its author will never see.
+
+Step 1's survey patterns are the other actionable design gap (§2.3): they find
 vendor SDKs but miss hand-rolled HTTP clients — the failure mode most likely to
 make an agent decline a job it should take, and the reason a good candidate host
-sitting in `strix-halo-bench` is invisible to the skill's own discovery step.
+sitting in `strix-halo-bench` is invisible to the skill's own discovery step. I
+found this by running the skill's own patterns and getting zero hits on repos I
+knew contained cloud AI clients.
 
 Separately and more strategically: the topology I actually run — one server,
 many networked consumers, plenty of commercial traffic to redirect — is served
