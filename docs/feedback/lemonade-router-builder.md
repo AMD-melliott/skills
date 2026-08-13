@@ -323,37 +323,63 @@ per-request) from client-side routers (request-class-aware, no prompt
 inspection). This also strengthens the skill's pitch: content-awareness is the
 thing the other layers structurally cannot do.
 
-### 2.6 MEDIUM — Backend health is per-recipe, and the `on_error` default hides it
+### 2.6 HIGH — Nothing validates `labels` against the classifier model's real output (measured)
 
 A Mode B policy routinely spans two runtimes: candidates and
 `semantic_similarity` models are `llamacpp`, while a `classifier` model is an
-`onnxruntime` encoder. `reference.md` says model *capability* is checked at
-registration — but backend installation and health is tracked per
-recipe+backend, and `auto` selection masks a broken one.
+`onnxruntime` encoder. I set out to test a narrower, inferred version of this
+finding — that an uninstalled `onnxruntime` backend would fail to load and
+silently misroute via `on_error: "match_false"`. That mechanism **did not
+reproduce**, but the experiment surfaced a different, measured hazard with the
+same silent-misroute signature.
 
-Measured on this host, on a different modality of the same server:
-`llamacpp/rocm` was `update_required` while `llamacpp/vulkan` was installed, so
-`auto` quietly used Vulkan and chat never noticed. `whispercpp` had only a
-`rocm` build, which aborts on start (SIGABRT) under the service environment, and
-with no alternative to fall back to that modality was simply dead. Chat,
-embeddings, and reranking stayed healthy throughout.
+**Backend-absent is not a hazard at 11.5.2.** `onnxruntime:cpu` was
+`installable` (not installed) on this host. I registered a Mode B policy with
+a `classifier` leaf on `Bert-Phishing-ONNX` and routed real traffic through it.
+`journalctl` shows lemond installing `ort-server` on first use, transparently,
+the same way it fetches an undownloaded checkpoint — the classifier loaded and
+ran. A working chat path *does* generalize to a classifier's runtime here,
+which is the opposite of what I expected to find.
 
-The consequence for this skill: **a working chat path proves nothing about the
-runtime a classifier model needs.** And the skill's default
-`on_error: "match_false"` is fail-open — a classifier that cannot load does not
-raise, it just never matches, so every request falls through to
-`default_model`. That is the same silent-misroute signature as §2.3 arriving
-from a different cause, and `route_trace` is again the only way to see it.
+**What actually causes silent misrouting: `labels` is never checked against
+the model.** My first policy declared the classifier label-less, per
+`reference.md`'s "legal for single-score models" rule. `Bert-Phishing-ONNX` is
+not single-score — its `id2label` is `{0: "benign", 1: "phishing"}` — so every
+request scored `0.0` and fell through, with `route_trace` showing
+`default_used: true` and no hint why. Re-registering with the correct
+`"labels": ["benign", "phishing"]` fixed it: the same phishing prompt then
+scored `0.9999949` and routed correctly.
 
-*Caveat:* no `onnxruntime` classifier was exercised here. The per-recipe backend
-mechanism is measured; its effect on a classifier leaf is inferred.
+To isolate the mechanism, I then registered a third variant with **fabricated
+labels** — `"labels": ["spam", "ham"]`, names that don't exist on the model —
+and routed the identical 99.9997%-confidence phishing prompt through it. Both
+`scripts/validate.py` and the live `/api/v1/pull` accepted the policy without
+complaint. The request came back `default_used: true, matched_rule: "",
+score: 0.0` — HTTP 200, and `journalctl -u lemond` shows no warning, error, or
+mention of the mismatch anywhere in the stack.
 
-**Suggested fix.** One sentence in Step 5: a classifier model may need a
-different backend from the candidates, and `on_error: "match_false"` turns a
-load failure into silent non-matching rather than an error — verify with
-`route_trace` that the rule actually fires before shipping. This is the same
-argument as §2.1: the policy runs on a host, and the host's state is not
-visible from the JSON.
+So the failure isn't `on_error` at all — no error occurs. A `classifier` leaf
+whose `label` doesn't exist on the model (wrong name, typo, or a label-less
+declaration against a model that isn't single-score) reads back an
+unconditional `0.0` by design, and nothing in the validator, the live parser,
+or the server logs distinguishes that from a working rule that simply didn't
+match this request.
+
+**Suggested fix.** `scripts/validate.py` cannot check this offline — it has no
+way to know a classifier model's real output labels — but the *registration*
+step could: the server already loads the model to check capability, so
+`/api/v1/pull` cross-checking declared `labels` against the model's real
+label set (and rejecting a label-less declaration against a model that isn't
+single-score) would turn this into the same loud, first-try rejection the
+parser already gives for a `route_to` that isn't a candidate. Short of that,
+one sentence in Step 5: verify a classifier's `labels` against the model's
+`id2label`/card before shipping, and confirm with `route_trace` that a rule
+you expect to fire actually does — because neither validate.py nor the live
+parser will catch a wrong label name.
+
+*Full transcript, including the backend-absent test and the auto-install log
+lines:* `skills/.local/docs/p3-onnx-classifier-test.md` (not checked in —
+gitignored scratch).
 
 ### 2.7 LOW — Step 8's mandatory-pairing language fights the checklist
 
@@ -399,12 +425,35 @@ The validator proves the JSON parses. It cannot tell the author that `rule-3` is
 unreachable because `rule-1` subsumes it — the single most likely *semantic*
 error given first-match-wins plus substring matching.
 
-A `python scripts/validate.py router.json --simulate prompts.txt` mode that
-evaluates the deterministic leaves (`keywords_*`, `regex`, `min_chars`,
-`max_chars`, `has_tools`, `has_images`) offline and prints which rule each prompt
-would hit — skipping classifier leaves as "requires server" — would catch
-shadowed rules before registration. Everything needed is already in the
-validator.
+**Prototyped — cheap, and it catches exactly that case.** ~110 lines reusing
+`validate.py`'s existing match-expression grammar: walk `routing.rules`
+first-match-wins per prompt, evaluate `keywords_*` / `regex` / `min_chars` /
+`max_chars` deterministically, and raise "requires server" for any
+`classifier`/`has_tools`/`has_images` leaf reached before a match — reporting
+the rule as indeterminate for that prompt rather than guessing.
+
+Against a 3-rule policy (`rule-1` on `"code"`, `rule-3` on `"code review"`,
+both text `keywords_any`), four prompts including one containing "code
+review", the prototype flags exactly the predicted shadowing:
+
+```
+Never hit by any prompt in this set: ['rule-3-code-review']
+rule-1-code       <- 'Can you review this code review checklist for me?'
+rule-1-code       <- 'please help me write some code for a script'
+rule-2-shipping   <- 'track my shipping order status'
+default (...)     <- "what's the weather today"
+```
+
+Against a mixed policy (one keyword rule, one `classifier` rule), the same
+four prompts all report `REQUIRES SERVER (classifier 'phish-clf'...)` once the
+keyword rule fails to match — the intended fallback for the case the offline
+tool structurally cannot resolve, rather than a false claim either way.
+
+No server call in either run. This is worth shipping — the grammar walk
+already exists in `validate.py`; a `--simulate prompts.txt` flag is additive to
+the same file. Prototype: `skills/.local/scripts/router_simulate.py` (not
+checked in — gitignored scratch; a real submission would fold this into
+`validate.py` rather than ship a second script).
 
 ### 3.2 Emit a starter prompt set alongside the policy
 
@@ -483,6 +532,7 @@ green `check.sh` on a skill that no user will ever install.
 | T2 | Silent-fallback experiment — 4 Mode A policies × 24 prompts = 96 routed requests, varying prompt style and judge model | **done**; warning vindicated, remedy refuted | §2.3 |
 | T3 | Slot behaviour — direct sequential loads vs. a 2-candidate router alternating over 6 requests | **done**; direct loads evict, router candidates stay coresident on separate back-ports | §2.1 |
 | T4 | `semantic_similarity` accuracy against a ground-truth corpus with known terminology drift | **not run** | §2.9, §3.3 |
+| T5 | Mode B `onnxruntime` classifier — backend-absent registration, label-less vs. correct vs. fabricated `labels`, live routing | **done**; backend-absent hazard refuted (auto-installs), unvalidated-`labels` hazard confirmed | §2.6 |
 
 **T4 was dropped deliberately.** It would measure the *classifier model's*
 retrieval quality, not the skill's behaviour — a different model would give a
@@ -496,9 +546,10 @@ with an LLM judge, and it grades agent behaviour rather than the artifact. The
 parser-agreement matrix (T1) is the higher-value deterministic check and it
 came back clean.
 
-Nothing further is planned. The three claims worth testing — that the offline
-validator matches the live parser, that the silent-fallback hazard is real, and
-that a multi-candidate policy behaves on a bounded-slot host — are all settled.
+Nothing further is planned. The claims worth testing — that the offline
+validator matches the live parser, that the silent-fallback hazard is real,
+that a multi-candidate policy behaves on a bounded-slot host, and that a
+Mode B classifier leaf can silently misroute — are all settled.
 
 ---
 
@@ -515,10 +566,17 @@ from that: no slot model, and the verification instrument for its own headline
 failure mode arriving last and under-emphasised. Both are additive fixes; none
 requires restructuring.
 
-One measured result contradicts the skill: the prescribed remedy for silent
-fallback is prompt phrasing, and phrasing turned out not to be the determinant —
-judge capability is (§2.3). The skill's own `router.model` default is the
-failing configuration. That is the single change I would make first.
+Two measured results contradict the skill, both silent-misroute, both from
+causes it doesn't name. In Mode A, the prescribed remedy for silent fallback
+is prompt phrasing, and phrasing turned out not to be the determinant — judge
+capability is (§2.3), and the skill's own `router.model` default is the
+failing configuration. In Mode B, I set out to test a backend-loadability
+hypothesis and it didn't hold — but the same experiment showed neither
+`scripts/validate.py` nor the live parser checks a `classifier` leaf's
+`labels` against what the model actually outputs, so a wrong label name
+silently and permanently never matches (§2.6). Judge selection in Step 4 is
+the single change I would make first; label validation at registration is the
+second.
 
 Separately, this skill is not in the marketplace manifest and `check.sh` does
 not notice (§3.6) — a question for AMD rather than a patch.
