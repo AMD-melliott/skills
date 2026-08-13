@@ -323,7 +323,39 @@ per-request) from client-side routers (request-class-aware, no prompt
 inspection). This also strengthens the skill's pitch: content-awareness is the
 thing the other layers structurally cannot do.
 
-### 2.6 LOW — Step 8's mandatory-pairing language fights the checklist
+### 2.6 MEDIUM — Backend health is per-recipe, and the `on_error` default hides it
+
+A Mode B policy routinely spans two runtimes: candidates and
+`semantic_similarity` models are `llamacpp`, while a `classifier` model is an
+`onnxruntime` encoder. `reference.md` says model *capability* is checked at
+registration — but backend installation and health is tracked per
+recipe+backend, and `auto` selection masks a broken one.
+
+Measured on this host, on a different modality of the same server:
+`llamacpp/rocm` was `update_required` while `llamacpp/vulkan` was installed, so
+`auto` quietly used Vulkan and chat never noticed. `whispercpp` had only a
+`rocm` build, which aborts on start (SIGABRT) under the service environment, and
+with no alternative to fall back to that modality was simply dead. Chat,
+embeddings, and reranking stayed healthy throughout.
+
+The consequence for this skill: **a working chat path proves nothing about the
+runtime a classifier model needs.** And the skill's default
+`on_error: "match_false"` is fail-open — a classifier that cannot load does not
+raise, it just never matches, so every request falls through to
+`default_model`. That is the same silent-misroute signature as §2.3 arriving
+from a different cause, and `route_trace` is again the only way to see it.
+
+*Caveat:* no `onnxruntime` classifier was exercised here. The per-recipe backend
+mechanism is measured; its effect on a classifier leaf is inferred.
+
+**Suggested fix.** One sentence in Step 5: a classifier model may need a
+different backend from the candidates, and `on_error: "match_false"` turns a
+load failure into silent non-matching rather than an error — verify with
+`route_trace` that the rule actually fires before shipping. This is the same
+argument as §2.1: the policy runs on a host, and the host's state is not
+visible from the JSON.
+
+### 2.7 LOW — Step 8's mandatory-pairing language fights the checklist
 
 Step 8 opens with "These two actions are a single mandatory step. Do not stop
 between them," then labels them 8a and 8b. If they truly cannot be separated,
@@ -333,7 +365,7 @@ after validation, say that directly.
 Minor, but this skill is otherwise unusually precise about instruction shape, so
 it stands out.
 
-### 2.7 LOW — `metadata` caveat is buried in a table cell
+### 2.8 LOW — `metadata` caveat is buried in a table cell
 
 "not editable in the desktop UI yet — use only when the user asks for metadata
 routing" is a meaningful constraint sitting in the last cell of the match-leaf
@@ -343,7 +375,7 @@ Router editor will assume the policy is broken.
 **Suggested fix.** Keep the table row, and add a sentence under the table listing
 which match types round-trip through the desktop editor and which do not.
 
-### 2.8 LOW — `min_score` semantics could use one example
+### 2.9 LOW — `min_score` semantics could use one example
 
 `{"classifier": "clf-1", "label": "PII", "min_score": 0.5}` is described as a
 "band test" with `min_score`/`max_score` in `[0,1]`. It is not stated whether
@@ -396,7 +428,23 @@ covering the adjacent case: the user names a model that is not in the local
 registry. `curl /api/v1/models/<id>` is already curl #1 in Step 8b, but nothing
 says what to do when it 404s — pull it, substitute, or stop and ask.
 
-### 3.5 Question: this skill is not published, and nothing flags that
+### 3.5 Publish the policy contract in a machine-readable form
+
+`scripts/validate.py` is a hand-written mirror of the server's parser, and §2.4
+shows the mirror is exact today. Nothing keeps it that way, because there is no
+machine-readable contract to check it against: at 11.5.2 the server serves no
+fetchable spec of any kind — `/openapi.json`, `/api/v1/openapi.json`,
+`/swagger.json`, `/api/openapi.json` and `/v1/openapi.json` all 404, while
+`/docs`, `/redoc` and `/openapi` return the SPA shell. Confirming the validator
+still matches a new release therefore means re-running T1 by hand.
+
+A JSON Schema for `collection.router` shipped next to the parser — or a
+server-side validate/dry-run endpoint that accepts a policy without registering
+it — would let `validate.py` be generated or diffed in CI rather than
+re-measured. The same schema would settle §2.9's score-range question in the
+place a reader already looks.
+
+### 3.6 Question: this skill is not published, and nothing flags that
 
 Not a defect, and not something I would patch — a publication decision is AMD's
 to make. But it is invisible from inside the repo, so it is worth surfacing.
@@ -434,12 +482,12 @@ green `check.sh` on a skill that no user will ever install.
 | T1 | Validator vs live parser — 13 policies (1 valid + 12 targeted mutations) | **done**; 13/13 agreement, no false negatives | §2.4 |
 | T2 | Silent-fallback experiment — 4 Mode A policies × 24 prompts = 96 routed requests, varying prompt style and judge model | **done**; warning vindicated, remedy refuted | §2.3 |
 | T3 | Slot behaviour — direct sequential loads vs. a 2-candidate router alternating over 6 requests | **done**; direct loads evict, router candidates stay coresident on separate back-ports | §2.1 |
-| T4 | `semantic_similarity` accuracy against a ground-truth corpus with known terminology drift | **not run** | §2.8, §3.3 |
+| T4 | `semantic_similarity` accuracy against a ground-truth corpus with known terminology drift | **not run** | §2.9, §3.3 |
 
 **T4 was dropped deliberately.** It would measure the *classifier model's*
 retrieval quality, not the skill's behaviour — a different model would give a
 different number and neither would say anything about whether the generated JSON
-is correct. §2.8 asks for one sentence on typical score ranges per classifier
+is correct. §2.9 asks for one sentence on typical score ranges per classifier
 type; that is an authoring note AMD can write from its own model cards more
 cheaply and more accurately than I can infer it from one corpus.
 
@@ -473,4 +521,4 @@ judge capability is (§2.3). The skill's own `router.model` default is the
 failing configuration. That is the single change I would make first.
 
 Separately, this skill is not in the marketplace manifest and `check.sh` does
-not notice (§3.5) — a question for AMD rather than a patch.
+not notice (§3.6) — a question for AMD rather than a patch.
