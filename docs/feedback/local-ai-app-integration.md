@@ -613,25 +613,90 @@ The cost of not having that gate is not a bad integration — it is a *finished*
 integration that ships a product with fewer features than it had, discovered
 after Steps 3–5 are done and the packaging is rebuilt.
 
-**Suggested fix — a Step 0, before the survey.**
+**Suggested fix — a Step 0, before the survey.** Below is literal drop-in text,
+formatted to match the existing Steps 1–7 exactly, so it can be pasted into
+`SKILL.md` rather than re-derived. Two edits are needed: renumber the
+opinionated-path checklist, and insert the new step ahead of Step 1.
 
-> **Step 0 — Confirm Lemonade can supply what the app already has.** Before
-> vendoring anything, exercise the endpoint the app will use against any running
-> Lemonade and check four things:
->
-> 1. **Streaming.** Does the response arrive incrementally? Time the first
->    *body* byte, not the headers. That a request accepts `stream=true` is not
->    evidence that it streams (§2.17).
-> 2. **Response fields.** Diff the response schema against the fields the app
->    renders today. A field Lemonade does not return is a feature the app loses,
->    not a mapping problem.
-> 3. **ABI floor.** `objdump -T lemond | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1`
->    against the oldest distro the app packages for (§2.15).
-> 4. **Side effects.** Ports opened, files written, packets sent (§2.13, §2.14).
->
-> Record anything that removes a currently shipped capability, and decide before
-> Step 3. **"Integrate the batch path only" and "do not integrate" are
-> legitimate outcomes of this skill**, and it should say so.
+*Opinionated-path checklist (top of `SKILL.md`) becomes:*
+
+```
+[ ] 0. Confirm Lemonade can supply what the app already has
+[ ] 1. Survey the app's current AI integration
+[ ] 2. Pick a model + backend profile
+[ ] 3. Place Embeddable Lemonade in the app's tree (full package, not just the binary)
+[ ] 4. Add a `lemond` launcher (subprocess + API key + port + per-stage logging)
+[ ] 5. Re-point the existing client at lemond (base_url, api_key, 120s timeout — all three required)
+[ ] 6. Wait for /api/v1/health, install backend, then PULL the model before first use
+[ ] 7. Wire shutdown and error recovery
+```
+
+*New section, inserted immediately before "## Step 1: Survey the app":*
+
+~~~markdown
+## Step 0: Confirm Lemonade can supply what the app already has
+
+Before vendoring anything, exercise the endpoint the app will actually use
+against **any** running Lemonade instance — a system-wide install is fine for
+this step; you do not need the embeddable binary yet. Check four things.
+**"Do not integrate" and "integrate the batch path only" are legitimate
+outcomes of this step**, not failures of the process — deciding not to swap
+is cheaper here than after Steps 3–5 are built.
+
+1. **Streaming.** If the app's current path streams (SSE, NDJSON, chunked
+   transfer), time the Lemonade equivalent's *first body byte*, not its
+   headers:
+
+   ```bash
+   time curl -N -X POST http://127.0.0.1:{port}/api/v1/<endpoint> \
+     -d '{"stream": true, ... }'
+   ```
+
+   A request accepting `stream=true` is not evidence that it streams — some
+   Lemonade endpoints accept the parameter and return the entire body at once
+   regardless. If time-to-first-byte and time-to-last-byte are within noise
+   of each other, treat the endpoint as non-streaming: any progress bar or
+   incremental render the app currently drives from partial output will
+   degrade to an indeterminate spinner.
+
+2. **Response fields.** Call the endpoint once and diff the response body
+   against every field the app reads today — not just the fields a client
+   SDK's types declare, since a hand-rolled HTTP client may read the raw JSON
+   directly (see Step 1's note on hand-rolled clients). A field the app
+   currently renders that Lemonade's response does not carry (e.g. a speaker
+   or diarization label) is a **feature lost**, not a mapping problem to
+   solve later in integration code.
+
+3. **ABI floor** (Linux, only if vendoring the embeddable binary in Step 3).
+   Check the binary's glibc floor against the oldest distro the app packages
+   for:
+
+   ```bash
+   objdump -T lemond | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1
+   ldd --version | head -1   # glibc on each target distro/container
+   ```
+
+   A floor above your oldest supported distro's glibc is a packaging-breaking
+   defect that surfaces at runtime on the user's machine, not at install time
+   on yours.
+
+4. **Side effects.** Start `lemond` once with the config you intend to ship,
+   and read the first few seconds of its stdout for: any listening socket
+   beyond the one port you chose, any config file written outside the
+   directory you expected, and any network broadcast/discovery traffic. A
+   packaged app inherits each of these silently unless you configure it away.
+
+**Decide before continuing to Step 1:**
+
+| What you found | Outcome |
+|---|---|
+| No losses, no unacceptable side effects | Continue to Step 1 |
+| A loss exists, but the app doesn't use that capability today | Continue; note the gap in Step 2's profile choice |
+| A loss exists and the app **uses** that capability today | Do not integrate that mode — scope the integration to exclude it (e.g. "batch transcription only, no live/streaming UI"), or do not integrate at all |
+
+Record the decision and its reason. A scoped-down or declined integration is a
+correct output of this skill, not an incomplete one.
+~~~
 
 This is a gap in the guide, not a verdict on Lemonade — for a host without a
 live transcript or speaker labels the same swap is straightforwardly feasible.
@@ -777,14 +842,37 @@ Second, with `--host 127.0.0.1` and a default config:
 ```
 
 Binding to loopback does not suppress the discovery beacon — it went out on the
-LAN and on the docker and libvirt bridges. `reference.md` does carry the
-mitigation (`no_broadcast`, "**Set `true` for embedded apps**, disables UDP
-discovery beacon"), but only as a row in a config table plus a line in a
-recommended-defaults block that `SKILL.md` never tells the reader to apply, and
-the default is on. An app built exactly as the skill describes emits UDP
-broadcast frames from every RFC1918 interface without its developer being told.
-That is a finding that surfaces in a customer security review rather than in
-testing.
+LAN and on the docker and libvirt bridges. **The payload is worse than "a
+broadcast happened".** Captured with `tcpdump` on the LAN bridge and decoded:
+
+```
+192.168.252.24.44552 > 192.168.252.255.13305: UDP, length 91
+  {"service": "lemonade", "hostname": "barlow", "url": "http://192.168.252.24:13406/api/v1/"}
+```
+
+Sent every 2 seconds to the fixed well-known port `13305` — not the
+instance's own port — with the payload carrying the actual host, machine
+name, and LAN-reachable URL of *that specific instance* (port `13406` in this
+capture). Bound to `127.0.0.1` with no auth configured beyond
+`LEMONADE_API_KEY`, the embedded instance still announces its real network
+address and hostname to anything listening on the LAN.
+
+`reference.md` does carry the mitigation (`no_broadcast`, "**Set `true` for
+embedded apps**, disables UDP discovery beacon"), but only as a row in a
+config table plus a line in a recommended-defaults block that `SKILL.md` never
+tells the reader to apply, and the default is on. An app built exactly as the
+skill describes broadcasts its hostname and reachable URL from every RFC1918
+interface without its developer being told. That is a finding that surfaces in
+a customer security review rather than in testing.
+
+**Verified the mitigation actually works, at the packet level, not just the
+log level.** Set `no_broadcast: true` in `config.json`, then captured on the
+same bridge for the full run: `lemond` logs
+`Broadcasting disabled by --no-broadcast option`, and zero packets referencing
+the instance's port appeared on the wire (only the unrelated system instance's
+own beacon to `13305`, running independently, was visible). `no_broadcast`
+is a real, effective off switch — the gap is that it defaults to on and the
+skill never tells the reader to set it.
 
 **Suggested fix.** Name the second port in Step 4's launcher description, and
 promote `no_broadcast: true` out of the reference table into the Step 3 seed
@@ -806,15 +894,30 @@ Dynamic dependencies: `libz`, `libzstd`, `libssl.so.3`, `libcrypto.so.3`,
 `libdrm_amdgpu.so.1`, `libdrm.so.2`, `libstdc++.so.6`, `libm`, `libgcc_s`,
 `libc`.
 
-`GLIBC_2.38` is a hard floor. Only the first row below was executed; the rest is
-**inferred** from each distro's shipped glibc, not tested:
+`GLIBC_2.38` is a hard floor. All four rows below are now **measured** — each
+distro's official Docker image, with `libssl3`/`libdrm2`/`libdrm-amdgpu1`
+installed (the artifact's own dynamic deps) so the only variable is glibc,
+running the extracted binary directly (`docker run -v ... lemond --help`):
 
 | Distro | glibc | Runs? |
 |---|---|---|
-| Ubuntu 24.04 LTS | 2.39 | yes — measured |
-| Ubuntu 22.04 LTS (supported to 2027) | 2.35 | **no** — inferred |
-| Debian 13 trixie | 2.41 | yes — inferred |
-| Debian 12 bookworm | 2.36 | **no** — inferred |
+| Ubuntu 24.04 LTS | 2.39 | **yes** — measured |
+| Ubuntu 22.04 LTS (supported to 2027) | 2.35 | **no** — measured |
+| Debian 13 trixie | 2.41 | **yes** — measured |
+| Debian 12 bookworm | 2.36 | **no** — measured |
+
+The two failing distros produce the identical dynamic-linker error, before any
+`lemond` log output:
+
+```
+/lemond/lemond: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.38' not found (required by /lemond/lemond)
+/lemond/lemond: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.32' not found (required by /lemond/lemond)
+```
+
+exit code 1. This is not a soft degradation — the process never starts, so
+none of the skill's own diagnostics (health check, logging) ever run. A
+`.deb`/AppImage built from this artifact with no glibc floor in its metadata
+installs cleanly on Ubuntu 22.04 or Debian 12 and fails only at first launch.
 
 This is a distribution-blocking property of the exact artifact this skill tells
 you to produce. A `.deb` or AppImage carrying no glibc floor in its metadata
@@ -1104,6 +1207,8 @@ procedure runs to completion and delivers a downgrade.
 | T7 | Embeddable artifact: download, checksum, extract, run standalone on `:13399` beside the system instance | **done**; readiness race, shared model cache, config mutation, second listener, LAN broadcast, ABI floor, no OpenAPI | §2.12–§2.16 |
 | T8 | Vibe swap survey — locate the seam, enumerate what a lemond-backed implementation must satisfy | **done**; the seam is `SonaProcess`, everything above it is backend-agnostic | §2.11, §3.5 |
 | T9 | `/api/v1/audio/transcriptions` contract measured field-by-field against Vibe's `Segment`: `stream=true`, every `response_format`, diarization | **done**; streaming ignored, no `speaker`, `srt`/`vtt` JSON-wrapped | §2.17, §3.5 |
+| T10 | Run the extracted `lemond` binary inside official `ubuntu:22.04`/`debian:12`/`ubuntu:24.04`/`debian:13` Docker images (runtime deps `libssl3`/`libdrm2`/`libdrm-amdgpu1` installed, so glibc is the only variable) | **done**; the two older distros fail with an identical dynamic-linker error before any output, the two current ones run cleanly — distro matrix moved from inferred to measured | §2.15 |
+| T11 | `tcpdump` on the LAN bridge with `no_broadcast: false` (positive control) and `true`, decoding the beacon payload | **done**; payload is `{"service","hostname","url"}` sent every ~2s to fixed port 13305; `no_broadcast: true` produces zero matching packets and an explicit "disabled" log line — mitigation confirmed at both layers | §2.14 |
 
 **T6 is still the one real gap, but it is now a deliberate one.** It is the only
 test that would exercise Steps 3–4 (vendoring, the subprocess launcher,
