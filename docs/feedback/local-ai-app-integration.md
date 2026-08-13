@@ -646,6 +646,42 @@ already disagrees with itself.
 Together with §3.2 (one server, many networked consumers) that is two catalog
 gaps, both sitting *underneath* rather than beside the current skills.
 
+### 3.4 The pattern this skill teaches has no public demonstration
+
+Lemonade's own docs carry twelve integration guides — `ai-toolkit`,
+`anythingLLM`, `claude-code`, `codeGPT`, `continue`, `langchain`, `lemon-zest`,
+`mindcraft`, `open-hands`, `open-webui`, `pi`, `wut`. **Every one of them is
+config-level**: point an existing app's OpenAI base URL at a running Lemonade.
+
+Meanwhile `docs/embeddable/` documents the vendored-`lemond` flow thoroughly —
+release artifacts per platform, `server_models.json` and `backend_versions.json`
+customisation, the deployment-ready layout — and ships **no reference app**.
+
+So the easy case has twelve worked examples and the case this skill exists to
+teach has zero. That asymmetry explains several things at once:
+
+- Why §2.8's "~30 lines and three changes" headline is optimistic: the twelve
+  guides really *are* that easy, and the framing appears to have carried over
+  from them to a job that is much larger.
+- Why the `@anthropic-ai/sdk` base_url (§2.1) survived to review: a config-level
+  guide is verified by the app working, and none of the twelve uses that SDK.
+- Why §2.5's platform-preflight gap is invisible from inside AMD: every
+  documented integration runs against a Lemonade the *user already installed and
+  proved working*. This skill is the only one that ships onto an unproven host.
+
+**Suggested fix — a reference app, not more prose.** One small, real desktop app
+that vendors embeddable `lemond`, spawns it, shows cold-start progress, and shuts
+it down. It would make the skill checkable, give the twelve config-level guides a
+counterpart, and pin the version drift the rest of §2.7 asks about.
+
+I am forking [`thewh1teagle/vibe`](https://github.com/thewh1teagle/vibe) as a
+candidate — a Tauri transcription app whose `tauri.conf.json` already declares
+`"externalBin": ["binaries/sona"]`. It is the same shape the skill prescribes
+(desktop app supervising a vendored inference binary), so substituting embeddable
+`lemond` for the existing sidecar tests Steps 3–4 as a swap rather than a
+greenfield build, on the exact stack §1.8's watcher warning names. Findings will
+follow separately.
+
 ---
 
 ## 4. Testing performed
@@ -659,20 +695,28 @@ gaps, both sitting *underneath* rather than beside the current skills.
 | T5 | *(folded into T1)* | done | §2.2 |
 | T6 | Full integration into `instinct-dash` under `npm run dev:ui` without excluding `vendor/` from the Vite watcher | **not run** | §1.8, §2.8, progress UI |
 
-**T6 is the one real gap, and it is deliberate.** It is the only test that would
-exercise Steps 3–4 (vendoring, the subprocess launcher, shutdown) and the
-progress-UI and key-gating requirements — everything T2 explicitly could not
-reach, since `judge.py` is a batch harness with a pre-existing config point. It
-is also the only way to confirm the file-watcher hazard in §1.8 rather than
-taking it on trust.
+**T6 is the one real gap.** It is the only test that would exercise Steps 3–4
+(vendoring, the subprocess launcher, shutdown) plus the progress-UI and
+key-gating requirements — everything T2 could not reach, since `judge.py` is a
+batch harness with a pre-existing config point. It is also the only way to
+confirm the file-watcher hazard in §1.8 rather than taking it on trust.
 
-It costs roughly half a day and would land in an unrelated repo. The findings
-already in hand do not depend on it: nothing in §2 is contingent on the launcher
-behaving as documented, and §2.8's "the headline undersells the work" claim is
-*strengthened*, not weakened, by T2 having taken +40 lines on the easiest
-possible host. I would rather flag it as untested than half-run it.
+**The host has been changed, and the reason is worth recording.** T6 was
+originally scoped against `instinct-dash`, a local dashboard already talking to
+Lemonade. On inspection it calls only `GET /api/v1/models` and `GET /health` — it
+*observes* Lemonade and never consumes inference. Run the skill against it and
+every step correctly no-ops: Step 1 finds no cloud AI because there is none, and
+Steps 3–4 would be actively wrong, since embedding a private `lemond` contradicts
+the purpose of a monitor for the system-wide one. Testing it would have meant
+inventing an inference feature and then integrating my own demo.
 
-If AMD wants one more datapoint from this review, T6 is the one to ask for.
+That is a useful negative result about the skill's *applicability*: an app can be
+thoroughly "local-AI integrated" and still be entirely out of scope here. Step 1
+distinguishes has-cloud-AI from has-none, but nothing distinguishes
+consumes-inference from observes-inference, and the second is common in exactly
+the tooling-and-dashboard code around an inference host.
+
+T6 now targets a fork of `thewh1teagle/vibe` (see §3.4). Reporting separately.
 
 Everything else is settled. T4 was a reproduction test of the skill's own
 headline warning and came back negative, which is the most consequential single
