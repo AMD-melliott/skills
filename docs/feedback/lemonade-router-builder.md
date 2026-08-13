@@ -5,10 +5,17 @@
 **Hardware:** AMD Strix Halo (gfx1151), 128 GB unified memory, XDNA NPU, Pop!_OS 24.04
 **Lemonade:** `lemonade-server 11.5.2~24.04` (PPA), system `lemond.service`, `:13305` healthy
 
-Desk review of `SKILL.md`, `reference.md`, `examples.md`, and
-`scripts/validate.py` against a live 11.5.2 server and a production
-local-inference stack. Findings marked **[unverified]** are predictions the test
-plan in §4 will settle.
+Review of `SKILL.md`, `reference.md`, `examples.md`, and `scripts/validate.py`
+against a live 11.5.2 server and a production local-inference stack. Everything
+below is confirmed against the running server unless stated otherwise; §4
+records what was measured and what was deliberately not run.
+
+**This document holds design feedback, open questions, and measurement results
+only.** Mechanical corrections were submitted separately as a pull request:
+
+| PR | Covers |
+|---|---|
+| `docs(lemonade-router-builder): clarify Mode A trace reading and example scope` | `default_used` as the fallback signal, added to Step 8 (the minimal half of §2.2); the Mode A trace shape — synthetic `__route_N` ids, empty-`rationale`-on-success, the three-field fallback signature (§2.3); `examples.md` are shape references, not runnable policies (§2.4) |
 
 ---
 
@@ -188,6 +195,10 @@ curl -sS -X POST http://localhost:13305/api/v1/chat/completions \
 
 That connects the warning to its diagnostic, which is currently the missing link.
 
+*Partially addressed in the PR* — Step 8 now says to read `default_used`. That
+is the one-paragraph version. The structural change (a named verification step
+with a per-rule acceptance loop) is a design decision and is left here.
+
 ### 2.3 HIGH — The silent-fallback hazard is real, but the prescribed fix does not prevent it (measured)
 
 Step 4 makes a strong, falsifiable claim: an *imperative* router prompt
@@ -253,11 +264,11 @@ than anything realistically deployed. It establishes that capability is the
 boundary, not where the boundary sits. A ladder of judge sizes would locate the
 threshold; not run.
 
-*Trace-reading gotcha worth documenting:* `matched_rule` uses synthetic ids
-`__route_0` / `__route_1`, one per candidate. Routing to candidate index 1
-returns `score: 0.0` and an **empty rationale even on success**, so an empty
-rationale is not a fallback signal. Only `default_used: true` with
-`matched_rule: ""` and `x-lemonade-route: default` indicates fallback.
+*The trace-reading gotchas this experiment surfaced* — synthetic `__route_N`
+ids, empty-rationale-on-success, and the unambiguous fallback signature — are
+factual and went into the PR. The argument above about **judge selection versus
+prompt phrasing**, and the `router.model` default, are design calls and stay
+here.
 
 ### 2.4 RESOLVED — Version currency is fine at 11.5.2 (tested)
 
@@ -288,13 +299,11 @@ prerequisites so a future reader knows when the claim was last checked. The
 parser contract the validator mirrors is intact two minor versions on, which is
 worth saying out loud.
 
-**One note for `examples.md`.** Several shipped examples reference models a given
-host will not have, so they validate offline but fail live with
-`400 Collection component not registered: '<model>'. Pull or register it before
-referencing it in a collection.` That is correct, documented behaviour — the
-validator's docstring is explicit that model existence needs a live server, and
-Step 8b's curl #1 covers it. Worth one line in `examples.md` saying the examples
-are shape references, not runnable as-written.
+**One note for `examples.md`** (in the PR). Several shipped examples reference
+models a given host will not have, so they validate offline but fail live with
+`400 Collection component not registered: '<model>'`. That is correct,
+documented behaviour — the validator's docstring is explicit that model
+existence needs a live server — but nothing said so where a reader would look.
 
 ### 2.5 MEDIUM — No guidance on composing with an external control plane
 
@@ -387,26 +396,61 @@ covering the adjacent case: the user names a model that is not in the local
 registry. `curl /api/v1/models/<id>` is already curl #1 in Step 8b, but nothing
 says what to do when it 404s — pull it, substitute, or stop and ask.
 
+### 3.5 Question: this skill is not published, and nothing flags that
+
+Not a defect, and not something I would patch — a publication decision is AMD's
+to make. But it is invisible from inside the repo, so it is worth surfacing.
+
+At `cf5e518` there are **7 skills on disk and 4 in the marketplace**.
+`lemonade-router-builder`, `magpie-kernel-evaluator`, and
+`serving-llms-on-epyc` are absent from the `skills` array in
+`.claude-plugin/marketplace.json`. `lemonade-router-builder` additionally
+appears in **neither** derived manifest.
+
+`./.github/scripts/check.sh` passes anyway: `validate_skills.py` validates every
+skill directory it finds, and the two `--check` generators only assert that the
+derived manifests match the hand-maintained source array — so a skill omitted
+from that array is consistently omitted everywhere and nothing reports it.
+
+Two readings, and I cannot tell which applies:
+
+- **Deliberate** — these are staged, incubating, or federated elsewhere. Then a
+  one-line note in `CONTRIBUTING.md` about what gating publication means would
+  save the next reviewer the same detour.
+- **Accidental** — a skill was added and the array was not updated. Then a
+  `validate_skills.py` warning (not error) of the form
+  `skill 'X' is not listed in marketplace.json` would catch it for free, and
+  would have caught it here.
+
+Either way, a contributor who follows Path A in `CONTRIBUTING.md` today gets a
+green `check.sh` on a skill that no user will ever install.
+
 ---
 
-## 4. Planned live testing
+## 4. Testing performed
 
-| # | Test | Effort | Settles |
+| # | Test | Status | Settles |
 |---|---|---|---|
-| T1 | Validator vs live parser — **done**; 13/13 agreement, no false negatives | done | §2.4 resolved |
-| T2 | Silent-fallback experiment: two Mode A policies differing only in prompt style (imperative vs. intent-only), N prompts each, `route_trace: true`, count `default_used` | 2 hrs | §2.3 |
-| T3 | Slot-contention characterisation: 3-candidate policy on a single-`llm`-slot host; measure load/evict behaviour and switch latency | 1 hr | §2.1 |
-| T4 | `semantic_similarity` accuracy against a known-ground-truth corpus (UAP cross-era terminology drift: FBI → 1947-48 "flying disc/saucer"; DOW → modern "UAP" only) | 1 hr | §2.8, 3.3 |
+| T1 | Validator vs live parser — 13 policies (1 valid + 12 targeted mutations) | **done**; 13/13 agreement, no false negatives | §2.4 |
+| T2 | Silent-fallback experiment — 4 Mode A policies × 24 prompts = 96 routed requests, varying prompt style and judge model | **done**; warning vindicated, remedy refuted | §2.3 |
+| T3 | Slot behaviour — direct sequential loads vs. a 2-candidate router alternating over 6 requests | **done**; direct loads evict, router candidates stay coresident on separate back-ports | §2.1 |
+| T4 | `semantic_similarity` accuracy against a ground-truth corpus with known terminology drift | **not run** | §2.8, §3.3 |
 
-T1 is complete and the offline gate is trustworthy at 11.5.2, so policy
-authoring in T2/T3 can rely on it. `evals/evals.py` was not run: it needs the
-`claude` CLI behavioural harness with an LLM judge, and it grades agent
-behaviour rather than the artifact — the parser-agreement matrix is the
-higher-value, deterministic check.
+**T4 was dropped deliberately.** It would measure the *classifier model's*
+retrieval quality, not the skill's behaviour — a different model would give a
+different number and neither would say anything about whether the generated JSON
+is correct. §2.8 asks for one sentence on typical score ranges per classifier
+type; that is an authoring note AMD can write from its own model cards more
+cheaply and more accurately than I can infer it from one corpus.
 
-T2 is the highest-value item: it converts the skill's most distinctive claim
-from assertion into measurement. Numbers get reported either way. T3 bolts onto
-it, since both need a multi-candidate policy and a prompt harness.
+**`evals/evals.py` was not run.** It needs the `claude` CLI behavioural harness
+with an LLM judge, and it grades agent behaviour rather than the artifact. The
+parser-agreement matrix (T1) is the higher-value deterministic check and it
+came back clean.
+
+Nothing further is planned. The three claims worth testing — that the offline
+validator matches the live parser, that the silent-fallback hazard is real, and
+that a multi-candidate policy behaves on a bounded-slot host — are all settled.
 
 ---
 
@@ -422,3 +466,11 @@ that runs on a **host with finite resources**. Everything in §2.1 and §2.2 com
 from that: no slot model, and the verification instrument for its own headline
 failure mode arriving last and under-emphasised. Both are additive fixes; none
 requires restructuring.
+
+One measured result contradicts the skill: the prescribed remedy for silent
+fallback is prompt phrasing, and phrasing turned out not to be the determinant —
+judge capability is (§2.3). The skill's own `router.model` default is the
+failing configuration. That is the single change I would make first.
+
+Separately, this skill is not in the marketplace manifest and `check.sh` does
+not notice (§3.5) — a question for AMD rather than a patch.
