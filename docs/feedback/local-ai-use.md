@@ -5,11 +5,19 @@
 **Hardware:** AMD Strix Halo (gfx1151), 128 GB unified memory, XDNA NPU, Pop!_OS 24.04
 **Lemonade:** `lemonade-server 11.5.2~24.04` (PPA), system `lemond.service`, `:13305` healthy
 
-Desk review of `SKILL.md`, `reference.md`, `templates/local-ai-rule.md`, and
-`scripts/setup_local_ai.py`, plus a live environment probe. Findings marked
-**[unverified]** are predictions the test plan in §4 will settle;
-`setup_local_ai.py` has deliberately not been run here, because §2.1 predicts it
-would damage a working configuration.
+Review of `SKILL.md`, `reference.md`, `templates/local-ai-rule.md`, and
+`scripts/setup_local_ai.py` against a live 11.5.2 stack. The script was run
+against scratch directories rather than this workspace, because §2.1 predicted —
+and §2.9 then confirmed — that a live run would damage a working configuration.
+§4 records what was measured and what was deliberately not run.
+
+**This document holds design feedback, open questions, and research results
+only.** Reproduced mechanical defects were submitted separately as a pull
+request:
+
+| PR | Covers |
+|---|---|
+| `fix(local-ai-use): name Debian derivatives, and the two routes outside the /api/v1 pattern` | Prerequisites wording for Ubuntu derivatives (§2.7); the two routes that break the `/api/v1` pattern, for readers extending the rule beyond the three covered modalities (§2.4) |
 
 ---
 
@@ -118,10 +126,34 @@ interacts with a parent block already present.
 - The mirror list offers `CLAUDE.md` / `.cursor/rules/` / `GEMINI.md`. A user
   with two of those now has two copies that drift on the next run.
 
+**Measured against the real cascading `AGENTS.md`.** Running the script over a
+throwaway copy of this workspace's actual root file produced two live blocks and
+— more importantly — a set of **in-file contradictions with no precedence rule**.
+Nothing is overwritten; the skill's block is simply appended last:
+
+| Existing root `AGENTS.md` says | Appended block says |
+|---|---|
+| L35: Whisper is served by the `transcription:1` slot on a named back-port | transcription goes to `:13305/api/v1/audio/transcriptions` |
+| L45–65: the host's slot model, with what may be loaded concurrently | nothing about slots |
+| L64: rerank goes to the back-port, not the proxy | n/a |
+| L185: the health-check procedure for this host | its own health procedure |
+
+Both blocks load, root-first. An agent reading them has two sets of instructions
+for the same operations and no stated way to choose. The skill's block being
+*last* is the only tiebreaker, and that is an accident of append order rather
+than a design.
+
+This is the part I would most want AMD to weigh in on, because it is not fixable
+by the script alone: any workspace with existing local-inference conventions
+already has content that this block silently competes with.
+
 **Suggested fix.** Walk up for an existing `amd-skills:local-ai-use` block before
 creating a new file. If one is found, update it in place and say so, or require
 an explicit `--here` to create a nested override. Print the resolved model IDs
-alongside the path — one line that makes the cascade legible.
+alongside the path — one line that makes the cascade legible. Beyond that, the
+rule template could state its own precedence explicitly ("these instructions
+apply to image, TTS, and STT only; defer to workspace-specific routing where it
+exists") so an appended block declares its scope rather than assuming it.
 
 ### 2.3 MEDIUM — The image-generation rule fires unconditionally, with no note on GPU contention **[unverified]**
 
@@ -176,10 +208,10 @@ extension into other modalities:
 | `messages` (Anthropic) | `/v1/messages` only — `/api/v1/messages` 404s |
 | `rerank` | proxy serves `/api/v1/reranking`; `/api/v1/rerank` 404s, though the per-model back-port serves `/v1/rerank` |
 
-**Suggested fix.** A short "endpoints beyond the three modalities" note in
-`reference.md` listing those two exceptions, so a user extending the rule to
-embeddings or retrieval does not hit them blind. The sibling
-`local-ai-app-integration` review covers both in more depth.
+*Fixed in the PR* — `reference.md` gains an "if you extend the rule beyond these
+three modalities" note listing both exceptions, and states explicitly that the
+three covered modalities are alias-safe so the mixed spellings need no change.
+The sibling `local-ai-app-integration` review covers both routes in more depth.
 
 ### 2.4b MEDIUM — The slow-image-generation remedy assumes the only cause is a missing backend
 
@@ -254,8 +286,9 @@ the rule — which the §2.1 discovery step would do anyway.
 
 ### 2.7 LOW — Prerequisites should say "Ubuntu/Debian **and derivatives**"
 
-Pop!_OS 24.04 works fine via the documented PPA path. A user on Mint, Pop!_OS,
-or elementary reading "Ubuntu/Debian x64" may assume they are unsupported.
+Pop!_OS 24.04 works fine via the documented PPA path — this whole review ran on
+it. A user on Mint, Pop!_OS, or elementary reading "Ubuntu/Debian x64" may
+assume they are unsupported. *Fixed in the PR.*
 
 ### 2.8 LOW — `--no-install` is under-documented
 
@@ -343,25 +376,35 @@ upfront that the largest token cost is untouched is the right kind of honesty.
 
 ---
 
-## 4. Planned testing
+## 4. Testing performed
 
-Scratch-first: §2.1 and §2.3 predict a live run would damage a working
-configuration.
+Scratch-first throughout: §2.1 and §2.3 predicted a live run would damage a
+working configuration, and §2.9 confirmed it, so nothing ran against this
+workspace's real `AGENTS.md`.
 
-| # | Test | Effort | Settles |
+| # | Test | Status | Settles |
 |---|---|---|---|
-| T1 | `setup_local_ai.py` scratch run — **done**; clean slate works, correctly detects the system `lemond`, reports each step, 1 marker block | done | general |
-| T2 | Re-run idempotence — **done**; block does not duplicate, but customisation is reverted | done | §2.9 |
-| T3 | Cascade — **done**; parent not detected, second block created | done | §2.2 |
-| T4 | Merge against a throwaway branch of `~/git` with the real cascading `AGENTS.md`; diff the result | 30 min | §2.1, §2.2 |
-| T5 | `sd-cpp:rocm` on gfx1151 — **partially answered** read-only: `system-info` reports it `installable` on `amd_gpu`, so the command is right and offered. Performance unverified | partial | troubleshooting table |
-| T6 | Endpoint/namespace sweep — **done**; confirms the three covered modalities are documented correctly, and identifies `messages` and `reranking` as the two exceptions | done | §2.4 |
+| T1 | `setup_local_ai.py` clean-slate run | **done**; works, correctly detects the system `lemond`, reports each step, one marker block | general |
+| T2 | Re-run idempotence with and without flags | **done**; block does not duplicate, but a bare re-run reverts customisation | §2.9 |
+| T3 | Cascade — run from a nested directory under an existing block | **done**; parent not detected, second block created | §2.2 |
+| T4 | Merge against a copy of the real cascading `AGENTS.md`; diff the result | **done**; two live blocks and four in-file contradictions with no precedence rule | §2.1, §2.2 |
+| T5 | `sd-cpp:rocm` on gfx1151 — install and measure | **partial**; `system-info` reports it `installable` on `amd_gpu`, so the command is right and offered. Performance unmeasured | §2.4b |
+| T6 | Endpoint/namespace sweep | **done**; the three covered modalities are documented correctly; `messages` and `reranking` are the two exceptions | §2.4 |
 
-T4 is the remaining item — merging against a real cascading `AGENTS.md`. T3
-already establishes what it will find; T4 only measures the blast radius.
+**T5 is the only remaining gap, and it is bounded.** Completing it needs a
+backend install plus a ~5 GB model download, and it would measure *this
+hardware's* image-generation throughput — a number that says little about the
+skill, since the troubleshooting row it tests (§2.4b) is about a class of silent
+CPU fallback rather than about any particular speed. The read-only half already
+confirms the skill offers the right command on the right hardware. What it
+cannot confirm is the §2.4b claim that a successful install can still leave you
+on CPU; that one comes from host-level tuning work on this machine rather than
+from Lemonade, and it is why the suggested fix is a second troubleshooting row
+rather than a correction to the first.
 
-T5's remaining half needs a backend install plus a ~5 GB model, so it is
-deferred rather than skipped.
+Nothing further is planned. The two findings that matter most — the silent
+reversion (§2.9) and the cascade collision (§2.2) — are both confirmed by
+direct execution rather than inferred from reading the script.
 
 ---
 
@@ -372,13 +415,16 @@ version beyond what it documents, and capability-based probing is the design
 decision that earned that. The `AGENTS.md` mechanism is sound and the
 troubleshooting content is unusually good.
 
-The weakness is one-directional configuration: the skill writes but never reads.
-No discovery of what is already serving (§2.1), no model for a nested cascade
-(§2.2), no note that image generation shares the GPU with LLM inference (§2.3),
-and two documented endpoints that break the `/api/v1` pattern (§2.4). The first
-three share a root cause and a fix — a single discovery step against
-`GET /api/v1/health` and `/api/v1/models` before deciding anything — which also
+The weakness is one-directional configuration: **the skill writes but never
+reads.** No discovery of what is already serving (§2.1), no model for a nested
+cascade (§2.2), no note that image generation shares the GPU with LLM inference
+(§2.3), and a bare re-run that silently reverts customisation (§2.9). All four
+share a root cause, and largely a fix — a single discovery step against
+`GET /api/v1/health` and `/api/v1/models` before deciding anything, plus reading
+the existing block's values instead of re-deriving them from flags. That also
 resolves most of §2.5 and §2.6.
 
 That one addition takes this from "good for a fresh machine" to "safe on a
-machine that already matters."
+machine that already matters." Both confirmed failure modes only appear on the
+second kind of machine, which is exactly the kind least likely to be used for
+testing.
