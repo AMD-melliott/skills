@@ -111,14 +111,14 @@ The skill assumes one flat `AGENTS.md` per workspace. Real setups nest:
 
 ```
 ~/git/AGENTS.md                  # workspace root: utility stack, slot model, control plane
-  └── /data/uap-demo/AGENTS.md   # explicitly "builds on" the root file
+  └── /data/project/AGENTS.md    # explicitly "builds on" the root file
 ```
 
 Both load, root-first, by directory cascade. The skill does not say which level
 is "the workspace," what happens if run at both, or how its marker-fenced block
 interacts with a parent block already present.
 
-- Run at `~/git` and again at `/data/uap-demo`: two live blocks. Which model IDs
+- Run at `~/git` and again at `/data/project`: two live blocks. Which model IDs
   win? The deeper file's, presumably, but nothing says so.
 - It does **not** detect an existing block in a parent. Confirmed: with
   `/tmp/lau/AGENTS.md` already carrying the block, running from
@@ -157,7 +157,7 @@ rule template could state its own precedence explicitly ("these instructions
 apply to image, TTS, and STT only; defer to workspace-specific routing where it
 exists") so an appended block declares its scope rather than assuming it.
 
-### 2.3 MEDIUM: The image-generation rule fires unconditionally, with no note on GPU contention **[unverified]**
+### 2.3 MEDIUM: The image-generation rule fires unconditionally, with no note on GPU contention
 
 The rule instructs the agent to call `POST /api/v1/images/generations` for *any*
 image request, with no conditions, pulling `SD-Turbo` (~5 GB) on first use.
