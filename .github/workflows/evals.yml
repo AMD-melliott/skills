@@ -151,7 +151,9 @@ jobs:
   routing:
     name: Routing (whole catalog)
     needs: discover
-    if: needs.discover.outputs.routing == 'true'
+    # Self-hosted runners and gateway secrets only exist on amd/skills; forks
+    # would queue here until timeout.
+    if: github.repository == 'amd/skills' && needs.discover.outputs.routing == 'true'
     runs-on: [self-hosted, strix_halo, Linux]
     # Each case is killed as soon as its routing decision is observable, so
     # this is far shorter than a behavior run; the cap catches a hung agent.
@@ -213,7 +215,7 @@ jobs:
   behavior:
     name: Behavior (${{ matrix.skill }} on ${{ matrix.os }})
     needs: discover
-    if: needs.discover.outputs.default_any == 'true'
+    if: github.repository == 'amd/skills' && needs.discover.outputs.default_any == 'true'
     runs-on: ${{ fromJSON(matrix.runner) }}
     # Behavior runs install local models and can take a while; cap it so a hung
     # agent or a stalled model pull fails the job instead of burning minutes.
@@ -257,7 +259,7 @@ jobs:
   behavior-scoped:
     name: Behavior (${{ matrix.skill }} on ${{ matrix.os }}, ${{ matrix.environment }})
     needs: discover
-    if: needs.discover.outputs.scoped_any == 'true'
+    if: github.repository == 'amd/skills' && needs.discover.outputs.scoped_any == 'true'
     runs-on: ${{ fromJSON(matrix.runner) }}
     timeout-minutes: 45
     environment:
@@ -319,6 +321,7 @@ jobs:
       BEHAVIOR_WANTED: ${{ needs.discover.outputs.default_any }}
       SCOPED_WANTED: ${{ needs.discover.outputs.scoped_any }}
       SKIPPED: ${{ needs.discover.outputs.skipped }}
+      UPSTREAM: ${{ github.repository == 'amd/skills' }}
     steps:
       - name: Verify eval results
         run: |
@@ -334,6 +337,14 @@ jobs:
           if [ "$DISCOVER" != "success" ]; then
             echo "The discover job did not succeed ($DISCOVER)." >&2
             exit 1
+          fi
+
+          # Forks have no self-hosted runners, so the hardware legs were
+          # skipped on purpose; only discovery/validation counts here.
+          if [ "$UPSTREAM" != "true" ]; then
+            echo "::warning::Not amd/skills: routing and behavior legs skipped" \
+                 "(no self-hosted runners). Only dataset validation was checked."
+            exit 0
           fi
 
           # Say loudly when a change went out without running on real hardware.
