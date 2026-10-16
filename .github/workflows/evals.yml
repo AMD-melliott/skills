@@ -71,7 +71,7 @@ jobs:
   # runner fails here rather than halfway through a paid run.
   discover:
     name: Validate datasets and select runs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       routing: ${{ steps.select.outputs.routing }}
       default: ${{ steps.select.outputs.default }}
@@ -309,7 +309,7 @@ jobs:
     name: evals
     needs: [discover, routing, behavior, behavior-scoped]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       DISCOVER: ${{ needs.discover.result }}
       ROUTING: ${{ needs.routing.result }}

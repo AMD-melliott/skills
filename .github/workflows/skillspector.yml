@@ -44,7 +44,7 @@ jobs:
   # resulting JSON array may be empty, in which case scan-skill is skipped.
   discover-skills:
     name: Discover skills
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       skills: ${{ steps.discover.outputs.skills }}
     steps:
@@ -78,7 +78,7 @@ jobs:
   scan-skill:
     name: Scan skill
     needs: discover-skills
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       # Don't cancel the other skills when one fails; we want to see every
       # skill's scan result in a single run.
@@ -179,7 +179,7 @@ jobs:
     name: SkillSpector security scan (advisory)
     needs: scan-skill
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Summarize scan results
         run: |
