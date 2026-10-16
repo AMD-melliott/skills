@@ -25,7 +25,7 @@ jobs:
   # whole suite and hiding the status of every other skill.
   discover-skills:
     name: Discover skills
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       skills: ${{ steps.discover.outputs.skills }}
     steps:
@@ -42,7 +42,7 @@ jobs:
   validate-skill:
     name: Validate skill
     needs: discover-skills
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       # Don't cancel the other skills when one fails; we want to see every
       # skill's status in a single run.
@@ -65,7 +65,7 @@ jobs:
   # than partway through a run that spends real tokens.
   validate-evals:
     name: Validate eval datasets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
   # manifests and internal markdown references.
   validate-manifests:
     name: Validate plugin manifests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -138,7 +138,7 @@ jobs:
     name: Validate skills and plugin manifests
     needs: [validate-skill, validate-evals, validate-manifests]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Verify all validation jobs passed
         run: |

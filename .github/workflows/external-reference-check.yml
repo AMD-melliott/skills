@@ -48,13 +48,14 @@ permissions:
 jobs:
   external-references:
     name: Check external references in skills
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
       # The lychee config always comes from amd/skills so it can never drift.
-      # When this repo runs the check on itself, the working-tree copy is used
+      # When a repo runs the check on itself (any trigger other than
+      # workflow_call, so amd/skills and its forks), the working-tree copy is used
       # (so PRs that edit the config are tested against their own changes).
       # When another repo calls this workflow, the canonical config is fetched
       # from amd/skills at the SAME commit as this workflow file
@@ -62,7 +63,8 @@ jobs:
       # Sparse-checkout grabs only the config file so its markdown can't
       # pollute the scan.
       - name: Fetch canonical lychee config
-        if: ${{ github.repository != 'amd/skills' }}
+        # inputs.markdown_glob is only set (via its default) under workflow_call.
+        if: ${{ inputs.markdown_glob != '' }}
         uses: actions/checkout@v4
         with:
           repository: amd/skills
@@ -77,7 +79,7 @@ jobs:
         id: cfg
         shell: bash
         env:
-          IS_CANONICAL: ${{ github.repository == 'amd/skills' }}
+          IS_CANONICAL: ${{ inputs.markdown_glob == '' }}
         run: |
           set -euo pipefail
           if [ "${IS_CANONICAL}" = "true" ]; then
