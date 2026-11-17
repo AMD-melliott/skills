@@ -111,6 +111,7 @@ Scan this list against what you are doing. If any line could apply, open
 - A shared compat header must be host-includable: gate device-only includes behind `__CUDACC__`/`__HIPCC__`, or CUB leaks into host TUs. Hit independently by two projects.
 - `__HIP_PLATFORM_AMD__` is undefined until `hip_runtime.h` is included; a gate placed before it silently picks the CUDA branch.
 - Missing includes in a HIP port are usually pre-existing upstream omissions unmasked by the narrower include graph.
+- A compat stand-in for an API one ROCm release lacks collides when a later release adds it (HIP 7.2 has no `cg::reduce`/`cg::plus`; ROCm 10.1's HIP 7.16 ships them, so a shim defining them stops compiling). Gate each stand-in on `HIP_VERSION` or a feature probe.
 - A `-include`d compat header creates no dependency edge: wipe objects after editing it or you validate stale code.
 - clang type-checks kernel bodies in the HIP host pass, where `__CUDA_ARCH__` is unset: a `__CUDA_ARCH__`-split debug macro calling host code fails only in Debug.
 - The CUDA Samples `helper_math.h` operators tie with `HIP_vector_type`'s own: guard its arithmetic block off on HIP, wholesale.
@@ -153,7 +154,9 @@ host and a compile-time constant in device code.
 A real-GPU test run is the only evidence that counts. Lint is not validation, and a
 CPU-only build proves compilation and nothing else. Cover both wavefront widths and each
 OS the project supports: at least one wave64 (CDNA) GPU, one wave32 (RDNA) GPU, and Windows
-when the project builds there. Also compile the
+when the project builds there. Build and test on the current ROCm release as well as the
+one you developed on: a port validated only on an older ROCm can fail to compile on the
+current one. Also compile the
 CUDA path with nvcc as a no-regression gate: an additive ROCm port must leave the CUDA
 build a pure passthrough. `references/validation.md`.
 

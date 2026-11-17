@@ -692,6 +692,23 @@ without hipify. Verify include order rather than trusting the prepend. (LC-frame
 CUDA's headers supplied them transitively and the narrower HIP include graph unmasks them.
 Fix additively -- it helps the CUDA build too. (LC-framework)
 
+**A stand-in for an API HIP lacks must be gated, because a later ROCm adds it.** Compat headers
+fill gaps: HIP 7.2 (ROCm 7.2.x) has no `cooperative_groups::reduce` and no `cg::plus`, `cg::less`
+or `cg::greater` functors, so a port of code using `<cooperative_groups/reduce.h>` writes them.
+HIP 7.16 (ROCm 10.1.0) ships all four (`amd_hip_cooperative_groups.h`,
+`amd_hip_cooperative_groups_reduce.h`), and the port's own definitions become `error:
+redefinition of 'plus'` (and `less`, `greater`). Nothing on the ROCm the port was written against
+can show this. Gate each stand-in on the version that introduced the real thing
+(`#if HIP_VERSION_MAJOR < 7 || (HIP_VERSION_MAJOR == 7 && HIP_VERSION_MINOR < 16)`, from
+`hip/hip_version.h`), or on a feature test where the header provides one, and keep the real API's
+name and signature so the switch is invisible to call sites; then build on the current release.
+On the new side of the gate, include the header that now provides the API, which may not be
+reached by the umbrella header: in HIP 7.16 the functors come with `hip/hip_cooperative_groups.h`
+but `cg::reduce` needs `#include <hip/cooperative_groups/hip_reduce.h>` (without it: `no member
+named 'reduce' in namespace 'cooperative_groups'`). (llm.c: a shim `cooperative_groups/reduce.h`
+built and passed on ROCm 7.2.1 and failed to compile `test_gpt2fp32cu` on ROCm 10.1.0; gated as
+above, with the stand-in under `#else`, `test_gpt2fp32cu` built and passed on both.)
+
 **`CUDART_VERSION` is undefined under HIP, so every `#if CUDART_VERSION >= N` guard silently
 takes its fallback.** Audit them: some fallbacks change behaviour, not just speed. A
 `cudaMallocAsync` path that falls back to `cudaMalloc` makes the allocation uncapturable, and
