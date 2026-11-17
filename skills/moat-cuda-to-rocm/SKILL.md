@@ -123,6 +123,7 @@ Scan this list against what you are doing. If any line could apply, open
 - hipSPARSE breaks HIP graph capture where cuSPARSE does not (destroying a CSR SpMat syncs, default-algorithm analysis, size-0 buffers).
 - Pick a library's NVIDIA or AMD build per device, never by starting every backend; a HIP port that keeps the soname (hipVS, hipDF) allows one per process.
 - NVML -> AMD SMI, keyed by PCI address, not device index.
+- Sizes derived from device properties grow on MI300X: 304 CUs x 2048 threads/CU gives 1216 blocks where upstream asserted < 1024. Re-check every `multiProcessorCount`/`maxThreadsPerMultiProcessor` product against the bound it feeds.
 - `clock64()` is a 20-bit wrapping counter on RDNA3; cycle-bounded spins and delays end early. Use `wall_clock64()`.
 - `char` vs `signed char` vector base types differ between HIP and CUDA.
 - AMD compute-capability values COLLIDE with NVIDIA arch numbers, so CC-keyed dispatch picks the wrong path.

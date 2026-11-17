@@ -903,6 +903,18 @@ the block. (cuda_voxelizer)
 
 ## Types, dispatch and platform limits
 
+**Launch geometry computed from device properties can overshoot a bound sized for NVIDIA.**
+MI300X reports `multiProcessorCount` 304 and `maxThreadsPerMultiProcessor` 2048, against 132 and
+2048 on an H100, so a grid sized "enough blocks to fill the GPU" comes out more than twice as large.
+Code that later reduces those blocks in a fixed-size second pass (one 1024-thread block, a
+`__shared__` array of 1024, a scratch buffer sized by a constant) was correct on every NVIDIA
+part it met and breaks here. llm.c's `global_norm.cuh` computes
+`maxThreadsPerMultiProcessor * multiProcessorCount / 512` = 1216 blocks and asserts
+`gx * gy < 1024`, which tripped on the first MI300X test run. Cap the derived count at the bound
+it feeds (a no-op wherever the old assumption held, so the CUDA path keeps its numbers), and grep
+for every `multiProcessorCount` and `maxThreadsPerMultiProcessor` product. Related but separate:
+`__smid()` exceeding `multiProcessorCount` (wavefront section). (llm.c, gfx942.)
+
 **`clock64()` is a 20-bit wrapping counter on RDNA3, so a cycle-bounded spin, delay or
 timeout misbehaves.** HIP's `clock64()` is `__builtin_readcyclecounter()`. On gfx11 (RDNA3/3.5)
 that lowers to `s_getreg_b32 hwreg(HW_REG_SHADER_CYCLES, 0, 20)`, which wraps about every
