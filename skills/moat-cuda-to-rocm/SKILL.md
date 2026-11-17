@@ -124,6 +124,7 @@ Scan this list against what you are doing. If any line could apply, open
 - Pick a library's NVIDIA or AMD build per device, never by starting every backend; a HIP port that keeps the soname (hipVS, hipDF) allows one per process.
 - NVML -> AMD SMI, keyed by PCI address, not device index.
 - Sizes derived from device properties grow on MI300X: 304 CUs x 2048 threads/CU gives 1216 blocks where upstream asserted < 1024. Re-check every `multiProcessorCount`/`maxThreadsPerMultiProcessor` product against the bound it feeds.
+- LDS (shared memory) per block is capped at 64 KiB on gfx942 (MI300X; measured), where Hopper opts in to 227 KiB: a `cudaFuncSetAttribute(MaxDynamicSharedMemorySize, > 64 KiB)` fails, and the failure also sets the last error, so a fallback guarded by `cudaGetLastError()` checks never runs. Check every opt-in size against the model sizes the project supports.
 - `clock64()` is a 20-bit wrapping counter on RDNA3; cycle-bounded spins and delays end early. Use `wall_clock64()`.
 - `char` vs `signed char` vector base types differ between HIP and CUDA.
 - AMD compute-capability values COLLIDE with NVIDIA arch numbers, so CC-keyed dispatch picks the wrong path.

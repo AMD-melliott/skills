@@ -915,6 +915,38 @@ it feeds (a no-op wherever the old assumption held, so the CUDA path keeps its n
 for every `multiProcessorCount` and `maxThreadsPerMultiProcessor` product. Related but separate:
 `__smid()` exceeding `multiProcessorCount` (wavefront section). (llm.c, gfx942.)
 
+**Shared memory (LDS) per block tops out at 64 KiB on gfx942 (MI300X), and a refused opt-in poisons
+the last error.** NVIDIA kernels opt in to large dynamic shared memory with
+`cudaFuncSetAttribute(kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, bytes)`: up to 227 KiB on
+Hopper, 163 KiB on A100, so tiles and per-row caches are often sized well past 64 KiB. On gfx942
+(MI300X) `hipDeviceAttributeSharedMemPerBlockOptin`, `sharedMemPerBlock` and
+`maxSharedMemoryPerMultiProcessor` are all 65536. Measured with ROCm 7.2.1 and 10.1.0
+(`hipFuncSetAttribute` then a launch with that many dynamic bytes): 48 and 64 KiB succeed; 65, 80,
+96, 160 and 228 KiB return `hipErrorInvalidValue` from `hipFuncSetAttribute`, the same error is
+then returned by `hipGetLastError()`, and the launch fails. There is no larger opt-in to request.
+
+Two consequences for a port:
+
+- A kernel that NEEDS more than 64 KiB per block must be retiled (smaller tiles, more blocks, or
+  data kept in registers), not just relaunched. Find them by grepping for
+  `MaxDynamicSharedMemorySize` and computing the requested bytes for the largest configuration
+  the project supports, not only the one its tests use. The test suite often runs the smallest
+  model and never crosses the limit.
+- Projects that already have a fallback usually write `status = cudaFuncSetAttribute(...);
+  cudaCheck(cudaGetLastError()); if (status == cudaSuccess) big_kernel else fallback`. The refused
+  opt-in also sets the last error, so the check aborts before the fallback is reached. This is a
+  latent upstream bug, invisible on parts where the request never fails. Clear the error after a
+  refused opt-in (call `cudaGetLastError()` once and discard it) or test the returned status
+  before any last-error check; then the existing fallback runs on AMD and the CUDA path is
+  unchanged.
+
+Evidence: llm.c (upstream `f1e2ace`) `layernorm_forward` requests `(2 + 8) * C * sizeof(floatX)`
+bytes. At C=768 (GPT-2 124M, what the tests use) that is 30,720 B and runs. At C=1920 in FP32
+(76,800 B), both a direct call and `train_gpt2cu -e d60` abort with `[CUDA ERROR] at file
+llmc/layernorm.cuh:453: invalid argument`, the last-error check right after the opt-in, on ROCm
+7.2.1 and 10.1.0. Every model with C >= 1639 in FP32, or C >= 3277 in BF16, is affected. (llm.c,
+gfx942.)
+
 **`clock64()` is a 20-bit wrapping counter on RDNA3, so a cycle-bounded spin, delay or
 timeout misbehaves.** HIP's `clock64()` is `__builtin_readcyclecounter()`. On gfx11 (RDNA3/3.5)
 that lowers to `s_getreg_b32 hwreg(HW_REG_SHADER_CYCLES, 0, 20)`, which wraps about every
