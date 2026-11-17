@@ -101,11 +101,10 @@ Scan this list against what you are doing. If any line could apply, open
 
 **Floating point**
 - `__fsqrt_rn` is not always correctly rounded on gfx90a or gfx1100 (1 ULP high); CUDA's is IEEE-correct. Map it to `sqrtf` when a test compares against host sqrt.
-- Without `__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__` HIP's HOST `min`/`max` take int, so `min(float, float)` in `__host__ __device__` code silently truncates on the host (whole-pixel camera errors); define it for the HIP build.
+- HIP's HOST `min`/`max` (in `.cu`/HIP TUs and `__host__ __device__` code) exist only for `(int, int)` by default, so float, double AND unsigned arguments silently convert to int: `min(0.25f, 3.7f)` is 0, `max(3000000000u, 1u)` is 1. Fix the call sites with `fmin`/`fmax`/`fminf`/`fmaxf` (works on every ROCm and on CUDA). `__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1` adds the overloads only on ROCm >= 7.2 and silently does nothing before it; if you use it, add the host-pass `static_assert` from the reference so an older ROCm fails the build instead.
 - clang(HIP) defaults to `-ffp-contract=fast` and forms FMAs ACROSS expressions; nvcc contracts expression-only.
 - Exact float-equality branches fed by `__fdividef` produce out-of-range indices.
 - HIP device `cuda::min`/`max` NaN-selection can differ from host `std::min`/`max`.
-- HIP host `min`/`max` in `.cu` files exist only for `(int, int)`: float arguments silently truncate. Fix the call sites with `fmin`/`fmax`; the macro is ROCm >= 7.2 only and defaults off.
 
 **Headers, includes and build**
 - A shared compat header must be host-includable: gate device-only includes behind `__CUDACC__`/`__HIPCC__`, or CUB leaks into host TUs. Hit independently by two projects.
