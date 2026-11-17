@@ -53,6 +53,58 @@
       ]
     },
     {
+      "id": "review-reduction-kernels-for-mi300x",
+      "skill_should_trigger": true,
+      "prompt": "These kernels come from a CUDA training codebase we are bringing up on MI300X with HIP. On our H100s everything passes. Review them for what will go wrong on MI300X and write findings to review.md. Assume warp-size and mask issues are already handled elsewhere; focus on what is left. Don't build or run anything.\n\n```cpp\n// (1) per-block partial sums, last block finishes the reduction\n__global__ void bias_grad(const float* dout, float* partial, unsigned* flag, float* dbias, int N, int C) {\n  extern __shared__ float acc[];            // C floats\n  for (int c = threadIdx.x; c < C; c += blockDim.x) acc[c] = 0.f;\n  __syncthreads();\n  for (int r = blockIdx.x; r < N; r += gridDim.x)\n    for (int c = threadIdx.x; c < C; c += blockDim.x) acc[c] += dout[r * C + c];\n  __syncthreads();\n  for (int c = threadIdx.x; c < C; c += blockDim.x) partial[blockIdx.x * C + c] = acc[c];\n  __syncthreads();\n  __shared__ unsigned last;\n  if (threadIdx.x == 0) last = atomicInc(flag, gridDim.x);\n  __syncthreads();\n  if (last == gridDim.x - 1)\n    for (int c = threadIdx.x; c < C; c += blockDim.x) {\n      float s = 0.f;\n      for (int b = 0; b < gridDim.x; b++) s += partial[b * C + c];\n      dbias[c] = s;\n    }\n}\n\n// host\nint blocks = prop.maxThreadsPerMultiProcessor * prop.multiProcessorCount / 512;\nassert(blocks <= 1024);   // a later 1024-thread kernel reduces one value per block\n\nsize_t smem = 10 * C * sizeof(float);   // C is 768 in tests, up to 4096 in production\ncudaError_t st = cudaFuncSetAttribute(ln_fwd_big, cudaFuncAttributeMaxDynamicSharedMemorySize, smem);\ncudaCheck(cudaGetLastError());\nif (st == cudaSuccess) ln_fwd_big<<<grid, 256, smem>>>(...);\nelse ln_fwd_small<<<grid2, 256>>>(...);\n```",
+      "expected_behavior": [
+        "Flag that bias_grad has no __threadfence() between writing its partial sums and the atomicInc, nor before the last block reads them, so on MI300X (multiple XCDs with separate L2 caches) the last block can read stale partials and give wrong or nondeterministic results, and recommend adding the fences",
+        "Flag that the block count derived from maxThreadsPerMultiProcessor * multiProcessorCount comes out far larger on MI300X (304 CUs) than on an H100 and exceeds the 1024 bound (about 1216), and recommend capping it at the bound",
+        "Flag that MI300X allows at most 64 KiB of shared memory (LDS) per block, so the cudaFuncSetAttribute opt-in fails for large C (10 * C * 4 bytes exceeds 64 KiB once C is above about 1638), well short of what an H100 allows",
+        "Flag that the failed opt-in also sets the last error, so cudaCheck(cudaGetLastError()) aborts before the ln_fwd_small fallback can run, and recommend clearing the error or testing the status first"
+      ],
+      "unexpected_behavior": [
+        "Say the code is fine for MI300X because it already passes on H100",
+        "Recommend requesting a larger shared-memory opt-in on AMD as the fix for the 64 KiB limit"
+      ],
+      "files_exist": [
+        "review.md"
+      ]
+    },
+    {
+      "id": "compat-shim-stand-in-across-rocm-releases",
+      "skill_should_trigger": true,
+      "prompt": "Our HIP port of a CUDA codebase uses a shim header that defines cooperative_groups::reduce and the cg::plus / cg::greater functors, because HIP didn't provide them when we wrote it against ROCm 7.2. It builds and all tests pass on our MI300X with ROCm 7.2.1. We're about to open the PR saying the port is validated. Anything we should do first? Write the answer to answer.md; don't build anything.",
+      "expected_behavior": [
+        "Warn that newer ROCm releases provide cooperative_groups::reduce and these functors (ROCm 10.1 / HIP 7.16), so the shim's own definitions will collide with redefinition errors there",
+        "Recommend gating the stand-ins on the HIP version (or a feature check) so the real API is used where it exists",
+        "Recommend building and testing on the current ROCm release, not only the one the port was developed on, before claiming the port is validated"
+      ],
+      "unexpected_behavior": [
+        "Say a pass on ROCm 7.2.1 is enough to claim the port is validated for ROCm in general"
+      ],
+      "files_exist": [
+        "answer.md"
+      ]
+    },
+    {
+      "id": "existing-amd-fork-linked-in-readme",
+      "skill_should_trigger": true,
+      "prompt": "We want to port an open-source CUDA LLM training repo to AMD MI300X. Its README has a 'notable forks' section that includes: '- AMD support: [llm.c](https://github.com/anthonix/llm.c) by @anthonix: support for AMD devices, such as the 7900 XTX'. Nothing else in the repo mentions AMD. Write a short plan to plan.md for how we should approach this. Don't clone or build anything.",
+      "expected_behavior": [
+        "Identify the linked fork as an existing AMD effort and record it with its URL in the plan",
+        "Judge whether the fork is authoritative (AMD-official or well maintained) or a community fork, and say that a community fork is a hint to learn from rather than code to build on",
+        "Point out that an upstream that links platform forks instead of merging them may not accept an AMD port PR, so decide where the work should go (for example contributing to the fork) before porting",
+        "Plan further checks for existing AMD work beyond the README, such as searching the upstream's PRs and the web"
+      ],
+      "unexpected_behavior": [
+        "Plan to adopt the community fork's code as the base of the port without first judging whether it is authoritative",
+        "Ignore the linked fork and plan a from-scratch upstream PR without mentioning it"
+      ],
+      "files_exist": [
+        "plan.md"
+      ]
+    },
+    {
       "id": "hip-port-misbehaves-at-runtime",
       "skill_should_trigger": true,
       "prompt": "My HIP port of a CUDA particle simulation compiles cleanly with hipcc, but the results on a Radeon RX 7900 XTX drift away from the NVIDIA run, and on an MI250X it sometimes dies with a memory access fault. Where should I start looking?"
