@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Run a command in a ROCm container that can see exactly ONE GPU (MI300X, gfx942, PCI 0000:e5:00.0).
+# The current directory is mounted at the same path and used as the working directory.
+# Usage: rocm-run [--image IMAGE] [extra docker args via ROCM_RUN_ARGS env] -- cmd args...
+#        rocm-run bash -lc 'make ...'
+# Default image: rocm/dev-ubuntu-24.04:7.2.1-complete (matches the host's ROCm 7.2.1).
+set -euo pipefail
+IMAGE=rocm/dev-ubuntu-24.04:7.2.1-complete
+if [[ "${1:-}" == "--image" ]]; then IMAGE=$2; shift 2; fi
+[[ "${1:-}" == "--" ]] && shift
+RENDER=$(readlink -f /dev/dri/by-path/pci-0000:e5:00.0-render)
+exec docker run --rm -i --device=/dev/kfd --device="$RENDER" --group-add 44 --group-add 993 \
+  --security-opt seccomp=unconfined --shm-size=16g -e HIP_VISIBLE_DEVICES=0 \
+  -v "$PWD":"$PWD" -w "$PWD" ${ROCM_RUN_ARGS:-} "$IMAGE" "$@"
