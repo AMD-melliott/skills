@@ -417,6 +417,25 @@ Bisect with a sync on each side: only the one AFTER the copy fixes it. (TornadoV
 `NativeCommandQueue.mapOnDeviceMemoryNDRegion`, deterministic on Windows gfx1151, passing
 on Linux gfx950/gfx1201.)
 
+**A "last block reduces" kernel needs `__threadfence()`, and MI300X is where its absence shows.**
+A common CUDA pattern computes per-block partial results, writes them to global memory, bumps a
+completion counter with `atomicInc`/`atomicAdd`, and lets whichever block sees the final count
+read every partial and finish the reduction. CUDA's memory model requires a device-scope fence
+between the partial-sum stores and the counter (and before the last block reads), which is what
+CUDA's own threadFenceReduction sample does. Code that leaves the fences out usually works on an
+NVIDIA GPU, whose single L2 makes other blocks' stores visible in time. MI300X (gfx942) is
+built from eight XCDs, each with its own L2, and a plain store from a block on one XCD is not
+guaranteed to be visible to a block on another without a release/acquire: the last block reads
+stale partials. The result is wrong or run-to-run nondeterministic, with no fault. Add
+`__threadfence()` after the partial stores (before the atomic) and again in the last block before
+it reads the partials; it is correct on CUDA too and costs one fence per block. Grep for
+`atomicInc`, a `gridDim.x - 1` comparison against an atomic's return value, and "last block"
+comments. Measured on gfx942 with ROCm 7.2.1 and 10.1.0 (llm.c `layernorm_backward_kernel10`,
+upstream `f1e2ace`): without the fences the project's determinism check failed 3 of 3 runs on
+each version (`Nondeterminism! Loss mismatch at step 1: 6.937172889709473 vs 6.884676456451416`,
+plus wrong `ln2w` gradients in an earlier run); with them, 10 of 10 test configurations passed on
+both. (llm.c)
+
 **`hipFree` is synchronizing** (`hipFreeAsync` is not), so an explicit
 `hipDeviceSynchronize()` before it is redundant. (anari-visionaray)
 
