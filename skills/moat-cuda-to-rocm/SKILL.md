@@ -133,7 +133,7 @@ Scan this list against what you are doing. If any line could apply, open
 - Pick a library's NVIDIA or AMD build per device, never by starting every backend; a HIP port that keeps the soname (hipVS, hipDF) allows one per process.
 - NVML -> AMD SMI, keyed by PCI address, not device index.
 - Sizes derived from device properties grow on MI300X: 304 CUs x 2048 threads/CU gives 1216 blocks where upstream asserted < 1024. Re-check every `multiProcessorCount`/`maxThreadsPerMultiProcessor` product against the bound it feeds.
-- LDS (shared memory) per block is capped at 64 KiB on gfx942 (MI300X; measured), where Hopper opts in to 227 KiB: a `cudaFuncSetAttribute(MaxDynamicSharedMemorySize, > 64 KiB)` fails, and the failure also sets the last error, so a fallback guarded by `cudaGetLastError()` checks never runs. Check every opt-in size against the model sizes the project supports.
+- LDS (shared memory) is capped at 64 KiB per block on gfx942 (MI300X; measured), where Hopper opts in to 227 KiB. For every `cudaFuncSetAttribute(..., MaxDynamicSharedMemorySize, bytes)`, compute `bytes` at the LARGEST size the project supports (model width, tile size), not the size its tests use, and run that size once. Above 64 KiB the opt-in fails and also sets the last error, so a fallback guarded by a `cudaGetLastError()` check never runs.
 - `clock64()` is a 20-bit wrapping counter on RDNA3; cycle-bounded spins and delays end early. Use `wall_clock64()`.
 - `char` vs `signed char` vector base types differ between HIP and CUDA.
 - AMD compute-capability values COLLIDE with NVIDIA arch numbers, so CC-keyed dispatch picks the wrong path.
@@ -164,7 +164,10 @@ CPU-only build proves compilation and nothing else. Cover both wavefront widths 
 OS the project supports: at least one wave64 (CDNA) GPU, one wave32 (RDNA) GPU, and Windows
 when the project builds there. Build and test on the current ROCm release as well as the
 one you developed on: a port validated only on an older ROCm can fail to compile on the
-current one. Also compile the
+current one. Run at least one configuration at the largest size the project supports, not only
+the sizes its tests use: size thresholds select other kernels and larger resource requests
+(an LDS opt-in above 64 KiB, a sort that switches kernels above 3072 elements), and a small
+test never reaches them. Also compile the
 CUDA path with nvcc as a no-regression gate: an additive ROCm port must leave the CUDA
 build a pure passthrough. `references/validation.md`.
 
