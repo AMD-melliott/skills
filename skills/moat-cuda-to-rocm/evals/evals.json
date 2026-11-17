@@ -105,6 +105,23 @@
       ]
     },
     {
+      "id": "review-warp-reduce-small-blocks",
+      "skill_should_trigger": true,
+      "prompt": "We're bringing this CUDA reduction up on an MI300X with HIP; it passes on our A100 CI for every block size we launch (32, 64, 128, 256). Review it for anything that will break on the MI300X and write your findings to review.md. Don't build or run anything.\n\n```cpp\ntemplate <class T> __device__ T warpReduceSum(unsigned long long mask, T v) {\n  for (int off = warpSize / 2; off > 0; off /= 2) v += __shfl_down_sync(mask, v, off);\n  return v;\n}\n\ntemplate <class T, unsigned blockSize>\n__global__ void reduce(const T* in, T* out, unsigned n) {\n  T s = 0;\n  for (unsigned i = blockIdx.x * blockSize + threadIdx.x; i < n; i += blockSize * gridDim.x) s += in[i];\n  const unsigned long long mask = blockSize >= 64 ? ~0ull : ((1ull << blockSize) - 1);\n  s = warpReduceSum(mask, s);\n  __shared__ T partial[32];\n  if (threadIdx.x % warpSize == 0) partial[threadIdx.x / warpSize] = s;\n  __syncthreads();\n  if (threadIdx.x < warpSize) {\n    s = threadIdx.x < (blockSize + warpSize - 1) / warpSize ? partial[threadIdx.x] : 0;\n    s = warpReduceSum(mask, s);\n    if (threadIdx.x == 0) out[blockIdx.x] = s;\n  }\n}\n```",
+      "expected_behavior": [
+        "Flag that with blockSize 32 the block is only half of a 64-lane MI300X wavefront, so the warpReduceSum loop (starting at warpSize/2 = 32) reads lanes 32-63 that hold no thread and adds undefined values, giving wrong sums for 32-thread blocks",
+        "Recommend a concrete fix: only add values from lanes that hold a thread (e.g. check the lane against the mask or block size), or start the shuffle loop at the block width when the block is smaller than a wavefront, and test block size 32"
+      ],
+      "unexpected_behavior": [
+        "Say the 64-bit mask alone makes the 32-thread case correct on MI300X",
+        "Say the kernel is fine because it passes on A100",
+        "Suggest the 32-thread sum probably still comes out right on current hardware (e.g. because disabled lanes read as 0), rather than stating it is wrong in practice"
+      ],
+      "files_exist": [
+        "review.md"
+      ]
+    },
+    {
       "id": "hip-port-misbehaves-at-runtime",
       "skill_should_trigger": true,
       "prompt": "My HIP port of a CUDA particle simulation compiles cleanly with hipcc, but the results on a Radeon RX 7900 XTX drift away from the NVIDIA run, and on an MI250X it sometimes dies with a memory access fault. Where should I start looking?"

@@ -82,6 +82,7 @@ Scan this list against what you are doing. If any line could apply, open
 - HIP's `*_sync` warp functions reject a 32-bit mask at compile time; CUDA's `0xffffffff` needs a 64-bit spelling on HIP.
 - A compat `__ballot_sync` that casts `__ballot()` to `uint32_t` returns the wrong 32 lanes on wave64.
 - An over-wide `__shfl*` width silently clamps to the physical wavefront instead of erroring; the symptom is a metric shift, not a crash.
+- A block smaller than the wavefront leaves lanes with no thread: a 32-thread block is a full NVIDIA warp but half a wave64, so a `warpSize/2` shuffle loop reads lanes 32-63 and adds undefined values (measured: every block wrong on gfx942). Only add lanes that hold a thread, or size the loop from the block.
 - A full 64-bit `*_sync` mask in 32-lane group code traps in a HIP debug build on wave64 when the halves diverge; pass the group mask.
 - Intra-wave barrier divergence: a per-row early return before `__syncthreads()` is benign on CUDA, faults on wave64.
 - `cub`/`hipCUB` block-collective `TempStorage` reuse races on a 64-thread block without an explicit `__syncthreads`.

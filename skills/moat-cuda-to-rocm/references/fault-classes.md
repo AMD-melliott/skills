@@ -153,6 +153,19 @@ lossy or statistical pipeline the wrong collective still round-trips, so it surf
 quality-metric shift (compression ratio, PSNR) rather than a crash -- the cross-arch gate
 has to compare the METRIC, not just that the output decodes. (cuSZ)
 
+**A block smaller than the wavefront leaves lanes with no thread, and shuffles read them.**
+On NVIDIA a 32-thread block fills its warp exactly, so a reduction such as
+`for (off = warpSize / 2; off > 0; off /= 2) v += __shfl_down(v, off);` only ever reads live
+lanes. On wave64 the same block is half a wavefront: `warpSize / 2` is 32, lane 0 reads lane
+32, and lanes 32-63 hold no thread, so the value returned is undefined and is added in. A
+minimal kernel (each thread contributes 1, 4096 blocks) gives the right sum for 64-thread
+blocks and a wrong sum in every block at 32 threads, identically on ROCm 7.2.1 and 10.1.0
+(gfx942). Fix by adding only lanes that hold a thread
+(`if (lane + off < warpSize && (mask >> (lane + off)) & 1) v += other;`, with the mask built
+from the block size), or by starting the loop at the block width when the block is smaller than
+a wavefront. Sweep every block size the code can launch, including 32 and below.
+(cuda-samples `reduction` `reduce7`/`warpReduceSum`.)
+
 **A full 64-bit `*_sync` mask in 32-lane group code traps in a HIP debug build on wave64.**
 HIP's `__shfl*_sync` / `__ballot_sync` run `__hip_check_mask`, which asserts that the mask
 equals the lanes that reached the call (`__ballot(true)`), and `__hip_assert` is a
