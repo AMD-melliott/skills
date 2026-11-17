@@ -35,6 +35,24 @@
       ]
     },
     {
+      "id": "host-min-max-in-shared-code",
+      "skill_should_trigger": true,
+      "prompt": "We compile our CUDA sources as HIP for an MI300X build (CMake, .cu files marked LANGUAGE HIP, ROCm 7.2). Some helpers are shared between host and device. A colleague says the AMD build gives slightly different camera parameters on the host and suggests adding -D__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1 to the HIP flags and moving on. Some of our users build with ROCm 6.4. Review this and write what you'd do to review.md. Don't build anything.\n\n```cpp\n__host__ __device__ inline float clamp_fov(float deg) {\n  return min(max(deg, 0.5f), 179.5f);\n}\n\n// host only, in camera.cu\nunsigned pick_tile_count(unsigned pixels, unsigned max_tiles) {\n  return max(pixels / 4096u, max_tiles);\n}\n```",
+      "expected_behavior": [
+        "Explain that HIP's host-side min/max are only defined for (int, int) by default, so the float calls in clamp_fov truncate to int when it runs on the host, while the device path is correct",
+        "Point out that pick_tile_count's unsigned arguments also go through the (int, int) host overload, so values above INT_MAX come out wrong",
+        "Recommend fixing the call sites (fminf/fmaxf for the floats, an explicitly unsigned min/max for the unsigned call) as the fix that works on every ROCm version and on CUDA",
+        "State that __HIP_DEFINE_EXTENDED_HOST_MIN_MAX__ only exists from ROCm 7.2, so on the users' ROCm 6.4 the define does nothing and the truncation stays, unless the build is made to fail on such a toolchain"
+      ],
+      "unexpected_behavior": [
+        "Endorse adding -D__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1 as a complete fix without mentioning that it has no effect before ROCm 7.2",
+        "Say the unsigned call is safe because both arguments are integers"
+      ],
+      "files_exist": [
+        "review.md"
+      ]
+    },
+    {
       "id": "hip-port-misbehaves-at-runtime",
       "skill_should_trigger": true,
       "prompt": "My HIP port of a CUDA particle simulation compiles cleanly with hipcc, but the results on a Radeon RX 7900 XTX drift away from the NVIDIA run, and on an MI250X it sometimes dies with a memory access fault. Where should I start looking?"
