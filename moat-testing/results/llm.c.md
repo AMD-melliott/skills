@@ -93,7 +93,7 @@ starter pack). No NVIDIA run is possible here for a side-by-side.
    parts (H100: 132 SMs). Evidence: `global_norm.cuh` assert on first run.
 3. **Known gap 3, now measured: 64 KiB LDS opt-in cap, and a failed opt-in sets the last error.**
    Probe `repros/lds-optin/lds.hip`: `SharedMemPerBlockOptin` 65536; 48/64 KiB ok; 65..228 KiB
-   `hipErrorInvalidValue` from `hipFuncSetAttribute`, sticky in `hipGetLastError`, launch fails.
+   `hipErrorInvalidValue` from `hipFuncSetAttribute` (exact cap 65,536 B; 65,537 B refused), also returned and cleared by the next `hipGetLastError` (ordinary CUDA semantics, not sticky; corrected after review), launch fails.
    Same on 7.2.1 and 10.1.0. llm.c evidence above.
 4. **Missing: stand-ins for APIs a ROCm release lacks must be version-gated, and validation must
    include the current ROCm release.** SKILL.md's validation bar names archs and OSes but not ROCm
