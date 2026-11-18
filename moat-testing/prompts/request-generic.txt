@@ -1,0 +1,1 @@
+Port this CUDA project to ROCm/HIP so it builds and its tests pass on this MI300X; keep the CUDA build unchanged.
