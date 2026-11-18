@@ -73,6 +73,7 @@ Scan this list against what you are doing. If any line could apply, open
 - Warp size: NVIDIA is always 32; AMD is 64 on CDNA (gfx9xx) and 32 on RDNA. Never hardcode.
 - Warp-derived array sizing: quantities scaling WITH `warpSize` need the 64 upper bound, quantities scaling as `blockDim/warpSize` need the 32 LOWER bound. Getting it backwards writes out of bounds.
 - A launch whose block is narrower than one wavefront makes `blockDim.x / warpSize` zero, and a block reduction keyed on it returns 0 on wave64; floor the block at the runtime wavefront width.
+- Fixing that count is not enough on its own: a `warpSize/2` shuffle loop in a 32-thread block reads lanes 32-63, which hold no thread, and adds undefined values (every block wrong on gfx942). Only add lanes that hold a thread, or start the loop at the block width.
 - HIP's `*_sync` warp functions reject a 32-bit mask at compile time; CUDA's `0xffffffff` needs a 64-bit spelling on HIP.
 - A compat `__ballot_sync` that casts `__ballot()` to `uint32_t` returns the wrong 32 lanes on wave64.
 - An over-wide `__shfl*` width silently clamps to the physical wavefront instead of erroring; the symptom is a metric shift, not a crash.
@@ -85,12 +86,14 @@ Scan this list against what you are doing. If any line could apply, open
 
 **Memory and lifetime**
 - Out-of-bounds reads: CUDA often tolerates one element past an allocation; AMD faults.
+- A "last block to finish reduces everyone's partials" kernel (an `atomicInc`/`atomicAdd` completion counter, no `__threadfence()`) reads stale partials on MI300X, whose XCDs have separate L2 caches: nondeterministic or wrong sums. Fence before the counter and in the last block.
 - Fresh device allocations are NOT zeroed on ROCm, where CUDA's allocator often hands back zeroed pages. Whenever you port or review code, trace every allocation whose first use is a read-modify-write -- an `atomicAdd` counter, an accumulator, histogram bins, a `+=` output -- and confirm a memset or init kernel runs first on the same stream. Report a missing one even when the rest of the review is about something else.
 - `cudaMemcpy*Async` from a soon-freed pageable host buffer: CUDA stages synchronously, HIP does not. The same hides an unsynchronized upload on one stream feeding a kernel on another.
 - Bitwise/min/max atomics on `hipMallocManaged` memory are silently dropped on discrete xnack- cards (PCIe AtomicOps); whether a build is hit depends on optimization level, so check the app's ISA.
 - Rule-of-five on resource handles: CUDA tolerates double-destroy of a texture/stream/event; AMD does not.
 - `hipEventQuery`/`hipEventSynchronize` dereference the event's recording stream: querying an event after that stream is destroyed (legal on CUDA) hangs or crashes intermittently. Keep destroyed streams alive: route stream create/destroy through a sync-park-reuse pool in the compat header, not per-holder sweeps.
 - A functor returning a reference to a by-value parameter (lifetime UB) is tolerated by nvcc, not by clang/HIP.
+- Host code that reads a `__device__` variable through a pointer (a `__device__ constexpr` table whose `.data()` a `__host__ __device__` helper returns) gets HIP's zeroed host shadow, where nvcc gives the real values: silent wrong results. On HIP, drop `__device__` from such constexpr tables (clang already makes constexpr variables usable in device code).
 - `hipLaunchHostFunc` callback threads must not call ANY runtime API.
 - A flag one GPU polls in another GPU's `hipMalloc` memory never updates on MI250X; use uncached or fine-grained memory.
 - Data a peer GPU reads over IPC is stale on gfx1100 even in fine-grained memory and after a system-scope release; stage it in uncached memory (an event release is lost in graph replay).
@@ -100,6 +103,7 @@ Scan this list against what you are doing. If any line could apply, open
 - A query HIP reports as unsupported (`cudaLimitPrintfFifoSize` -> hipErrorUnsupportedLimit) leaves a sticky last error that the NEXT launch check reports; clear it under the HIP branch.
 
 **Textures**
+- gfx94x (MI300-class) has NO image/texture support in HIP: `tex*` fetches are compile errors, and at runtime `hipDeviceAttributeImageSupport` is 0 while `hipMallocArray`/`hipCreateTextureObject` return `hipErrorNotSupported`. Plan a buffer or software-texture path before porting texture code to these GPUs.
 - Texture pitch alignment: AMD requires 256-byte row pitch for pitched 2D binds (32 on NVIDIA).
 - Layered `cudaArray` collapses across kernel launches -- use a non-layered 3D array (confirmed gfx90a bug).
 - Hardware linear-filter texture over an element-read float array is arch-specific, not a blanket AMD limitation.
@@ -113,7 +117,7 @@ Scan this list against what you are doing. If any line could apply, open
 - HIP device `cuda::min`/`max` NaN-selection can differ from host `std::min`/`max`.
 - rocBLAS `gemm_ex` with a 16-bit D splits long k (`max(lda, ldb) * k >= 2^30` in ROCm 10.1) and rounds D once per chunk; send those GEMMs to hipBLASLt.
 - gfx11/gfx12 WMMA float accumulation drifts with k (biased toward zero) in hipBLASLt and rocBLAS alike; run k-chunks of <= 2^15 yourself with 16-bit per-chunk outputs summed in float (a float D is 8-28x slower on gfx1100), recomputing in float the outputs whose 16-bit chunk sums overflow or whose summed half-ulp rounding bound exceeds 3 units of roundoff of the result (a root-sum-square test is beaten by sums that round alike), not hipBLASLt split-k (a gfx1201 kernel is wrong at large k even when split). Route fused-epilogue (cuBLASLt) wrappers through the same path, with the epilogue applied afterwards.
-- HIP host `min`/`max` in `.cu` files exist only for `(int, int)`: float arguments in `__host__ __device__` code silently truncate on the host (whole-pixel camera errors). Fix the call sites with `fmin`/`fmax`; do not rely on `__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__`, which exists only from ROCm 7.2 and defaults off.
+- HIP host `min`/`max` in `.cu` files exist only for `(int, int)` by default: float, double AND unsigned arguments in host or `__host__ __device__` code silently convert to int (`min(0.25f, 3.7f)` is 0, `max(3000000000u, 1u)` is 1; whole-pixel camera errors). Fix the call sites with `fmin`/`fmax` and typed helpers; `__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__` exists only from ROCm 7.2 and defaults off, so if a project uses it anyway, add the host-pass `static_assert` from the reference so an older ROCm fails the build.
 - Casting a NEGATIVE float to `uint64_t` diverges: AMD keeps the low 32 bits, NVIDIA saturates to 0. (The 32-bit cast agrees.)
 
 **Headers, includes and build**
@@ -140,13 +144,16 @@ Scan this list against what you are doing. If any line could apply, open
 - hipSPARSE breaks HIP graph capture where cuSPARSE does not (destroying a CSR SpMat syncs, default-algorithm analysis, size-0 buffers).
 - Pick a library's NVIDIA or AMD build per device, never by starting every backend; a HIP port that keeps the soname (hipVS, hipDF) allows one per process.
 - NVML -> AMD SMI, keyed by PCI address, not device index.
+- Sizes derived from device properties grow on MI300X: 304 CUs x 2048 threads/CU gives 1216 blocks where upstream asserted < 1024. Re-check every `multiProcessorCount`/`maxThreadsPerMultiProcessor` product against the bound it feeds.
 - `clock64()` is a 20-bit wrapping counter on RDNA3; cycle-bounded spins and delays end early. Use `wall_clock64()`.
 - `char` vs `signed char` vector base types differ between HIP and CUDA.
 - AMD compute-capability values COLLIDE with NVIDIA arch numbers, so CC-keyed dispatch picks the wrong path.
 - hipCUB/rocPRIM: temp storage queries never return less than 4 bytes; segmented `ArgMax` returns an out-of-range key for an all-NaN segment.
 - MIOpen pooling needs its workspace in the forward pass for NHWC input; MIOpen runs a convolution only on a handle where Find ran for it (and reuses destroyed handle addresses); MIOpen 3.6 has no double batch norm or convolution and no bias backward; hipBLASLt epilogues differ from cuBLASLt per type and in the ReLU aux format; rpp.h and miopen.h collide on `BILINEAR`.
 - On RDNA, `hipOccupancyMaxActiveBlocksPerMultiprocessor` counts the 128 KiB WGP and returns 1 for dynamic shared memory between 64 and 128 KiB, so "occupancy > 0, take the smem kernel" launches what cannot run.
+- LDS (shared memory) is capped at 64 KiB per block on gfx942 (MI300X; measured), where Hopper opts in to 227 KiB. For every `cudaFuncSetAttribute(..., MaxDynamicSharedMemorySize, bytes)`, compute `bytes` at the LARGEST size the project supports (model width, tile size), not the size its tests use, and run that size once. Above 64 KiB the opt-in is refused and the error is reported by the next last-error check, so a fallback placed after a `cudaCheck(cudaGetLastError())` never runs; test the returned status first.
 - Library swaps: cuBLAS -> hipBLAS, cuFFT -> hipFFT, cuRAND -> hipRAND, cuSPARSE -> hipSPARSE, cuDNN -> MIOpen, Thrust/CUB -> rocThrust/hipCUB. Handle types and v2-enum signatures differ.
+- libcu++ -> libhipcxx (`cuda::` spelling kept; ROCm 10.1 bundles CCCL 3.0.2 as `hipccl`). Its block/device-scope `compare_exchange_strong` is actually weak: 1- and 2-byte CAS fail spuriously (75% / 50% in a repro, ROCm 10.1's copy included), so CAS-claims-a-slot code loses keys. `atomic_ref` on an 8-byte, 4-byte-aligned struct fails to link ("unsupported cmpxchg"). Patch the header or loop on the CAS, and test 1-, 2- and 8-byte atomic paths.
 - NVTX ranges -> roctx (header moved between ROCm versions; the NVTX injection API has no analogue). Code reading cuRAND's Box-Muller state flag needs rocRAND's `has_float` predicate, not an alias.
 - nvJPEG/nvImageCodec -> rocJPEG for JPEG decode only (VCN; baseline SOF0 only: no SOF1 or progressive, nothing under 64x64, no encoder, no JPEG 2000); the rest needs a named CPU path, chosen from the frame header, not a catch-all. A JPEG with no scan hangs the VCN engine: validate markers on the host first. NVDEC -> FFmpeg demux + rocDecode's parser and decoder (no FFmpeg hwaccel); gate on profile as well as `rocDecGetDecoderCaps`, which has no profile and lets unsupported H.264 profiles decode wrong, and whose size limits are coded sizes (round the display size up to the block size); a success status can still carry wrong pixels on some GPU and VA driver pairs, so decode a reference clip per codec once per process before trusting it; the CPU path needs libdav1d for AV1. NVENC has no ROCm equivalent: name the software encoder path. See fault-classes "Vulkan interop and image codecs".
 - Runtime PTX + CUDA Driver API is a third build class beyond A and B.

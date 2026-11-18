@@ -55,6 +55,20 @@ launch it had and a wave64 device gets a whole wavefront. Any launch whose block
 computed from a data size, rather than being a fixed 128 or 256, is a candidate. (CV-CUDA:
 OpFindHomography refinement, reachable at 16 or fewer point pairs.)
 
+**The shuffles themselves read lanes that hold no thread, whatever the count says.** On
+NVIDIA a 32-thread block fills its warp exactly, so a reduction such as
+`for (off = warpSize / 2; off > 0; off /= 2) v += __shfl_down(v, off);` only ever reads live
+lanes. On wave64 the same block is half a wavefront: `warpSize / 2` is 32, lane 0 reads lane
+32, and lanes 32-63 hold no thread, so the value returned is undefined and is added in. A
+minimal kernel (each thread contributes 1, 4096 blocks) gives the right sum for 64-thread
+blocks and a wrong sum in every block at 32 threads, identically on ROCm 7.2.1 and 10.1.0
+(gfx942). Where the launch can change, the block floor above fixes this too. Where the block
+width is fixed by the algorithm, add only lanes that hold a thread
+(`if (lane + off < warpSize && (mask >> (lane + off)) & 1) v += other;`, with the mask built
+from the block size), or start the loop at the block width when the block is smaller than a
+wavefront. Sweep every block size the code can launch, including 32 and below.
+(cuda-samples `reduction` `reduce7`/`warpReduceSum`.)
+
 **Lane masks must be 64-bit where the API takes one** -- `__shfl*`, `__ballot`,
 `__activemask`. A `uint32` mask is wrong on a 64-wide wavefront.
 
@@ -448,6 +462,19 @@ running the same call 20 times and comparing bitwise with the first; one
 `CreateTextureParallel`, wrong pixels up to 22% of max in projections 0 to 8, 2 to 7 runs
 in 20 on gfx90a.)
 
+**Host code reading a `__device__` variable through a pointer gets HIP's host shadow, not
+the value.** CUDA code often keeps lookup tables as `__device__ static constexpr` arrays so that
+both sides can use them, and reaches them through a `__host__ __device__ constexpr` helper that
+returns `table.data()`. Under nvcc the host side reads the real values. Under HIP, a `__device__`
+variable's host-side symbol is a shadow that only the runtime registration uses, so once the host
+takes its address it reads zeros. A repro of exactly this shape printed `0 0 0 0` at -O0 and
+`0 9.2e18 0 0` at -O2 on ROCm 7.2.1 and 10.1.0, where nvcc 12.8 printed `1.5 2.5 3.5 4.5`. Reading
+`table[i]` directly with a constant index can still constant-fold and look right, which hides
+the problem in small tests. Nothing faults: in cuCollections the HyperLogLog++ host finalizer
+silently skipped bias correction (Spark-parity test 79 vs. 81). Fix on HIP: drop `__device__` and
+keep a plain `static constexpr` array, which clang makes usable from device code as well (verified
+on both sides). nvcc rejects that spelling in device code, so keep `__device__` on the CUDA branch.
+
 **A functor returning a reference to a by-value or forwarded parameter** binds to a
 temporary that expires at the return. nvcc and CUB happen to keep the value live in
 registers; rocPRIM block-loads the dangling reference and reads garbage. Return BY VALUE --
@@ -546,6 +573,25 @@ Bisect with a sync on each side: only the one AFTER the copy fixes it. (TornadoV
 `NativeCommandQueue.mapOnDeviceMemoryNDRegion`, deterministic on Windows gfx1151, passing
 on Linux gfx950/gfx1201.)
 
+**A "last block reduces" kernel needs `__threadfence()`, and MI300X is where its absence shows.**
+A common CUDA pattern computes per-block partial results, writes them to global memory, bumps a
+completion counter with `atomicInc`/`atomicAdd`, and lets whichever block sees the final count
+read every partial and finish the reduction. CUDA's memory model requires a device-scope fence
+between the partial-sum stores and the counter (and before the last block reads), which is what
+CUDA's own threadFenceReduction sample does. Code that leaves the fences out usually works on an
+NVIDIA GPU, whose single L2 makes other blocks' stores visible in time. MI300X (gfx942) is
+built from eight XCDs, each with its own L2, and a plain store from a block on one XCD is not
+guaranteed to be visible to a block on another without a release/acquire: the last block reads
+stale partials. The result is wrong or run-to-run nondeterministic, with no fault. Add
+`__threadfence()` after the partial stores (before the atomic) and again in the last block before
+it reads the partials; it is correct on CUDA too and costs one fence per block. Grep for
+`atomicInc`, a `gridDim.x - 1` comparison against an atomic's return value, and "last block"
+comments. Measured on gfx942 with ROCm 7.2.1 and 10.1.0 (llm.c `layernorm_backward_kernel10`,
+upstream `f1e2ace`): without the fences the project's determinism check failed 3 of 3 runs on
+each version (`Nondeterminism! Loss mismatch at step 1: 6.937172889709473 vs 6.884676456451416`,
+plus wrong `ln2w` gradients in an earlier run); with them, 10 of 10 test configurations passed on
+both. (llm.c)
+
 **A buffer that crosses into Python and gets released with `free()` must come from `malloc`.** Old SWIG/NumPy bindings often hand a C++ result to NumPy by overwriting the array's `data` pointer (a custom `T** INPLACE_ARRAY1` typemap passing `&PyArrayObject->data`), with the callee setting `*out = (new std::vector<T>(n))->data()` or a `thrust::host_vector` equivalent. NumPy later `free()`s it. On Linux, libstdc++ hands back the raw `malloc` pointer, so the mismatch passes silently. MSVC's `std::allocator` over-aligns every allocation of 4 KiB or more and returns an offset pointer, so `free()` corrupts the heap. The crash, `0xc0000374` (STATUS_HEAP_CORRUPTION), comes from a LATER, unrelated free: the next solver call or interpreter exit. Small outputs (a few centroids) survive while large ones (per-row labels) do not. Run each solver alone in a fresh process and read the real exit code (MSYS bash reports 127), and do not blame whichever solver happened to run last. Fix: fill a `malloc`/`calloc` buffer (with `thrust::copy` from device iterators straight into the raw pointer). That keeps the handoff contract on every OS. (h2o4gpu: KMeans fit/predict/transform; the failure had first been blamed on the ElasticNet call that ran after it.)
 
 **`hipFree` is synchronizing** (`hipFreeAsync` is not), so an explicit
@@ -611,7 +657,11 @@ on the device`), gated purely on `--offload-arch`, so the identical source compi
 gfx90a/gfx11xx/gfx12xx and fails ONLY on gfx942/gfx950 -- this surfaces as a validation
 failure on exactly one arch even though nothing about the build command differs (confirm the
 arch pin is correct before assuming a real regression; then check for `__gfx94plus_clr__` in
-the toolchain headers). A project doing a bare point-lookup through a texture object has a
+the toolchain headers). At runtime the same GPUs report `hipDeviceAttributeImageSupport` = 0, and
+`hipMallocArray` and `hipCreateTextureObject` (even for a linear
+resource) return `hipErrorNotSupported` (measured on MI300X, ROCm 7.2.1 and 10.1.0); a sample
+that reads through `cudaArray`s with address modes and filtering needs a software texture
+path on these GPUs. A project doing a bare point-lookup through a texture object has a
 portable, unconditional fix, and the qualifying criterion is the ACCESS PATTERN, not the table
 size: point sampling only, no hardware filtering, no normalized coordinates, no address/border
 modes (arrayfire's FAST LUT is 64 KiB and still qualifies, so do not read "LUT" as "small").
@@ -867,15 +917,20 @@ long-k path needs another library's handle (rocBLAS here) and the compat only re
 handle, create the second handle with the first: a kernel may first run inside a graph capture,
 where the 32 MiB a rocBLAS handle allocates at creation cannot be. (oneflow, 0e606373b.)
 
-**Host `min`/`max` on floating-point values truncate to int under hipcc.** CUDA declares
-host `min`/`max` for int, unsigned, long, long long, float and double. HIP's
-`__clang_hip_math.h` declares only `min`/`max(int, int)` on the host. So host code in a
+**Host `min`/`max` on floating-point or unsigned values truncate to int under hipcc.** CUDA
+declares host `min`/`max` for int, unsigned, long, long long, float and double. HIP's
+`__clang_hip_math.h` declares only `min`/`max(int, int)` on the host by default. So host code in a
 `.cu` file such as `max(0.25, min(100.0, fwhm))` or `max(atan(a), atan(b))` compiles
 cleanly, converts both arguments to int and returns an int. Device code is unaffected,
 because the device overloads cover float and double. Expect parameters silently rounded
 down, a value below 1 clamped to 0, and geometry decisions taken on a zero angle. The only
 build symptom is `-Wliteral-conversion` on fractional literals ("changes value from 0.25
-to 0"), and only when a literal is involved. Detection: add
+to 0"), and only when a literal is involved; a variable argument, such as `x` in a
+`__host__ __device__ float clamp(float x) { return min(max(x, 0.25f), 3.75f); }`, gets no
+warning for itself. Unsigned and 64-bit arguments are hit too, which "the arguments are
+integers" makes easy to miss: `max(3000000000u, 1u)` converts both to int and returns 1.
+Measured with ROCm 7.2.1 (HIP 7.2.53211) and ROCm 10.1.0 (HIP 7.16.26385) host code, default flags, identical on both: `min(0.25f, 3.7f)` = 0,
+`max(0.5, 0.75)` = 0, the clamp above at 2.5f = 2, `max(3000000000u, 1u)` = 1. Detection: add
 `-D__HIP_NO_HOST_MIN_MAX_IN_GLOBAL_NAMESPACE__ -include poison.h` to the real hipcc
 command with `--cuda-host-only -fsyntax-only`. `poison.h` redefines the default pair with
 `__attribute__((diagnose_if(true, "HOSTMINMAX", "warning")))`, so every host call that
@@ -887,12 +942,34 @@ overload calls. `crt/math_functions.hpp` implements `min`/`max(double, double)` 
 mixed float/double forms with `fmin`/`fmax`, and `(float, float)` with `fminf`/`fmaxf`.
 Cast a float argument to double where CUDA took a mixed overload, e.g.
 `fmax(0.25, fmin(100.0, double(fwhm)))`. That keeps CUDA's results, NaN handling included,
-on every ROCm and on CUDA, without an `#ifdef`. Leave int calls alone. Do NOT rely on
-`-D__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1`. That macro adds the floating-point host
-overloads only from ROCm 7.2.0 (LLVM 0248d277ca), defaults to 0, and does not exist in
-7.1.x and earlier, where the define silently does nothing and the truncation stays. Rerun
-the detection pass with no define: no host call may still land on `(int, int)` with
-non-int arguments. Then confirm that the device code objects did not change (`.text`/`.rodata`
+on every ROCm and on CUDA, without an `#ifdef`. Leave calls whose arguments are both `int`
+alone; give unsigned, `long` and `long long` calls a small typed helper (or `std::min<T>` /
+`std::max<T>` with the type spelled, in a TU no hipify pass rewrites -- see the `std::` note
+below), so nothing reaches `(int, int)`.
+
+`-D__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1` is the macro the header offers, and it is a
+supplement to that fix, not a replacement. In ROCm 7.2.1's and 10.1.0's `__clang_hip_math.h` it defaults
+to 0 ("TODO: make this default to 1 after existing HIP apps adopting this change") and, when
+set, adds host `(unsigned, unsigned)`, `long`, `unsigned long`, `long long`, `unsigned long
+long`, and `float`/`double`/mixed float-double overloads implemented with `__builtin_fmin(f)`
+/ `__builtin_fmax(f)`. Mixed signed/unsigned pairs need a second macro,
+`__HIP_DEFINE_MIXED_HOST_MIN_MAX__`, which is off for a reason the header states (it compares
+unsigned). The macro arrived in ROCm 7.2.0 (LLVM 0248d277ca); in 7.1.x and earlier the define
+silently does nothing and the truncation stays. So a build that only adds the define is
+correct on the ROCm it was tested on and wrong on an older one, with no diagnostic. If a
+project does use it, make the older ROCm fail loudly with a host-pass assertion in the
+compat header:
+
+    #if defined(__HIP_PLATFORM_AMD__) && !defined(__HIP_DEVICE_COMPILE__)
+    #include <type_traits>
+    static_assert(std::is_same<decltype(min(1.0f, 2.0f)), float>::value,
+                  "host min(float,float) resolves to min(int,int): fix the call sites or "
+                  "build with ROCm >= 7.2 and -D__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1");
+    #endif
+
+Verified on ROCm 7.2.1 and 10.1.0 (where the macro still defaults to 0): without the define
+the assertion fails in the host pass; with it the TU builds. Either way, rerun the detection pass with no define: no host call may still land
+on `(int, int)` with non-int arguments. Then confirm that the device code objects did not change (`.text`/`.rodata`
 of the unbundled `.hip_fatbin`; the `__hip_cuid_*` names change with path and flags).
 (LEAP: bilateral FWHMs truncated, intensity FWHM < 1 gave the identity; the modular-beam
 Joseph backprojector chose its parallel kernel for cone data, failing adjointness and FBP;
@@ -1530,6 +1607,51 @@ to `&& !defined(__HIPCC__)`, since clang's HIP math header defines host+device `
 and the copies become redefinitions in `.hip`/`LANGUAGE HIP` TUs. Host `.cpp` files still need
 the block. (cuda_voxelizer)
 
+**Launch geometry computed from device properties can overshoot a bound sized for NVIDIA.**
+MI300X reports `multiProcessorCount` 304 and `maxThreadsPerMultiProcessor` 2048, against 132 and
+2048 on an H100, so a grid sized "enough blocks to fill the GPU" comes out more than twice as large.
+Code that later reduces those blocks in a fixed-size second pass (one 1024-thread block, a
+`__shared__` array of 1024, a scratch buffer sized by a constant) was correct on every NVIDIA
+part it met and breaks here. llm.c's `global_norm.cuh` computes
+`maxThreadsPerMultiProcessor * multiProcessorCount / 512` = 1216 blocks and asserts
+`gx * gy < 1024`, which tripped on the first MI300X test run. Cap the derived count at the bound
+it feeds (a no-op wherever the old assumption held, so the CUDA path keeps its numbers), and grep
+for every `multiProcessorCount` and `maxThreadsPerMultiProcessor` product. Related but separate:
+`__smid()` exceeding `multiProcessorCount` (wavefront section). (llm.c, gfx942.)
+
+**Shared memory (LDS) per block tops out at 64 KiB on gfx942 (MI300X), and a refused opt-in
+reaches the next last-error check.** NVIDIA kernels opt in to large dynamic shared memory with
+`cudaFuncSetAttribute(kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, bytes)`: up to 227 KiB on
+Hopper, 163 KiB on A100, so tiles and per-row caches are often sized well past 64 KiB. On gfx942
+(MI300X) `hipDeviceAttributeSharedMemPerBlockOptin`, `sharedMemPerBlock` and
+`maxSharedMemoryPerMultiProcessor` are all 65536. Measured with ROCm 7.2.1 and 10.1.0
+(`hipFuncSetAttribute` then a launch with that many dynamic bytes): 48 and 64 KiB succeed; 65, 80,
+96, 160 and 228 KiB return `hipErrorInvalidValue` from `hipFuncSetAttribute`, the same error is
+then returned by `hipGetLastError()`, and the launch fails. There is no larger opt-in to request.
+
+Two consequences for a port:
+
+- A kernel that NEEDS more than 64 KiB per block must be retiled (smaller tiles, more blocks, or
+  data kept in registers), not just relaunched. Find them by grepping for
+  `MaxDynamicSharedMemorySize` and computing the requested bytes for the largest configuration
+  the project supports, not only the one its tests use. The test suite often runs the smallest
+  model and never crosses the limit.
+- Projects that already have a fallback usually write `status = cudaFuncSetAttribute(...);
+  cudaCheck(cudaGetLastError()); if (status == cudaSuccess) big_kernel else fallback`. The refused
+  opt-in is reported by that last-error check (once: like CUDA, `hipGetLastError()` returns it
+  and clears it), so the check aborts before the fallback is reached. This is a
+  latent upstream bug, invisible on parts where the request never fails. Clear the error after a
+  refused opt-in (call `cudaGetLastError()` once and discard it) or test the returned status
+  before any last-error check; then the existing fallback runs on AMD and the CUDA path is
+  unchanged.
+
+Evidence: llm.c (upstream `f1e2ace`) `layernorm_forward` requests `(2 + 8) * C * sizeof(floatX)`
+bytes. At C=768 (GPT-2 124M, what the tests use) that is 30,720 B and runs. At C=1920 in FP32
+(76,800 B), both a direct call and `train_gpt2cu -e d60` abort with `[CUDA ERROR] at file
+llmc/layernorm.cuh:453: invalid argument`, the last-error check right after the opt-in, on ROCm
+7.2.1 and 10.1.0. Every model with C >= 1639 in FP32, or C >= 3277 in BF16, is affected. (llm.c,
+gfx942.)
+
 ## Types, dispatch and platform limits
 
 **`clock64()` is a 20-bit wrapping counter on RDNA3, so a cycle-bounded spin, delay or
@@ -1548,6 +1670,27 @@ constant-rate counter on every AMD GPU, and convert the duration with
 `clock64` and `clock()` in device code and treat any difference compared against more than
 2^20 as this bug. (LichtFeld-Studio: tensor hardening `GateStream` delay kernel; FLAMEGPU2,
 found in a test probe.)
+
+**libcu++ -> libhipcxx, and two atomic defects in it.** `ROCm/libhipcxx` keeps the
+`cuda::`/`cuda::std::` spelling, so CCCL-heavy code (`cuda::atomic_ref`, `cuda::stream_ref`,
+`cuda::std::span`) ports without renames. ROCm 10.1 bundles CCCL 3.0.2 as
+`/opt/rocm/core-10.1/include/hipccl`, and ROCm 7.2.1 bundles none; newer CCCL levels come from
+the `amd-develop` branch. Two defects in `cuda/std/__atomic/functions/atomic_hip_generated.h`,
+both reproduced on gfx942 with ROCm 7.2.1 and 10.1.0 (amd-develop `832dc407f`, and the bundled
+3.0.2 for the first):
+- The block- and device-scope `__atomic_compare_exchange_cuda` ignores its weak flag and always
+  calls `__hip_atomic_compare_exchange_weak`. A 1- or 2-byte CAS is a 32-bit CAS on the
+  containing word, so the weak form also fails when a NEIGHBOURING byte changes. With each
+  thread flipping only its own byte, `compare_exchange_strong` failed 75% (1 byte) and 50%
+  (2 bytes) of the time, while the raw strong builtin failed 0 times. Code that reads a failed CAS
+  on an empty slot as "taken" loses or duplicates keys (cuCollections: 11 failing
+  `static_set<int8_t/int16_t>` cases).
+- `atomic_ref<T>` on an 8-byte type with 4-byte `alignof` (`struct {int a, b;}`, aligned to 8
+  by the caller as `atomic_ref` requires) fails to link with `unsupported cmpxchg: instruction
+  alignment 4 is smaller than the required 8-byte alignment`. NVIDIA's libcu++ compiles it.
+Both fixes are small header patches: honour the weak flag, and view the object through a
+`sizeof(T)`-aligned typedef. Carry them in the port and tell the user. Validate 1-, 2- and 8-byte
+atomic paths explicitly, because 4-byte tests pass either way.
 
 **Library swaps.** cuBLAS -> hipBLAS, cuFFT -> hipFFT, cuRAND -> hipRAND, cuSPARSE ->
 hipSPARSE, cuDNN -> MIOpen, Thrust/CUB -> rocThrust/hipCUB. Mostly 1:1; watch handle types
