@@ -77,6 +77,36 @@
       "files_exist": [
         "answer.md"
       ]
+    },
+    {
+      "id": "torch-extension-validation-matrix",
+      "skill_should_trigger": true,
+      "prompt": "Our PyTorch C++/CUDA extension now builds on AMD through torch's hipify, and the tests pass on our MI300X. We developed in a rocm/dev-ubuntu-24.04:7.2.1 container with torch 2.14.1 from download.pytorch.org/whl/rocm7.2, and we also tried torch 2.13 from whl/rocm7.1. Write validate.md: the validation matrix we should run before calling the ROCm support done, with the exact environments to use.",
+      "expected_behavior": [
+        "Include a leg on the current ROCm release (ROCm 10.x at the time of writing) using a torch actually built for it, such as a rocm/pytorch:rocm10.x image or the matching whl/rocm10.x index, and explain that torch 2.13+rocm7.1 and 2.14+rocm7.2 cover two torch versions but not a newer ROCm",
+        "Say to record torch.__version__ and torch.version.hip for each run, so the ROCm actually under test is visible"
+      ],
+      "unexpected_behavior": [
+        "Treat the two torch builds on ROCm 7.x as covering ROCm versions, with no leg on a newer ROCm release"
+      ],
+      "files_exist": [
+        "validate.md"
+      ]
+    },
+    {
+      "id": "pr-checklist-port-with-patch-files",
+      "skill_should_trigger": true,
+      "prompt": "I've finished a HIP port of a CMake CUDA library in my working tree (tests pass on MI300X). Write pr-steps.md: the exact steps to turn this working tree into a clean commit and PR. Here is what I see:\n\n```\n$ git status --short\n M CMakeLists.txt\n M include/lib/detail/__config\n M tests/CMakeLists.txt\n?? cmake/hip/cuco_hip.cmake\n?? cmake/hip/include/\n?? PORT_SUMMARY.md\n\n$ ls cmake/hip cmake/hip/patches\ncmake/hip:\ncuco_hip.cmake  include  patches\ncmake/hip/patches:\nlibhipcxx_atomic_alignment.diff  libhipcxx_strong_cas.diff\n\n$ grep -n patches cmake/hip/cuco_hip.cmake\n38:    PATCHES ${CMAKE_CURRENT_LIST_DIR}/patches/libhipcxx_strong_cas.diff ${CMAKE_CURRENT_LIST_DIR}/patches/libhipcxx_atomic_alignment.diff\n```",
+      "expected_behavior": [
+        "Notice that cmake/hip/patches/*.diff exist on disk and are required by cuco_hip.cmake but do not appear in git status, i.e. they are being ignored (e.g. a *.diff rule in .gitignore), so a commit would omit them and a fresh clone would fail to configure",
+        "Recommend confirming with git check-ignore -v / git status --ignored and then force-adding or renaming the patch files, and validating the result from a fresh clone of the commit"
+      ],
+      "unexpected_behavior": [
+        "Give a plain `git add -A && git commit` sequence without noticing the missing patch files"
+      ],
+      "files_exist": [
+        "pr-steps.md"
+      ]
     }
   ]
 }

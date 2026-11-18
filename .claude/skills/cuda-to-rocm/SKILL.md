@@ -124,6 +124,7 @@ Scan this list against what you are doing. If any line could apply, open
 - Missing includes in a HIP port are usually pre-existing upstream omissions unmasked by the narrower include graph.
 - A compat stand-in for an API one ROCm release lacks collides when a later release adds it (HIP 7.2 has no `cg::reduce`/`cg::plus`; ROCm 10.1's HIP 7.16 ships them, so a shim defining them stops compiling). Gate each stand-in on `HIP_VERSION` or a feature probe.
 - A `-include`d compat header creates no dependency edge: wipe objects after editing it or you validate stale code.
+- Upstream ignore rules can swallow port files: a `*.diff` pattern hid a port's libhipcxx patches from `git status`, so a commit of the port would not configure. Run `git status --ignored` / `git check-ignore -v` on every new file, and validate from a fresh clone of the commit.
 - Never define `CUDART_VERSION` in a compat header: hip* library headers read it as "NVIDIA backend". rocThrust's `thrust/system/cuda/error.h` is CUDA-only; never reopen `namespace thrust::hip`.
 - `hip::hipcub`/`roc::rocthrust` targets leak `--offload-arch` into g++ sources of a mixed target; a HIP-linked target given `-fopenmp` loads clang's libomp next to g++'s libgomp.
 - A HIP-linked shared library or Python module gets no RUNPATH to the ROCm lib dir (an implicit link dir); set `BUILD_RPATH` from `hip::amdhip64` or it fails to load without `LD_LIBRARY_PATH`.
@@ -196,6 +197,15 @@ the sizes its tests use: size thresholds select other kernels and larger resourc
 test never reaches them. Also compile the
 CUDA path with nvcc as a no-regression gate: an additive ROCm port must leave the CUDA
 build a pure passthrough. `references/validation.md`.
+
+Write the validation matrix down before building -- ROCm releases x architectures x problem
+sizes, and for a PyTorch extension the torch build each ROCm leg needs -- and check it off at
+the end. A port that knew every axis still skipped one when nobody wrote the list.
+
+Then rebuild from a fresh clone of the committed result, in a fresh container from the stock
+image, with exactly the commands the port's README or summary documents: no wrapper script,
+no exported variable, no file the working tree has and the commit does not. Run the suite
+there. A port that passes only in the environment it was built in has not been validated.
 
 ## Keeping an open PR mergeable
 
