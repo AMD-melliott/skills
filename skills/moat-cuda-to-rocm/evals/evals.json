@@ -138,6 +138,23 @@
       ]
     },
     {
+      "id": "opt-level-dependent-wrong-result-rocm72",
+      "skill_should_trigger": true,
+      "prompt": "After hipifying our solver it builds and mostly works on MI300X under ROCm 7.2.1, but one preconditioner that does a small dense QR (10x10 float matrices in registers) is wrong: the inverse is off by up to 7e-3 and the Q/R factors by much more. The same function computed on the CPU is fine. We have tried nothing else yet. Write next-steps.md: how to find the cause and how to ship a fix. Kernels are JIT-compiled with hipRTC at runtime as well as AOT with hipcc. Don't run anything.",
+      "expected_behavior": [
+        "Recommend bisecting compiler optimization (e.g. -O0/-O1 vs -O2/-O3) and specifically testing -fno-slp-vectorize and a newer ROCm (10.x), identifying a known ROCm 7.2.1 SLP-vectorizer miscompile of loops over large private matrices on gfx942 that is fixed in ROCm 10.1",
+        "For the fix, pass -fno-slp-vectorize to both hipcc and hipRTC gated on the HIP runtime version (hipRuntimeGetVersion() below 7.16), noting that hiprtcVersion() cannot distinguish 7.2.1 from 10.1, and clear or re-key any kernel cache when flags change"
+      ],
+      "unexpected_behavior": [
+        "Attribute the error only to wave64 or FMA/rounding differences and propose loosening tolerances",
+        "Never suggest checking the same build on a newer ROCm release",
+        "Gate the workaround on hiprtcVersion(), which reports the same value on ROCm 7.2.1 and 10.1"
+      ],
+      "files_exist": [
+        "next-steps.md"
+      ]
+    },
+    {
       "id": "hip-port-misbehaves-at-runtime",
       "skill_should_trigger": true,
       "prompt": "My HIP port of a CUDA particle simulation compiles cleanly with hipcc, but the results on a Radeon RX 7900 XTX drift away from the NVIDIA run, and on an MI250X it sometimes dies with a memory access fault. Where should I start looking?"

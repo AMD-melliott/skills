@@ -115,6 +115,7 @@ Scan this list against what you are doing. If any line could apply, open
 - clang(HIP) defaults to `-ffp-contract=fast` and forms FMAs ACROSS expressions; nvcc contracts expression-only.
 - Exact float-equality branches fed by `__fdividef` produce out-of-range indices.
 - HIP device `cuda::min`/`max` NaN-selection can differ from host `std::min`/`max`.
+- ROCm 7.2.1's device compiler miscompiles some loops over large private matrices at -O2/-O3 on gfx942 via the SLP vectorizer (a 10x10 float Householder QR came out wrong by up to 16; ROCm 10.1 is correct). Signature: wrong at -O2+, right at -O0/-O1 and with `-fno-slp-vectorize`. Gate the workaround on `hipRuntimeGetVersion()` < 7.16, not on `hiprtcVersion()`, which reports 9.0 on both releases.
 
 **Headers, includes and build**
 - A shared compat header must be host-includable: gate device-only includes behind `__CUDACC__`/`__HIPCC__`, or CUB leaks into host TUs. Hit independently by two projects.
