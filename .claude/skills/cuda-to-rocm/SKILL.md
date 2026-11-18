@@ -122,6 +122,7 @@ Scan this list against what you are doing. If any line could apply, open
 - A compat header that defines `__CUDA_ARCH__` for HIP device code also makes numeric `#if __CUDA_ARCH__ < NNN` gates true, which can select `__trap()` fallbacks.
 - Feature and version macros CUDA headers define but HIP headers do not (`__CUDA_BF16_TYPES_EXIST__`, `CUBLAS_VERSION`) silently drop whole dtype paths; audit gates by macro class, not only `__CUDA_ARCH__`.
 - Missing includes in a HIP port are usually pre-existing upstream omissions unmasked by the narrower include graph.
+- A compat stand-in for an API one ROCm release lacks collides when a later release adds it (HIP 7.2 has no `cg::reduce`/`cg::plus`; ROCm 10.1's HIP 7.16 ships them, so a shim defining them stops compiling). Gate each stand-in on `HIP_VERSION` or a feature probe.
 - A `-include`d compat header creates no dependency edge: wipe objects after editing it or you validate stale code.
 - Never define `CUDART_VERSION` in a compat header: hip* library headers read it as "NVIDIA backend". rocThrust's `thrust/system/cuda/error.h` is CUDA-only; never reopen `namespace thrust::hip`.
 - `hip::hipcub`/`roc::rocthrust` targets leak `--offload-arch` into g++ sources of a mixed target; a HIP-linked target given `-fopenmp` loads clang's libomp next to g++'s libgomp.
@@ -187,7 +188,12 @@ host and a compile-time constant in device code.
 A real-GPU test run is the only evidence that counts. Lint is not validation, and a
 CPU-only build proves compilation and nothing else. Cover both wavefront widths and each
 OS the project supports: at least one wave64 (CDNA) GPU, one wave32 (RDNA) GPU, and Windows
-when the project builds there. Also compile the
+when the project builds there. Build and test on the current ROCm release as well as the
+one you developed on: a port validated only on an older ROCm can fail to compile on the
+current one. Run at least one configuration at the largest size the project supports, not only
+the sizes its tests use: size thresholds select other kernels and larger resource requests
+(an LDS opt-in above 64 KiB, a sort that switches kernels above 3072 elements), and a small
+test never reaches them. Also compile the
 CUDA path with nvcc as a no-regression gate: an additive ROCm port must leave the CUDA
 build a pure passthrough. `references/validation.md`.
 

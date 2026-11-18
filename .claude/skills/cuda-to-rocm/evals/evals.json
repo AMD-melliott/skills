@@ -61,6 +61,22 @@
       "skill_should_trigger": false,
       "note": "Porting a CUDA kernel, but to a CPU with no GPU at all.",
       "prompt": "Rewrite this CUDA vector add as a plain C++ loop parallelised with OpenMP so it runs on a laptop that has no GPU:\n\n```cpp\n__global__ void add(const float* a, const float* b, float* c, int n) {\n  int i = blockIdx.x * blockDim.x + threadIdx.x;\n  if (i < n) c[i] = a[i] + b[i];\n}\n```"
+    },
+    {
+      "id": "compat-shim-stand-in-across-rocm-releases",
+      "skill_should_trigger": true,
+      "prompt": "Our HIP port of a CUDA codebase uses a shim header that defines cooperative_groups::reduce and the cg::plus / cg::greater functors, because HIP didn't provide them when we wrote it against ROCm 7.2. It builds and all tests pass on our MI300X with ROCm 7.2.1. We're about to open the PR saying the port is validated. Anything we should do first? Write the answer to answer.md; don't build anything.",
+      "expected_behavior": [
+        "Warn that newer ROCm releases provide cooperative_groups::reduce and these functors (ROCm 10.1 / HIP 7.16), so the shim's own definitions will collide with redefinition errors there",
+        "Recommend gating the stand-ins on the HIP version (or a feature check) so the real API is used where it exists",
+        "Recommend building and testing on the current ROCm release, not only the one the port was developed on, before claiming the port is validated"
+      ],
+      "unexpected_behavior": [
+        "Say a pass on ROCm 7.2.1 is enough to claim the port is validated for ROCm in general"
+      ],
+      "files_exist": [
+        "answer.md"
+      ]
     }
   ]
 }

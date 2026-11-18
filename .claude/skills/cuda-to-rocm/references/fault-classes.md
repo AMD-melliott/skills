@@ -1365,6 +1365,19 @@ wave64, lanes 32-63 read lanes 0-31 and the sums are silently wrong. Use
 `__shfl(v, lane, 32)` with a per-half mask, and avoid `__shfl_sync` when the two halves
 take different paths, because HIP's mask check traps. (colmap)
 
+**A stand-in for an API HIP lacks must be gated, because a later ROCm adds it.** Compat headers
+fill gaps: HIP 7.2 (ROCm 7.2.x) has no `cooperative_groups::reduce` and no `cg::plus`, `cg::less`
+or `cg::greater` functors, so a port of code using `<cooperative_groups/reduce.h>` writes them.
+HIP 7.16 (ROCm 10.1.0) ships all four, and the port's own definitions become `error:
+redefinition of 'plus'` (and `less`, `greater`). Nothing on the ROCm the port was written against
+can show this. Gate each stand-in on the version that introduced the real thing
+(`#if HIP_VERSION_MAJOR < 7 || (HIP_VERSION_MAJOR == 7 && HIP_VERSION_MINOR < 16)`, from
+`hip/hip_version.h`), or on a feature test where the header provides one, and keep the real API's
+name and signature so the switch is invisible to call sites; on the new side of the gate include
+the header that now provides it (for `cg::reduce`, the one named above). Then build on the
+current release. (llm.c: a shim `cooperative_groups/reduce.h` built and passed on ROCm 7.2.1 and
+failed to compile `test_gpt2fp32cu` on ROCm 10.1.0; gated as above, it built and passed on both.)
+
 **An uninitialised header-only submodule fails as a HIP error, not as a missing file.**
 When a project bundles GLM (or Eigen, or any header-only library) as a submodule and the
 clone did not recurse, the `-I` path still exists and is simply empty, so the compiler falls
