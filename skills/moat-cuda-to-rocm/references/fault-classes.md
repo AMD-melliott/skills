@@ -994,6 +994,27 @@ constant-rate counter on every AMD GPU, and convert the duration with
 2^20 as this bug. (LichtFeld-Studio: tensor hardening `GateStream` delay kernel; FLAMEGPU2,
 found in a test probe.)
 
+**libcu++ -> libhipcxx, and two atomic defects in it.** `ROCm/libhipcxx` keeps the
+`cuda::`/`cuda::std::` spelling, so CCCL-heavy code (`cuda::atomic_ref`, `cuda::stream_ref`,
+`cuda::std::span`) ports without renames. ROCm 10.1 bundles CCCL 3.0.2 as
+`/opt/rocm/core-10.1/include/hipccl`, and ROCm 7.2.1 bundles none; newer CCCL levels come from
+the `amd-develop` branch. Two defects in `cuda/std/__atomic/functions/atomic_hip_generated.h`,
+both reproduced on gfx942 with ROCm 7.2.1 and 10.1.0 (amd-develop `832dc407f`, and the bundled
+3.0.2 for the first):
+- The block- and device-scope `__atomic_compare_exchange_cuda` ignores its weak flag and always
+  calls `__hip_atomic_compare_exchange_weak`. A 1- or 2-byte CAS is a 32-bit CAS on the
+  containing word, so the weak form also fails when a NEIGHBOURING byte changes. With each
+  thread flipping only its own byte, `compare_exchange_strong` failed 75% (1 byte) and 50%
+  (2 bytes) of the time, while the raw strong builtin failed 0 times. Code that reads a failed CAS
+  on an empty slot as "taken" loses or duplicates keys (cuCollections: 11 failing
+  `static_set<int8_t/int16_t>` cases).
+- `atomic_ref<T>` on an 8-byte type with 4-byte `alignof` (`struct {int a, b;}`, aligned to 8
+  by the caller as `atomic_ref` requires) fails to link with `unsupported cmpxchg: instruction
+  alignment 4 is smaller than the required 8-byte alignment`. NVIDIA's libcu++ compiles it.
+Both fixes are small header patches: honour the weak flag, and view the object through a
+`sizeof(T)`-aligned typedef. Carry them in the port and tell the user. Validate 1-, 2- and 8-byte
+atomic paths explicitly, because 4-byte tests pass either way.
+
 **Library swaps.** cuBLAS -> hipBLAS, cuFFT -> hipFFT, cuRAND -> hipRAND, cuSPARSE ->
 hipSPARSE, cuDNN -> MIOpen, Thrust/CUB -> rocThrust/hipCUB. Mostly 1:1; watch handle types
 and a few signature differences such as the hipBLAS v2 enums.
