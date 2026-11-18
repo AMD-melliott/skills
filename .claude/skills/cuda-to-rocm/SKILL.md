@@ -62,6 +62,21 @@ to inherit. Cheapest high-signal check first: grep the upstream's own docs for
 `amd|rocm|hip|gfx[0-9]`, because reference repos routinely link platform forks.
 `references/assess-existing-support.md`.
 
+Running the grep is not the check; acting on what it prints is. Before writing any port
+code, write the verdict down (in the port notes or summary): each AMD effort found, with its
+URL, authoritative or community, and what that means for the work -- build on it, port from
+scratch using it only as a hint, or skip. Then also run the PR search and a web search from
+the reference. A README that LINKS a platform fork, rather than merging one, tells you
+upstream may not take a platform PR, which changes where the result should go even when
+you port from scratch.
+
+**If the verdict names an authoritative AMD port and you were asked to port, stop and ask
+before writing port code.** Put three options to the user: contribute what the AMD port lacks
+to it; validate the AMD port as it is; or port current upstream anyway, saying why the AMD
+port cannot serve. A gap in the AMD port (it lags upstream, it lacks a feature) is the thing
+to contribute, not a reason for a parallel port. With no one to ask, take one of the first
+two and write the gap up.
+
 Some CUDA has no HIP analogue to translate INTO, so hipify succeeds at doing nothing and the port looks small. CUTLASS reimplements against Composable Kernel; CuTe has a real structural correspondence in AMD's FlyDSL, whose layout algebra is modelled on it. That is a reimplementation with a defined target, not the same verdict as "no target exists" -- and both get written off as "not portable" unless you say which. `references/no-hip-equivalent.md`.
 
 ## Fault classes -- the index

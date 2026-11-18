@@ -7,6 +7,8 @@ A "port" is not always a fresh CUDA-to-HIP conversion, and an existing AMD effor
 
 When a designated AMD effort already exists, contribute your DIFFERENTIATOR to it (for gsplat: the RDNA wave32 + Windows + gfx90a coverage the MI300X-only effort lacks), not a parallel upstream PR.
 
+Finding the AMD effort is not where this goes wrong; acting on it is. Two independent ports of NVIDIA cuCollections both found ROCm/hipCollections (part of ROCm-DS), recorded it as AMD's own, and built a parallel port anyway, reasoning that it lagged upstream (no HyperLogLog, no `dynamic_map`). That lag was the differentiator to contribute. So when the classification below lands on "skip" or "validate and improve" and the request was "port it", stop and put the choice to the user rather than resolving it by porting.
+
 Then classify what you found:
 - Mature ROCm/HIP support upstream, OR a mature separate AMD project (ROCm-DS-style) -> skip; do not duplicate AMD's own work.
 - AMD supported only via OpenCL, Vulkan, or SYCL with no HIP path -> a ROCm/HIP port of the CUDA code is still valuable.
