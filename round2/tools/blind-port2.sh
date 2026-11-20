@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Round-2 blind port. Usage: blind-port2.sh <arm: A|B> <label> <project-git-url> <commit> [request-file]
+# Round-2 blind port. Usage: blind-port2.sh <arm: A|B|Bdi|A5|B4r> <label> <project-git-url> <commit> [request-file]
 # - Fresh clone of the project at <commit> into round2/projects/<label>.
 # - Installs the arm's skill as ~/.claude/skills/cuda-to-rocm (same name for both arms).
 # - Strips GitHub/Docker/HF credentials from the agent's environment and adds deny rules, so an
@@ -32,8 +32,8 @@ ln -sfn "$SKILL_SRC" ~/.claude/skills/cuda-to-rocm
 cd "$P" && date -Is > "$T/start"
 env -u GH_TOKEN -u GITHUB_TOKEN -u SSH_AUTH_SOCK -u HF_TOKEN -u HUGGING_FACE_HUB_TOKEN \
   GH_CONFIG_DIR=$R2/iso/gh DOCKER_CONFIG=$R2/iso/docker HF_HOME=$R2/iso/hf \
-  GIT_CONFIG_GLOBAL=$R2/iso/gitconfig GIT_SSH_COMMAND=/bin/false GIT_TERMINAL_PROMPT=0 \
-  timeout 21600 claude -p --settings $R2/blind-settings-r2.json --strict-mcp-config \
+  GIT_CONFIG_GLOBAL=$R2/iso/gitconfig CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 GIT_SSH_COMMAND=/bin/false GIT_TERMINAL_PROMPT=0 \
+  timeout 21600 claude -p --settings $R2/blind-settings-r2b.json --max-budget-usd ${MAX_BUDGET:-25} --strict-mcp-config \
   --disallowedTools "Skill(hf-cli)" "Skill(git-status-review)" \
   --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Skill,WebSearch,WebFetch,TodoWrite" \
   --output-format stream-json --verbose < "$T/prompt.txt" > "$T/transcript.jsonl" 2> "$T/stderr.txt"

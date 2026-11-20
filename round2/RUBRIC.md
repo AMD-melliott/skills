@@ -68,3 +68,37 @@ Not edited after that; any later note goes in a dated addendum below the freeze 
   building, and the would-be-committed build output is recorded as a separate packaging defect.
 - Arm-B runs that stopped to ask (all four in phase 1) delivered nothing: V1-V4 and Q are N/A for them.
 - 2026-11-19: stock ROCm images lack git, which upstream cuCollections' CPM/rapids-cmake needs; v4.sh installs git in the container for cuCollections (a prerequisite of upstream, not of the port). First attempt logs kept in v4/attempt1-nogit/.
+
+---
+## Addendum 2026-11-19, follow-up screens (written before any follow-up run; Matt approved the plan 2026-11-19)
+
+**Shared baseline.** The phase-1 arm-A runs (cuco-A1, cuco-A2, nccl-A1, nccl-A2) are the control for both
+screens below; arm A is not re-run. Same skill tree (`496c4873`), project commits, request and env notes.
+Harness differences from phase 1, both outside the skill: Claude Code auto-memory is off
+(`autoMemoryEnabled: false` and `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`; nccl-A2 used it in phase 1), and each
+run has `--max-budget-usd` = min(25, room left under the cap). Phase-1 harness kept as
+`tools/blind-port2-phase1.sh`. Runs are sequential on GPU 7 only. The baseline is from a few hours
+earlier on the same model and harness; time drift is an accepted, noted confound.
+
+**Screen P5: PR 5 alone.** Arm A5 = arm A + PR 5 (`7b89b0a4`), plus a test-only commit replacing the
+project names in PR 5's text (the same substitutions as `e8dec6f5`, restricted to PR 5's files):
+`6f40980d`, tree `f5d69a4a`. A5 differs from the phase-1 Bdi tree only by PR 4. Runs: cuCollections
+@ 403526d, cuco-A5-1 and cuco-A5-2.
+- Primary measure: **V3** (A: 0/2 on cuCollections). Effect = A5 2/2.
+- Why not V4: cuco-A1 already passed V4, so under the decision rule ("neither A run matches") V4 cannot
+  show an effect on this baseline. V4 is reported (A: 1/2); A5 worse than 1/2 is a regression to report.
+- Also reported: V1 (matrix before first build; A 0/2), V2, Q, the packaging defects (ignored files,
+  committed build output), cost and turns.
+
+**Screen P4r: PR 4 revised.** Arm B4r = arm A + the revised PR 4 (prepared by a separate session from
+`PR4-REVISION-BRIEF.md`, no PR 5), plus the same kind of test-only de-identification. SHAs recorded here
+before its first run. Runs: cuco-B4r-1, cuco-B4r-2, then nccl-B4r-1, nccl-B4r-2 (budget permitting).
+- Primary: **E3** (A 0/4), with path `contribute` or `validate` counting YES and `stop` counting NO for
+  this screen (the revision exists to remove the stop). Effect = B4r YES in both runs of a project.
+- Co-primary, **D (delivered)**: the run's deliverable for its chosen path passes V4 (for a contribution:
+  my fresh rebuild of the AMD port clone plus its commits, its documented commands; for a validation: its
+  documented build-and-test commands reproduce its reported result). A's V4 is the comparison (cuco 1/2,
+  nccl 2/2). B4r passing E3 but failing D in both runs is reported as "no working default yet".
+- Reported: E1, E2, V1-V3, Q, cost, turns.
+
+**Cap.** Stop before any run where total + 20 would cross $150; each run's hard limit is above.
