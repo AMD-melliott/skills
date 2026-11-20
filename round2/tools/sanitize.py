@@ -6,8 +6,8 @@ arm/branch identifiers. Step numbers let a scorer judge ordering (verdict before
 before first build)."""
 import json, re, sys
 
-SKILL_PATH = re.compile(r'(tool-results/|\.claude/skills/cuda-to-rocm|round2/arms|armBdi|armA\b|armB\b|/arms/|skills-held)')
-SCRUB = [(re.compile(r'round2/arms/arm\w+'), '<skill-dir>'), (re.compile(r'\barm ?(A|B|Bdi)\b'), 'arm ?'),
+SKILL_PATH = re.compile(r'(tool-results/|\.claude/skills/cuda-to-rocm|round2/arms|armB4r|armBdi|armA5|armA\b|armB\b|/arms/|skills-held|pr4-rev)')
+SCRUB = [(re.compile(r'round2/arms/arm\w+'), '<skill-dir>'), (re.compile(r'\barm ?(A5|B4r-di|B4r|A|B|Bdi)\b'), 'arm ?'),
          (re.compile(r'/home/melliott/\.claude/skills/cuda-to-rocm'), '<skill-dir>'),
          (re.compile(r'round2/(armA|armB|armB-di)'), '<branch>')]
 TR = 1500  # chars kept from each tool result

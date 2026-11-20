@@ -102,3 +102,9 @@ before its first run. Runs: cuco-B4r-1, cuco-B4r-2, then nccl-B4r-1, nccl-B4r-2 
 - Reported: E1, E2, V1-V3, Q, cost, turns.
 
 **Cap.** Stop before any run where total + 20 would cross $150; each run's hard limit is above.
+
+**P4r arm identity (recorded 2026-11-19 21:20, before its first run).** Revised PR 4 = `b7c7b1e2`
+(on arm A `c7628017`); test-only de-identification = `79b94a33`, tree `ea3eb02b`, installed from
+`arms/armB4r-di`. Gates (skills, harness-adapters, jargon) pass; report in `PR4-REVISION.md`. The diff
+against arm A names none of cuCollections, hipCollections, nccl-tests, rccl-tests, HyperLogLog or
+dynamic_map. Run order: cuco-B4r-1, cuco-B4r-2, nccl-B4r-1, nccl-B4r-2, after screen P5 completes.
