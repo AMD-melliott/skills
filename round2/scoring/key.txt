@@ -1,0 +1,8 @@
+cuco-A1 run-ca8e97
+cuco-B1 run-e6ad93
+cuco-A2 run-bd7d43
+cuco-B2 run-3ac2b6
+nccl-A1 run-4d9b56
+nccl-B1 run-ebbba3
+nccl-A2 run-40329a
+nccl-B2 run-bb5733

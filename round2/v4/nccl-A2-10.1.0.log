@@ -1,0 +1,119 @@
+deliverable files changed vs upstream: 13
+removed untracked build output: build-hip
+image=rocm/dev-ubuntu-24.04:10.1.0-full
+cmd=make -j HIP=1 BUILDDIR=build-hip-10.1 && SELF_TEST=none hip/run_tests.sh build-hip-10.1
+2026-11-19T18:00:37-08:00
+make -C src build BUILDDIR=/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1
+make[1]: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/src'
+make[2]: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/os'
+Compiling  timer.cc                            > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/timer.o
+Compiling  linux.cc                            > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/os/linux.o
+Compiling /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/verifiable/verifiable.o
+Compiling  all_reduce.cu                       > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/all_reduce.o
+Compiling  common.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/common.o
+Compiling  all_gather.cu                       > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/all_gather.o
+Compiling  broadcast.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/broadcast.o
+Compiling  reduce_scatter.cu                   > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/reduce_scatter.o
+Compiling  reduce.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/reduce.o
+Compiling  alltoall.cu                         > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/alltoall.o
+Compiling  alltoallv.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/alltoallv.o
+Compiling  scatter.cu                          > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/scatter.o
+Compiling  gather.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/gather.o
+Compiling  sendrecv.cu                         > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/sendrecv.o
+Compiling  hypercube.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/hypercube.o
+Creating archive /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/os/linux.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/os/libnccl_test_os.a
+Compiling  util.cu                             > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/util.o
+make[2]: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/os'
+common.cu:246:49: warning: 'sscanf' may overflow; destination buffer in argument 4 has size 1, but the corresponding specifier may require size 2 [-Wfortify-source]
+  246 |     int count = sscanf(value, "%lf %1s", &size, &size_lit);
+      |                                                 ^
+common.cu:490:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  490 |   cudaFreeHost(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/hip/cuda_to_hip.h:61:45: note: expanded from macro 'cudaFreeHost'
+   61 | #define cudaFreeHost                        hipHostFree
+      |                                             ^
+common.cu:986:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  986 |   cudaMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/hip/cuda_to_hip.h:62:45: note: expanded from macro 'cudaMemGetInfo'
+   62 | #define cudaMemGetInfo                      hipMemGetInfo
+      |                                             ^
+common.cu:1965:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1965 |   cudaDeviceReset();
+      |   ^~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/hip/cuda_to_hip.h:50:45: note: expanded from macro 'cudaDeviceReset'
+   50 | #define cudaDeviceReset                     hipDeviceReset
+      |                                             ^
+4 warnings generated when compiling for gfx942.
+common.cu:246:49: warning: 'sscanf' may overflow; destination buffer in argument 4 has size 1, but the corresponding specifier may require size 2 [-Wfortify-source]
+  246 |     int count = sscanf(value, "%lf %1s", &size, &size_lit);
+      |                                                 ^
+common.cu:490:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  490 |   cudaFreeHost(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/hip/cuda_to_hip.h:61:45: note: expanded from macro 'cudaFreeHost'
+   61 | #define cudaFreeHost                        hipHostFree
+      |                                             ^
+common.cu:986:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  986 |   cudaMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/hip/cuda_to_hip.h:62:45: note: expanded from macro 'cudaMemGetInfo'
+   62 | #define cudaMemGetInfo                      hipMemGetInfo
+      |                                             ^
+common.cu:1965:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1965 |   cudaDeviceReset();
+      |   ^~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/hip/cuda_to_hip.h:50:45: note: expanded from macro 'cudaDeviceReset'
+   50 | #define cudaDeviceReset                     hipDeviceReset
+      |                                             ^
+4 warnings generated when compiling for host.
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/all_reduce.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/all_reduce_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/all_gather.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/all_gather_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/broadcast.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/broadcast_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/reduce_scatter.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/reduce_scatter_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/reduce.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/reduce_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/alltoall.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/alltoall_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/alltoallv.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/alltoallv_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/scatter.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/scatter_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/gather.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/gather_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/hypercube.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/hypercube_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/sendrecv.o > /data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/build-hip-10.1/sendrecv_perf
+make[1]: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A2-10.1.0/src'
+PASS  all_reduce all types/ops
+PASS  all_reduce graph mode
+PASS  all_reduce blocking+unaligned
+PASS  all_gather all types/ops
+PASS  all_gather graph mode
+PASS  all_gather blocking+unaligned
+PASS  broadcast all types/ops
+PASS  broadcast graph mode
+PASS  broadcast blocking+unaligned
+PASS  reduce_scatter all types/ops
+PASS  reduce_scatter graph mode
+PASS  reduce_scatter blocking+unaligned
+PASS  reduce all types/ops
+PASS  reduce graph mode
+PASS  reduce blocking+unaligned
+PASS  alltoall all types/ops
+PASS  alltoall graph mode
+PASS  alltoall blocking+unaligned
+PASS  alltoallv all types/ops
+PASS  alltoallv graph mode
+PASS  alltoallv blocking+unaligned
+PASS  scatter all types/ops
+PASS  scatter graph mode
+PASS  scatter blocking+unaligned
+PASS  gather all types/ops
+PASS  gather graph mode
+PASS  gather blocking+unaligned
+PASS  sendrecv all types/ops
+PASS  sendrecv graph mode
+PASS  sendrecv blocking+unaligned
+PASS  hypercube all types/ops
+PASS  hypercube graph mode
+PASS  hypercube blocking+unaligned
+PASS  verifiable negative test
+failures: 0
+RC=0
+2026-11-19T18:02:20-08:00

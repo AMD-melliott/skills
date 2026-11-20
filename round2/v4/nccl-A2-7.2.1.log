@@ -1,0 +1,171 @@
+deliverable files changed vs upstream: 13
+removed untracked build output: build-hip
+image=rocm/dev-ubuntu-24.04:7.2.1-complete
+cmd=make -j HIP=1 BUILDDIR=build-hip && make -C verifiable HIP=1 && hip/run_tests.sh build-hip
+2026-11-19T17:56:43-08:00
+make -C src build BUILDDIR=/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip
+make[1]: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/src'
+make[2]: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/os'
+Compiling  timer.cc                            > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/timer.o
+Compiling /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/verifiable/verifiable.o
+Compiling  all_reduce.cu                       > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/all_reduce.o
+Compiling  linux.cc                            > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/os/linux.o
+Compiling  common.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/common.o
+Compiling  all_gather.cu                       > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/all_gather.o
+Compiling  broadcast.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/broadcast.o
+Compiling  reduce_scatter.cu                   > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/reduce_scatter.o
+Compiling  reduce.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/reduce.o
+Compiling  alltoall.cu                         > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/alltoall.o
+Compiling  alltoallv.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/alltoallv.o
+Compiling  scatter.cu                          > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/scatter.o
+Compiling  gather.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/gather.o
+Compiling  sendrecv.cu                         > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/sendrecv.o
+Compiling  hypercube.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/hypercube.o
+Creating archive /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/os/linux.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/os/libnccl_test_os.a
+Compiling  util.cu                             > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/util.o
+make[2]: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/os'
+common.cu:246:49: warning: 'sscanf' may overflow; destination buffer in argument 4 has size 1, but the corresponding specifier may require size 2 [-Wfortify-source]
+  246 |     int count = sscanf(value, "%lf %1s", &size, &size_lit);
+      |                                                 ^
+common.cu:490:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  490 |   cudaFreeHost(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:61:45: note: expanded from macro 'cudaFreeHost'
+   61 | #define cudaFreeHost                        hipHostFree
+      |                                             ^
+common.cu:986:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  986 |   cudaMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:62:45: note: expanded from macro 'cudaMemGetInfo'
+   62 | #define cudaMemGetInfo                      hipMemGetInfo
+      |                                             ^
+alltoall.cu:14:14: warning: weak identifier 'ncclAlltoAll' never declared
+   14 | #pragma weak ncclAlltoAll
+      |              ^
+common.cu:1965:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1965 |   cudaDeviceReset();
+      |   ^~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:50:45: note: expanded from macro 'cudaDeviceReset'
+   50 | #define cudaDeviceReset                     hipDeviceReset
+      |                                             ^
+1 warning generated when compiling for gfx942.
+common.cu:26:14: warning: weak identifier 'ncclDevCommCreate' never declared
+   26 | #pragma weak ncclDevCommCreate
+      |              ^
+common.cu:27:14: warning: weak identifier 'ncclDevCommDestroy' never declared
+   27 | #pragma weak ncclDevCommDestroy
+      |              ^
+6 warnings generated when compiling for gfx942.
+alltoall.cu:14:14: warning: weak identifier 'ncclAlltoAll' never declared
+   14 | #pragma weak ncclAlltoAll
+      |              ^
+1 warning generated when compiling for host.
+common.cu:246:49: warning: 'sscanf' may overflow; destination buffer in argument 4 has size 1, but the corresponding specifier may require size 2 [-Wfortify-source]
+  246 |     int count = sscanf(value, "%lf %1s", &size, &size_lit);
+      |                                                 ^
+common.cu:490:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  490 |   cudaFreeHost(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:61:45: note: expanded from macro 'cudaFreeHost'
+   61 | #define cudaFreeHost                        hipHostFree
+      |                                             ^
+common.cu:986:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  986 |   cudaMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:62:45: note: expanded from macro 'cudaMemGetInfo'
+   62 | #define cudaMemGetInfo                      hipMemGetInfo
+      |                                             ^
+common.cu:1965:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1965 |   cudaDeviceReset();
+      |   ^~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:50:45: note: expanded from macro 'cudaDeviceReset'
+   50 | #define cudaDeviceReset                     hipDeviceReset
+      |                                             ^
+common.cu:26:14: warning: weak identifier 'ncclDevCommCreate' never declared
+   26 | #pragma weak ncclDevCommCreate
+      |              ^
+common.cu:27:14: warning: weak identifier 'ncclDevCommDestroy' never declared
+   27 | #pragma weak ncclDevCommDestroy
+      |              ^
+6 warnings generated when compiling for host.
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/all_reduce.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/all_reduce_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/all_gather.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/all_gather_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/broadcast.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/broadcast_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/reduce_scatter.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/reduce_scatter_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/reduce.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/reduce_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/alltoall.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/alltoall_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/alltoallv.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/alltoallv_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/scatter.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/scatter_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/sendrecv.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/sendrecv_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/hypercube.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/hypercube_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/gather.o > /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build-hip/gather_perf
+make[1]: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/src'
+make: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/verifiable'
+Compiling /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build/verifiable/verifiable.o
+Creating DSO /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build/verifiable/libverifiable.so
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/build/verifiable/self_test
+main.cu:10:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   10 |   cudaSetDevice(0);
+      |   ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:46:45: note: expanded from macro 'cudaSetDevice'
+   46 | #define cudaSetDevice                       hipSetDevice
+      |                                             ^
+main.cu:12:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   12 |   cudaDeviceSynchronize();
+      |   ^~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:49:45: note: expanded from macro 'cudaDeviceSynchronize'
+   49 | #define cudaDeviceSynchronize               hipDeviceSynchronize
+      |                                             ^
+2 warnings generated when compiling for gfx942.
+main.cu:10:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   10 |   cudaSetDevice(0);
+      |   ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:46:45: note: expanded from macro 'cudaSetDevice'
+   46 | #define cudaSetDevice                       hipSetDevice
+      |                                             ^
+main.cu:12:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   12 |   cudaDeviceSynchronize();
+      |   ^~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/hip/cuda_to_hip.h:49:45: note: expanded from macro 'cudaDeviceSynchronize'
+   49 | #define cudaDeviceSynchronize               hipDeviceSynchronize
+      |                                             ^
+2 warnings generated when compiling for host.
+make: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A2-7.2.1/verifiable'
+PASS  all_reduce all types/ops
+PASS  all_reduce graph mode
+PASS  all_reduce blocking+unaligned
+PASS  all_gather all types/ops
+PASS  all_gather graph mode
+PASS  all_gather blocking+unaligned
+PASS  broadcast all types/ops
+PASS  broadcast graph mode
+PASS  broadcast blocking+unaligned
+PASS  reduce_scatter all types/ops
+PASS  reduce_scatter graph mode
+PASS  reduce_scatter blocking+unaligned
+PASS  reduce all types/ops
+PASS  reduce graph mode
+PASS  reduce blocking+unaligned
+PASS  alltoall all types/ops
+PASS  alltoall graph mode
+PASS  alltoall blocking+unaligned
+PASS  alltoallv all types/ops
+PASS  alltoallv graph mode
+PASS  alltoallv blocking+unaligned
+PASS  scatter all types/ops
+PASS  scatter graph mode
+PASS  scatter blocking+unaligned
+PASS  gather all types/ops
+PASS  gather graph mode
+PASS  gather blocking+unaligned
+PASS  sendrecv all types/ops
+PASS  sendrecv graph mode
+PASS  sendrecv blocking+unaligned
+PASS  hypercube all types/ops
+PASS  hypercube graph mode
+PASS  hypercube blocking+unaligned
+INFO  verifiable self_test: exit 0, 185914 mismatch lines (see hip/run_tests.sh)
+PASS  verifiable negative test
+failures: 0
+RC=0
+2026-11-19T18:00:36-08:00

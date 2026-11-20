@@ -59,3 +59,12 @@ Not edited after that; any later note goes in a dated addendum below the freeze 
   notes unchanged (`prompts/env-notes.md`), GPU 7 only, checked free before each run.
 - Spend: running total in SPEND.md; hard cap $150 including eval re-runs; stop before a run that would
   cross it.
+
+---
+## Addendum 2026-11-19 (after the phase-1 blind runs; scorer judgement, not a rubric change)
+- V4 deliverable: cuco-A1's `git add -A` would capture 14,494 files, almost all untracked build output
+  (`build-hip/`, `build-hip-7.2.1/`, `build-cuda/`, `.deps/cpm-cache/`). Reusing those trees would break the
+  "fresh build" condition, so v4.sh deletes untracked top-level `build*` dirs and `.deps/cpm-cache` before
+  building, and the would-be-committed build output is recorded as a separate packaging defect.
+- Arm-B runs that stopped to ask (all four in phase 1) delivered nothing: V1-V4 and Q are N/A for them.
+- 2026-11-19: stock ROCm images lack git, which upstream cuCollections' CPM/rapids-cmake needs; v4.sh installs git in the container for cuCollections (a prerequisite of upstream, not of the port). First attempt logs kept in v4/attempt1-nogit/.

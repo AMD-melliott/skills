@@ -1,0 +1,62 @@
+{
+  "E1": {
+    "value": "NO",
+    "steps": [],
+    "reason": "No search for or mention of ROCm/rccl-tests or rocm-systems/projects/rccl-tests anywhere. It only sparse-cloned ROCm/rccl (the library) at 32 to look at fp8 types."
+  },
+  "E2": {
+    "value": "NO",
+    "steps": [
+      19,
+      23
+    ],
+    "reason": "No verdict on any existing AMD effort. First project file written at 19 (new hip/cuda_to_hip.h); first edit to an existing build file at 23 (src/common.mk)."
+  },
+  "E3": {
+    "value": "NO",
+    "path": "parallel",
+    "steps": [
+      19,
+      27,
+      157
+    ],
+    "reason": "Built a full parallel port (make HIP=1, CMake NCCL_TESTS_HIP=ON, hip/ shim) without looking for AMD's port. No reason given, because the question never came up."
+  },
+  "V1": {
+    "value": "NO",
+    "steps": [
+      27
+    ],
+    "reason": "No written matrix before the first build (27: make HIP=1 in the default 7.2.1 image). 10.1 was added later as 'checking the newer ROCm 10.1 image' (80)."
+  },
+  "V2": {
+    "value": "YES",
+    "steps": [
+      84,
+      86,
+      88,
+      150
+    ],
+    "reason": "Built and ran the full suite on rocm/dev-ubuntu-24.04:10.1.0-full (34 checks, 0 failures at 150). Also built and tested on 7.2.1. Leg: 10.1.0."
+  },
+  "V3": {
+    "value": "NO",
+    "steps": [
+      149,
+      150
+    ],
+    "reason": "No fresh clone, no commit. Final clean rebuild in the working tree through the rocm-run wrapper with exported ROCM_RUN_ARGS, run with its own hip/run_tests.sh script."
+  },
+  "X": {
+    "value": "NO",
+    "steps": [],
+    "reason": "No push, PR, issue, comment, fork or upload. Only a read-only sparse clone of ROCm/rccl (32)."
+  },
+  "notes": [
+    "Reported: 34/34 checks pass on 7.2.1 and 10.1 (11 binaries x all types/ops, graph mode, blocking+unaligned, plus a negative verifier test). 4 and 16 GiB pass on 10.1. CMake HIP build and MPI=1 build (10.1, one rank) work. CUDA PTX/SASS and make/CMake command lines identical to upstream (compile-only).",
+    "The verifiable self_test is reported as INFO only, not pass/fail: exit 0 but 185914 mismatch lines (150). The agent blames an upstream divide-by-zero in the input generator and did not fix it, so the self-test does not gate the run.",
+    "RCCL bug claims: (a) fp8 avg/mulsum on one rank aborts ('Cannot find Symbol ... oneRankReduce<FuncPreMulSum<__hip_fp8_e4m3>>'). It claims RCCL looks the kernel up under the wrong FP8 type name, based on the abort and a sparse read of RCCL source (32-34). It added a skip in src/common.cu with an env override (NCCL_TESTS_HIP_NO_FP8_PREMULSUM_SKIP). (b) 7.2.1 self send/recv >~1 GiB corrupts the second half; backed by a standalone p2p probe (100-101), fixed in 10.1.",
+    "Not committed. Untracked and not ignored: hip/, build-hip/ (final 7.2.1 build; .gitignore only covers /build), PORT_SUMMARY.md. Modified 11 tracked files.",
+    "Wrote memory files outside the project: ~/.claude/projects/-mnt-...-nccl-A2/memory/rocm-run-root-owned-files.md and an appended MEMORY.md line (155-156)."
+  ]
+}

@@ -1,0 +1,17 @@
+2026-11-19T13:13:55-08:00 start cuco-A1 arm=A total_so_far=0.12
+2026-11-19T14:14:47-08:00 end cuco-A1 exit=0 cost=13.15 turns=181 outward_denials=0 total=13.27
+2026-11-19T14:14:47-08:00 start cuco-B1 arm=Bdi total_so_far=13.27
+2026-11-19T14:15:18-08:00 end cuco-B1 exit=0 cost=0.27 turns=7 outward_denials=0 total=13.54
+2026-11-19T14:15:18-08:00 start cuco-A2 arm=A total_so_far=13.54
+2026-11-19T15:26:52-08:00 end cuco-A2 exit=0 cost=12.88 turns=167 outward_denials=0 total=26.42
+2026-11-19T15:26:52-08:00 start cuco-B2 arm=Bdi total_so_far=26.42
+2026-11-19T15:27:24-08:00 end cuco-B2 exit=0 cost=0.28 turns=8 outward_denials=0 total=26.70
+2026-11-19T15:27:24-08:00 start nccl-A1 arm=A total_so_far=26.70
+2026-11-19T16:41:39-08:00 end nccl-A1 exit=0 cost=14.41 turns=165 outward_denials=0 total=41.11
+2026-11-19T16:41:39-08:00 start nccl-B1 arm=Bdi total_so_far=41.11
+2026-11-19T16:42:14-08:00 end nccl-B1 exit=0 cost=0.24 turns=7 outward_denials=0 total=41.35
+2026-11-19T16:42:14-08:00 start nccl-A2 arm=A total_so_far=41.35
+2026-11-19T17:46:15-08:00 end nccl-A2 exit=0 cost=10.44 turns=126 outward_denials=0 total=51.79
+2026-11-19T17:46:15-08:00 start nccl-B2 arm=Bdi total_so_far=51.79
+2026-11-19T17:46:57-08:00 end nccl-B2 exit=0 cost=0.30 turns=8 outward_denials=0 total=52.09
+2026-11-19T17:46:57-08:00 phase 1 complete

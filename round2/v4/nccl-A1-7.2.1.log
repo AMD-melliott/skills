@@ -1,0 +1,198 @@
+deliverable files changed vs upstream: 18
+image=rocm/dev-ubuntu-24.04:7.2.1-complete
+cmd=make -j ROCM=1 GPU_TARGETS=gfx942 && make -C verifiable ROCM=1 GPU_TARGETS=gfx942 && tools/run_single_gpu_checks.sh build 64M
+2026-11-19T17:49:02-08:00
+make -C src build BUILDDIR=/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build
+make[1]: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/src'
+make[2]: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/os'
+Compiling  timer.cc                            > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/timer.o
+Compiling /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/verifiable/verifiable.o
+Compiling  all_reduce.cu                       > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/all_reduce.o
+Compiling  linux.cc                            > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/os/linux.o
+Compiling  common.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/common.o
+Compiling  all_gather.cu                       > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/all_gather.o
+Compiling  broadcast.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/broadcast.o
+Compiling  reduce_scatter.cu                   > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/reduce_scatter.o
+Compiling  reduce.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/reduce.o
+Compiling  alltoall.cu                         > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/alltoall.o
+Compiling  alltoallv.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/alltoallv.o
+Compiling  scatter.cu                          > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/scatter.o
+Compiling  gather.cu                           > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/gather.o
+Compiling  sendrecv.cu                         > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/sendrecv.o
+Compiling  hypercube.cu                        > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/hypercube.o
+Creating archive /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/os/linux.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/os/libnccl_test_os.a
+make[2]: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/os'
+Compiling  util.cu                             > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/util.o
+common.cu:246:49: warning: 'sscanf' may overflow; destination buffer in argument 4 has size 1, but the corresponding specifier may require size 2 [-Wfortify-source]
+  246 |     int count = sscanf(value, "%lf %1s", &size, &size_lit);
+      |                                                 ^
+common.cu:490:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  490 |   cudaFreeHost(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:60:43: note: expanded from macro 'cudaFreeHost'
+   60 | #define cudaFreeHost                      hipHostFree
+      |                                           ^
+common.cu:985:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  985 |   cudaMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:61:43: note: expanded from macro 'cudaMemGetInfo'
+   61 | #define cudaMemGetInfo                    hipMemGetInfo
+      |                                           ^
+alltoall.cu:14:14: warning: weak identifier 'ncclAlltoAll' never declared
+   14 | #pragma weak ncclAlltoAll
+      |              ^
+1 warning generated when compiling for gfx942.
+common.cu:1964:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1964 |   cudaDeviceReset();
+      |   ^~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:54:43: note: expanded from macro 'cudaDeviceReset'
+   54 | #define cudaDeviceReset                   hipDeviceReset
+      |                                           ^
+common.cu:26:14: warning: weak identifier 'ncclDevCommCreate' never declared
+   26 | #pragma weak ncclDevCommCreate
+      |              ^
+common.cu:27:14: warning: weak identifier 'ncclDevCommDestroy' never declared
+   27 | #pragma weak ncclDevCommDestroy
+      |              ^
+6 warnings generated when compiling for gfx942.
+alltoall.cu:14:14: warning: weak identifier 'ncclAlltoAll' never declared
+   14 | #pragma weak ncclAlltoAll
+      |              ^
+1 warning generated when compiling for host.
+common.cu:246:49: warning: 'sscanf' may overflow; destination buffer in argument 4 has size 1, but the corresponding specifier may require size 2 [-Wfortify-source]
+  246 |     int count = sscanf(value, "%lf %1s", &size, &size_lit);
+      |                                                 ^
+common.cu:490:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  490 |   cudaFreeHost(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:60:43: note: expanded from macro 'cudaFreeHost'
+   60 | #define cudaFreeHost                      hipHostFree
+      |                                           ^
+common.cu:985:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  985 |   cudaMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:61:43: note: expanded from macro 'cudaMemGetInfo'
+   61 | #define cudaMemGetInfo                    hipMemGetInfo
+      |                                           ^
+common.cu:1964:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1964 |   cudaDeviceReset();
+      |   ^~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:54:43: note: expanded from macro 'cudaDeviceReset'
+   54 | #define cudaDeviceReset                   hipDeviceReset
+      |                                           ^
+common.cu:26:14: warning: weak identifier 'ncclDevCommCreate' never declared
+   26 | #pragma weak ncclDevCommCreate
+      |              ^
+common.cu:27:14: warning: weak identifier 'ncclDevCommDestroy' never declared
+   27 | #pragma weak ncclDevCommDestroy
+      |              ^
+6 warnings generated when compiling for host.
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/all_reduce.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/all_reduce_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/all_gather.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/all_gather_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/broadcast.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/broadcast_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/reduce_scatter.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/reduce_scatter_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/reduce.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/reduce_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/alltoall.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/alltoall_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/alltoallv.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/alltoallv_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/scatter.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/scatter_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/gather.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/gather_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/sendrecv.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/sendrecv_perf
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/hypercube.o > /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/hypercube_perf
+make[1]: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/src'
+make: Entering directory '/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/verifiable'
+Creating DSO /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/verifiable/libverifiable.so
+Linking  /data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/build/verifiable/self_test
+main.cu:10:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   10 |   cudaSetDevice(0);
+      |   ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:47:43: note: expanded from macro 'cudaSetDevice'
+   47 | #define cudaSetDevice                     hipSetDevice
+      |                                           ^
+main.cu:12:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   12 |   cudaDeviceSynchronize();
+      |   ^~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:53:43: note: expanded from macro 'cudaDeviceSynchronize'
+   53 | #define cudaDeviceSynchronize             hipDeviceSynchronize
+      |                                           ^
+2 warnings generated when compiling for gfx942.
+main.cu:10:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   10 |   cudaSetDevice(0);
+      |   ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:47:43: note: expanded from macro 'cudaSetDevice'
+   47 | #define cudaSetDevice                     hipSetDevice
+      |                                           ^
+main.cu:12:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   12 |   cudaDeviceSynchronize();
+      |   ^~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/hip_compat/cuda_to_hip.h:53:43: note: expanded from macro 'cudaDeviceSynchronize'
+   53 | #define cudaDeviceSynchronize             hipDeviceSynchronize
+      |                                           ^
+2 warnings generated when compiling for host.
+make: Leaving directory '/data/melliott/moat-testing/round2/v4/nccl-A1-7.2.1/verifiable'
+PASS verifiable self_test
+tools/run_single_gpu_checks.sh: line 50:   756 Aborted                 (core dumped) "$bin" -g 1 -b 8 -e "$MAXBYTES" -f 8 -d all -o all -c 1 -w 1 -n 5 > "$log" 2>&1
+XFAIL all_reduce: fp8 avg/mulsum on one rank (RCCL: missing oneRankReduce<FuncPreMulSum<fp8>> kernel)
+PASS all_reduce (up to fp8 avg) (512 rows)
+PASS all_reduce -d f8e4m3 -o sum (8 rows)
+PASS all_reduce -d f8e4m3 -o prod (8 rows)
+PASS all_reduce -d f8e4m3 -o max (8 rows)
+PASS all_reduce -d f8e4m3 -o min (8 rows)
+PASS all_reduce -d f8e5m2 -o sum (8 rows)
+PASS all_reduce -d f8e5m2 -o prod (8 rows)
+PASS all_reduce -d f8e5m2 -o max (8 rows)
+PASS all_reduce -d f8e5m2 -o min (8 rows)
+PASS all_reduce -G 2 (4 rows)
+PASS all_reduce -z 1 -u 7 (48 rows)
+PASS all_gather (96 rows)
+PASS all_gather -G 2 (4 rows)
+PASS all_gather -z 1 -u 7 (48 rows)
+PASS broadcast (96 rows)
+PASS broadcast -G 2 (4 rows)
+PASS broadcast -z 1 -u 7 (48 rows)
+tools/run_single_gpu_checks.sh: line 50:  1029 Aborted                 (core dumped) "$bin" -g 1 -b 8 -e "$MAXBYTES" -f 8 -d all -o all -c 1 -w 1 -n 5 > "$log" 2>&1
+XFAIL reduce_scatter: fp8 avg/mulsum on one rank (RCCL: missing oneRankReduce<FuncPreMulSum<fp8>> kernel)
+PASS reduce_scatter (up to fp8 avg) (513 rows)
+PASS reduce_scatter -d f8e4m3 -o sum (8 rows)
+PASS reduce_scatter -d f8e4m3 -o prod (8 rows)
+PASS reduce_scatter -d f8e4m3 -o max (8 rows)
+PASS reduce_scatter -d f8e4m3 -o min (8 rows)
+PASS reduce_scatter -d f8e5m2 -o sum (8 rows)
+PASS reduce_scatter -d f8e5m2 -o prod (8 rows)
+PASS reduce_scatter -d f8e5m2 -o max (8 rows)
+PASS reduce_scatter -d f8e5m2 -o min (8 rows)
+PASS reduce_scatter -G 2 (4 rows)
+PASS reduce_scatter -z 1 -u 7 (48 rows)
+tools/run_single_gpu_checks.sh: line 50:  1206 Aborted                 (core dumped) "$bin" -g 1 -b 8 -e "$MAXBYTES" -f 8 -d all -o all -c 1 -w 1 -n 5 > "$log" 2>&1
+XFAIL reduce: fp8 avg/mulsum on one rank (RCCL: missing oneRankReduce<FuncPreMulSum<fp8>> kernel)
+PASS reduce (up to fp8 avg) (512 rows)
+PASS reduce -d f8e4m3 -o sum (8 rows)
+PASS reduce -d f8e4m3 -o prod (8 rows)
+PASS reduce -d f8e4m3 -o max (8 rows)
+PASS reduce -d f8e4m3 -o min (8 rows)
+PASS reduce -d f8e5m2 -o sum (8 rows)
+PASS reduce -d f8e5m2 -o prod (8 rows)
+PASS reduce -d f8e5m2 -o max (8 rows)
+PASS reduce -d f8e5m2 -o min (8 rows)
+PASS reduce -G 2 (4 rows)
+PASS reduce -z 1 -u 7 (48 rows)
+PASS alltoall (96 rows)
+PASS alltoall -G 2 (4 rows)
+PASS alltoall -z 1 -u 7 (48 rows)
+PASS alltoallv (96 rows)
+PASS alltoallv -G 2 (4 rows)
+PASS alltoallv -z 1 -u 7 (48 rows)
+PASS gather (96 rows)
+PASS gather -G 2 (4 rows)
+PASS gather -z 1 -u 7 (48 rows)
+PASS scatter (96 rows)
+PASS scatter -G 2 (4 rows)
+PASS scatter -z 1 -u 7 (48 rows)
+PASS sendrecv (576 rows)
+PASS sendrecv -G 2 (4 rows)
+PASS sendrecv -z 1 -u 7 (48 rows)
+PASS hypercube (96 rows)
+PASS hypercube -G 2 (4 rows)
+PASS hypercube -z 1 -u 7 (48 rows)
+ran 11 test binaries; ALL PASSED
+RC=0
+2026-11-19T17:54:20-08:00

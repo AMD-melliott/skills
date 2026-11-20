@@ -1,0 +1,215 @@
+deliverable files changed vs upstream: 25
+image=rocm/dev-ubuntu-24.04:7.2.1-complete
+cmd=(command -v git >/dev/null || (apt-get update -qq && apt-get install -y -qq git >/dev/null 2>&1)); python3 -m pip install -q --target /tmp/pt "cmake>=4" ninja >/dev/null 2>&1; export PATH=/tmp/pt/bin:$PATH PYTHONPATH=/tmp/pt; cmake --version | head -1; cmake -S . -B build-hip -G Ninja -DCUCO_USE_HIP=ON -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_HIP_ARCHITECTURES=gfx942 && cmake --build build-hip -j 64 && ctest --test-dir build-hip -j 8
+2026-11-19T18:03:29-08:00
+W: https://repo.radeon.com/amdgpu/30.30.1/ubuntu/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+W: https://repo.radeon.com/rocm/apt/7.2.1/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+cmake version 4.4.5
+-- Fetching rapids-cmake from https://github.com/rapidsai/rapids-cmake/archive/refs/heads/main.zip
+-- [download 2% complete]
+-- [download 3% complete]
+-- [download 5% complete]
+-- [download 6% complete]
+-- [download 7% complete]
+-- [download 9% complete]
+-- [download 12% complete]
+-- [download 14% complete]
+-- [download 15% complete]
+-- [download 17% complete]
+-- [download 19% complete]
+-- [download 22% complete]
+-- [download 24% complete]
+-- [download 25% complete]
+-- [download 28% complete]
+-- [download 31% complete]
+-- [download 32% complete]
+-- [download 33% complete]
+-- [download 34% complete]
+-- [download 35% complete]
+-- [download 37% complete]
+-- [download 39% complete]
+-- [download 42% complete]
+-- [download 44% complete]
+-- [download 47% complete]
+-- [download 49% complete]
+-- [download 52% complete]
+-- [download 54% complete]
+-- [download 58% complete]
+-- [download 60% complete]
+-- [download 62% complete]
+-- [download 65% complete]
+-- [download 66% complete]
+-- [download 69% complete]
+-- [download 71% complete]
+-- [download 73% complete]
+-- [download 76% complete]
+-- [download 78% complete]
+-- [download 81% complete]
+-- [download 82% complete]
+-- [download 85% complete]
+-- [download 87% complete]
+-- [download 90% complete]
+-- [download 93% complete]
+-- [download 96% complete]
+-- [download 98% complete]
+-- [download 100% complete]
+-- The CXX compiler identification is Clang 22.0.0
+-- The HIP compiler identification is Clang 22.0.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/rocm/llvm/bin/clang++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting HIP compiler ABI info
+-- Detecting HIP compiler ABI info - done
+-- Check for working HIP compiler: /opt/rocm/llvm/bin/clang++ - skipped
+-- Detecting HIP compile features
+-- Detecting HIP compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Performing Test HIP_CLANG_SUPPORTS_PARALLEL_JOBS
+-- Performing Test HIP_CLANG_SUPPORTS_PARALLEL_JOBS - Success
+-- CPM: Adding package libhipcxx@3.4.0 (3.4.0)
+-- Populating libhipcxx
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/build-hip/_deps/libhipcxx-subbuild
+[1/9] Creating directories for 'libhipcxx-populate'
+[1/9] Performing download step (download, verify and extract) for 'libhipcxx-populate'
+-- Downloading...
+   dst='/data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/build-hip/_deps/libhipcxx-subbuild/libhipcxx-populate-prefix/src/832dc407f4ca38da614c69d0fec3f473ec8d77c0.tar.gz'
+   timeout='none'
+   inactivity timeout='none'
+-- Using src='https://github.com/ROCm/libhipcxx/archive/832dc407f4ca38da614c69d0fec3f473ec8d77c0.tar.gz'
+-- [download 0% complete]
+-- [download 1% complete]
+-- [download 2% complete]
+-- [download 3% complete]
+-- [download 4% complete]
+-- [download 5% complete]
+-- [download 6% complete]
+-- [download 7% complete]
+-- [download 8% complete]
+-- [download 9% complete]
+-- [download 10% complete]
+-- [download 11% complete]
+-- [download 12% complete]
+-- [download 13% complete]
+-- [download 14% complete]
+-- [download 15% complete]
+-- [download 16% complete]
+-- [download 17% complete]
+-- [download 18% complete]
+-- [download 19% complete]
+-- [download 20% complete]
+-- [download 21% complete]
+-- [download 22% complete]
+-- [download 23% complete]
+-- [download 24% complete]
+-- [download 25% complete]
+-- [download 26% complete]
+-- [download 27% complete]
+-- [download 28% complete]
+-- [download 29% complete]
+-- [download 30% complete]
+-- [download 31% complete]
+-- [download 32% complete]
+-- [download 33% complete]
+-- [download 34% complete]
+-- [download 35% complete]
+-- [download 36% complete]
+-- [download 37% complete]
+-- [download 38% complete]
+-- [download 39% complete]
+-- [download 40% complete]
+-- [download 41% complete]
+-- [download 42% complete]
+-- [download 43% complete]
+-- [download 44% complete]
+-- [download 45% complete]
+-- [download 46% complete]
+-- [download 47% complete]
+-- [download 48% complete]
+-- [download 49% complete]
+-- [download 50% complete]
+-- [download 51% complete]
+-- [download 52% complete]
+-- [download 53% complete]
+-- [download 54% complete]
+-- [download 55% complete]
+-- [download 56% complete]
+-- [download 57% complete]
+-- [download 58% complete]
+-- [download 59% complete]
+-- [download 60% complete]
+-- [download 61% complete]
+-- [download 62% complete]
+-- [download 63% complete]
+-- [download 64% complete]
+-- [download 65% complete]
+-- [download 66% complete]
+-- [download 67% complete]
+-- [download 68% complete]
+-- [download 69% complete]
+-- [download 70% complete]
+-- [download 71% complete]
+-- [download 72% complete]
+-- [download 73% complete]
+-- [download 74% complete]
+-- [download 75% complete]
+-- [download 76% complete]
+-- [download 77% complete]
+-- [download 78% complete]
+-- [download 79% complete]
+-- [download 80% complete]
+-- [download 81% complete]
+-- [download 82% complete]
+-- [download 83% complete]
+-- [download 84% complete]
+-- [download 85% complete]
+-- [download 86% complete]
+-- [download 87% complete]
+-- [download 88% complete]
+-- [download 89% complete]
+-- [download 90% complete]
+-- [download 91% complete]
+-- [download 92% complete]
+-- [download 93% complete]
+-- [download 94% complete]
+-- [download 95% complete]
+-- [download 96% complete]
+-- [download 97% complete]
+-- [download 98% complete]
+-- [download 99% complete]
+-- [download 100% complete]
+-- Downloading... done
+-- extracting...
+     src='/data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/build-hip/_deps/libhipcxx-subbuild/libhipcxx-populate-prefix/src/832dc407f4ca38da614c69d0fec3f473ec8d77c0.tar.gz'
+     dst='/data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/build-hip/_deps/libhipcxx-src'
+-- extracting... [tar xf]
+-- extracting... [analysis]
+-- extracting... [rename]
+-- extracting... [clean up]
+-- extracting... done
+[2/9] No update step for 'libhipcxx-populate'
+[3/9] No patch step for 'libhipcxx-populate'
+[5/9] No configure step for 'libhipcxx-populate'
+[6/9] No build step for 'libhipcxx-populate'
+[7/9] No install step for 'libhipcxx-populate'
+[8/9] No test step for 'libhipcxx-populate'
+[9/9] Completed 'libhipcxx-populate'
+-- Found Git: /usr/bin/git (found version "2.43.0")
+error: can't open patch '/data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/cmake/hip/patches/libhipcxx-strong-cas.diff': No such file or directory
+CMake Error at cmake/hip/cuco_hip.cmake:65 (message):
+  cuco: could not apply
+  /data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/cmake/hip/patches/libhipcxx-strong-cas.diff
+  to
+  /data/melliott/moat-testing/round2/v4/cuco-A2-7.2.1/build-hip/_deps/libhipcxx-src
+Call Stack (most recent call first):
+  CMakeLists.txt:82 (include)
+
+
+-- Configuring incomplete, errors occurred!
+RC=1
+2026-11-19T18:03:49-08:00
