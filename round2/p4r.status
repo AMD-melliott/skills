@@ -1,0 +1,9 @@
+2026-11-19T23:10:56-08:00 start cuco-B4r-1 arm=B4r-di total_so_far=79.47 max_budget=25.00
+2026-11-20T00:42:34-08:00 end cuco-B4r-1 exit=0 cost=15.42 turns=1 outward_denials=0 total=94.89
+2026-11-20T00:42:34-08:00 start cuco-B4r-2 arm=B4r-di total_so_far=94.89 max_budget=25.00
+2026-11-20T01:47:11-08:00 end cuco-B4r-2 exit=0 cost=9.70 turns=169 outward_denials=0 total=104.59
+2026-11-20T01:47:11-08:00 start nccl-B4r-1 arm=B4r-di total_so_far=104.59 max_budget=25.00
+2026-11-20T03:01:08-08:00 end nccl-B4r-1 exit=0 cost=10.73 turns=127 outward_denials=0 total=115.32
+2026-11-20T03:01:08-08:00 start nccl-B4r-2 arm=B4r-di total_so_far=115.32 max_budget=25.00
+2026-11-20T04:28:43-08:00 end nccl-B4r-2 exit=0 cost=8.02 turns=4 outward_denials=0 total=123.34
+2026-11-20T04:28:43-08:00 p4r complete

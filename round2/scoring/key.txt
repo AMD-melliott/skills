@@ -6,3 +6,9 @@ nccl-A1 run-4d9b56
 nccl-B1 run-ebbba3
 nccl-A2 run-40329a
 nccl-B2 run-bb5733
+cuco-A5-1 run-52d4ee
+cuco-A5-2 run-2ebf81
+cuco-B4r-1 run-ecf340
+cuco-B4r-2 run-6abd3e
+nccl-B4r-1 run-cf33e5
+nccl-B4r-2 run-baddc0

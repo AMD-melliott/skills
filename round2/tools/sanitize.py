@@ -9,7 +9,11 @@ import json, re, sys
 SKILL_PATH = re.compile(r'(tool-results/|\.claude/skills/cuda-to-rocm|round2/arms|armB4r|armBdi|armA5|armA\b|armB\b|/arms/|skills-held|pr4-rev)')
 SCRUB = [(re.compile(r'round2/arms/arm\w+'), '<skill-dir>'), (re.compile(r'\barm ?(A5|B4r-di|B4r|A|B|Bdi)\b'), 'arm ?'),
          (re.compile(r'/home/melliott/\.claude/skills/cuda-to-rocm'), '<skill-dir>'),
-         (re.compile(r'round2/(armA|armB|armB-di)'), '<branch>')]
+         (re.compile(r'round2/(armA|armB|armB-di)'), '<branch>'),
+         # Run labels (cuco-A1, nccl-B4r-2, ...) appear in project paths, image tags and file names.
+         (re.compile(r'(?i)\b(cuco|nccl)[-_]?(A5|B4r|Bdi|A|B)[-_]?(\d)?\b'), r'\1-RUN'),
+         (re.compile(r'(?i)\b(cuco|nccl)(a5|b4r)\b'), r'\1RUN'),
+         (re.compile(r'(?i)(?<![a-z])(cuco|nccl)_(A5|B4r|Bdi|A|B)_?(\d)(?!\d)'), r'\1_RUN')]
 TR = 1500  # chars kept from each tool result
 
 def scrub(s):

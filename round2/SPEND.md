@@ -13,3 +13,9 @@ Hard cap: $150 (blind runs + eval re-runs). Phase 1 estimate ~$65.
 | nccl-B1 | Bdi | 0.24 | 41.35 |
 | nccl-A2 | A | 10.44 | 51.79 |
 | nccl-B2 | Bdi | 0.30 | 52.09 |
+| cuco-A5-1 | A5 | 12.87 | 64.96 |
+| cuco-A5-2 | A5 | 14.51 | 79.47 |
+| cuco-B4r-1 | B4r-di | 15.42 | 94.89 |
+| cuco-B4r-2 | B4r-di | 9.70 | 104.59 |
+| nccl-B4r-1 | B4r-di | 10.73 | 115.32 |
+| nccl-B4r-2 | B4r-di | 8.02 | 123.34 |

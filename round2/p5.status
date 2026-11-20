@@ -1,0 +1,5 @@
+2026-11-19T21:10:11-08:00 start cuco-A5-1 arm=A5 total_so_far=52.09 max_budget=25.00
+2026-11-19T22:16:35-08:00 end cuco-A5-1 exit=0 cost=12.87 turns=173 outward_denials=0 total=64.96
+2026-11-19T22:16:35-08:00 start cuco-A5-2 arm=A5 total_so_far=64.96 max_budget=25.00
+2026-11-19T23:10:00-08:00 end cuco-A5-2 exit=0 cost=14.51 turns=179 outward_denials=0 total=79.47
+2026-11-19T23:10:00-08:00 p5 complete

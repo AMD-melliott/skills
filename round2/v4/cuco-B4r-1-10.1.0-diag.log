@@ -1,0 +1,363 @@
+deliverable: /data/melliott/moat-testing/round2/projects/cuco-B4r-1/amd-port branch sync-upstream-876 tip 770883d1987538aea3584e489298e94ec0386fe2
+fresh clone tip: 770883d1987538aea3584e489298e94ec0386fe2
+image=rocm/dev-ubuntu-24.04:10.1.0-full
+cmd=(command -v git >/dev/null || (apt-get update -qq && apt-get install -y -qq git >/dev/null 2>&1)); python3 -m pip install -q --break-system-packages --target /tmp/pt "cmake>=3.31,<4" ninja >/dev/null 2>&1; export PATH=/tmp/pt/bin:$PATH PYTHONPATH=/tmp/pt; cmake -G Ninja -S . -B build -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_HIP_ARCHITECTURES=gfx942 -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=OFF && cmake --build build -j 64 && cd build && ctest -j8
+2026-11-20T05:05:27-08:00
+-- Downloaded 'CUCO_RAPIDS.cmake' successfully!
+-- [download 2% complete]
+-- [download 4% complete]
+-- [download 5% complete]
+-- [download 7% complete]
+-- [download 9% complete]
+-- [download 11% complete]
+-- [download 12% complete]
+-- [download 14% complete]
+-- [download 15% complete]
+-- [download 16% complete]
+-- [download 18% complete]
+-- [download 20% complete]
+-- [download 22% complete]
+-- [download 24% complete]
+-- [download 27% complete]
+-- [download 29% complete]
+-- [download 31% complete]
+-- [download 33% complete]
+-- [download 35% complete]
+-- [download 37% complete]
+-- [download 39% complete]
+-- [download 41% complete]
+-- [download 42% complete]
+-- [download 44% complete]
+-- [download 46% complete]
+-- [download 48% complete]
+-- [download 50% complete]
+-- [download 52% complete]
+-- [download 54% complete]
+-- [download 56% complete]
+-- [download 58% complete]
+-- [download 60% complete]
+-- [download 62% complete]
+-- [download 64% complete]
+-- [download 66% complete]
+-- [download 68% complete]
+-- [download 70% complete]
+-- [download 72% complete]
+-- [download 74% complete]
+-- [download 76% complete]
+-- [download 78% complete]
+-- [download 80% complete]
+-- [download 82% complete]
+-- [download 84% complete]
+-- [download 86% complete]
+-- [download 88% complete]
+-- [download 90% complete]
+-- [download 92% complete]
+-- [download 94% complete]
+-- [download 96% complete]
+-- [download 98% complete]
+-- [download 100% complete]
+-- The CXX compiler identification is GNU 13.3.0
+-- The HIP compiler identification is Clang 24.0.0
+
+[... 82033 lines total; middle trimmed for the results branch; full log kept on tme-server round2/v4/cuco-B4r-1-10.1.0-diag.log ...]
+
+550/700 Test #553: static_multimap insert_if - int32_t, int32_t, cuco::test::probe_sequence::linear_probing, 2 ..................................................................................................................   Passed    0.27 sec
+        Start 558: static_multimap for_each tests - int32_t, cuco::test::probe_sequence::double_hashing, 2
+551/700 Test #555: static_multimap for_each tests - int32_t, cuco::test::probe_sequence::linear_probing, 2 ......................................................................................................................   Passed    0.29 sec
+        Start 559: static_multimap insert/contains test - int64_t, int64_t, cuco::test::probe_sequence::double_hashing, 1
+552/700 Test #554: static_multimap find tests - int64_t, cuco::test::probe_sequence::linear_probing, 2 ..........................................................................................................................   Passed    0.37 sec
+        Start 560: static_multimap find tests - int64_t, cuco::test::probe_sequence::double_hashing, 1
+553/700 Test #556: static_multimap count tests - int32_t, cuco::test::probe_sequence::linear_probing, 2 .........................................................................................................................   Passed    0.29 sec
+        Start 561: static_multimap retrieve_if - int32_t, int32_t, 1
+554/700 Test #558: static_multimap for_each tests - int32_t, cuco::test::probe_sequence::double_hashing, 2 ......................................................................................................................   Passed    0.19 sec
+        Start 562: static_multimap retrieve tests - int32_t, cuco::test::probe_sequence::double_hashing, 1
+555/700 Test #557: static_multimap insert/contains test - int32_t, int32_t, cuco::test::probe_sequence::double_hashing, 1 .......................................................................................................   Passed    0.29 sec
+        Start 563: static_multimap insert_if - int64_t, int64_t, cuco::test::probe_sequence::double_hashing, 1
+556/700 Test #552: static_multimap insert/contains test - int64_t, int64_t, cuco::test::probe_sequence::linear_probing, 1 .......................................................................................................   Passed    0.61 sec
+        Start 564: static_multimap retrieve tests - int64_t, cuco::test::probe_sequence::linear_probing, 1
+557/700 Test #560: static_multimap find tests - int64_t, cuco::test::probe_sequence::double_hashing, 1 ..........................................................................................................................   Passed    0.25 sec
+        Start 565: static_multimap multiplicity tests - int64_t, cuco::test::probe_sequence::linear_probing, 8
+558/700 Test #563: static_multimap insert_if - int64_t, int64_t, cuco::test::probe_sequence::double_hashing, 1 ..................................................................................................................   Passed    0.19 sec
+        Start 566: static_multimap insert/contains test - int32_t, int64_t, cuco::test::probe_sequence::linear_probing, 1
+559/700 Test #562: static_multimap retrieve tests - int32_t, cuco::test::probe_sequence::double_hashing, 1 ......................................................................................................................   Passed    0.26 sec
+        Start 567: static_multimap retrieve tests - int32_t, cuco::test::probe_sequence::linear_probing, 4
+560/700 Test #559: static_multimap insert/contains test - int64_t, int64_t, cuco::test::probe_sequence::double_hashing, 1 .......................................................................................................   Passed    0.36 sec
+        Start 568: static_multimap retrieve tests - int32_t, cuco::test::probe_sequence::linear_probing, 1
+561/700 Test #565: static_multimap multiplicity tests - int64_t, cuco::test::probe_sequence::linear_probing, 8 ..................................................................................................................   Passed    0.25 sec
+        Start 569: static_multimap insert_if - int64_t, int32_t, cuco::test::probe_sequence::linear_probing, 1
+562/700 Test #564: static_multimap retrieve tests - int64_t, cuco::test::probe_sequence::linear_probing, 1 ......................................................................................................................   Passed    0.31 sec
+        Start 570: static_multimap heterogeneous lookup tests - int32_t
+563/700 Test #567: static_multimap retrieve tests - int32_t, cuco::test::probe_sequence::linear_probing, 4 ......................................................................................................................   Passed    0.29 sec
+        Start 571: static_multimap for_each tests - int64_t, cuco::test::probe_sequence::double_hashing, 2
+564/700 Test #568: static_multimap retrieve tests - int32_t, cuco::test::probe_sequence::linear_probing, 1 ......................................................................................................................   Passed    0.26 sec
+        Start 572: static_multimap insert/contains test - int32_t, int32_t, cuco::test::probe_sequence::linear_probing, 1
+565/700 Test #566: static_multimap insert/contains test - int32_t, int64_t, cuco::test::probe_sequence::linear_probing, 1 .......................................................................................................   Passed    0.39 sec
+        Start 573: static_multimap find tests - int32_t, cuco::test::probe_sequence::linear_probing, 1
+566/700 Test #570: static_multimap heterogeneous lookup tests - int32_t .........................................................................................................................................................   Passed    0.20 sec
+        Start 574: static_multimap for_each tests - int64_t, cuco::test::probe_sequence::linear_probing, 1
+567/700 Test #569: static_multimap insert_if - int64_t, int32_t, cuco::test::probe_sequence::linear_probing, 1 ..................................................................................................................   Passed    0.23 sec
+        Start 575: static_multimap find tests - int64_t, cuco::test::probe_sequence::double_hashing, 2
+568/700 Test #571: static_multimap for_each tests - int64_t, cuco::test::probe_sequence::double_hashing, 2 ......................................................................................................................   Passed    0.24 sec
+        Start 576: static_multimap insert_if - int32_t, int64_t, cuco::test::probe_sequence::linear_probing, 1
+569/700 Test #573: static_multimap find tests - int32_t, cuco::test::probe_sequence::linear_probing, 1 ..........................................................................................................................   Passed    0.33 sec
+        Start 577: static_multimap count tests - int32_t, cuco::test::probe_sequence::linear_probing, 1
+570/700 Test #574: static_multimap for_each tests - int64_t, cuco::test::probe_sequence::linear_probing, 1 ......................................................................................................................   Passed    0.33 sec
+        Start 578: static_multimap insert_if - int32_t, int32_t, cuco::test::probe_sequence::double_hashing, 2
+571/700 Test #575: static_multimap find tests - int64_t, cuco::test::probe_sequence::double_hashing, 2 ..........................................................................................................................   Passed    0.31 sec
+        Start 579: static_multimap count tests - int32_t, cuco::test::probe_sequence::double_hashing, 1
+572/700 Test #572: static_multimap insert/contains test - int32_t, int32_t, cuco::test::probe_sequence::linear_probing, 1 .......................................................................................................   Passed    0.48 sec
+573/700 Test #576: static_multimap insert_if - int32_t, int64_t, cuco::test::probe_sequence::linear_probing, 1 ..................................................................................................................   Passed    0.24 sec
+        Start 580: static_multimap insert/contains test - int64_t, int32_t, cuco::test::probe_sequence::double_hashing, 1
+        Start 581: static_multimap for_each tests - int64_t, cuco::test::probe_sequence::linear_probing, 2
+574/700 Test #577: static_multimap count tests - int32_t, cuco::test::probe_sequence::linear_probing, 1 .........................................................................................................................   Passed    0.24 sec
+        Start 582: static_multimap insert/contains test - int64_t, int32_t, cuco::test::probe_sequence::double_hashing, 2
+575/700 Test #579: static_multimap count tests - int32_t, cuco::test::probe_sequence::double_hashing, 1 .........................................................................................................................   Passed    0.24 sec
+        Start 583: static_multimap insert/contains test - int64_t, int32_t, cuco::test::probe_sequence::linear_probing, 1
+576/700 Test #578: static_multimap insert_if - int32_t, int32_t, cuco::test::probe_sequence::double_hashing, 2 ..................................................................................................................   Passed    0.25 sec
+        Start 584: static_multimap count tests - int32_t, cuco::test::probe_sequence::double_hashing, 2
+577/700 Test #581: static_multimap for_each tests - int64_t, cuco::test::probe_sequence::linear_probing, 2 ......................................................................................................................   Passed    0.21 sec
+        Start 585: static_multimap count tests - int64_t, cuco::test::probe_sequence::linear_probing, 1
+578/700 Test #580: static_multimap insert/contains test - int64_t, int32_t, cuco::test::probe_sequence::double_hashing, 1 .......................................................................................................   Passed    0.25 sec
+        Start 586: static_multimap insert/contains test - int64_t, int64_t, cuco::test::probe_sequence::linear_probing, 2
+579/700 Test #582: static_multimap insert/contains test - int64_t, int32_t, cuco::test::probe_sequence::double_hashing, 2 .......................................................................................................   Passed    0.37 sec
+        Start 587: static_multimap insert_if - int32_t, int32_t, cuco::test::probe_sequence::double_hashing, 1
+580/700 Test #584: static_multimap count tests - int32_t, cuco::test::probe_sequence::double_hashing, 2 .........................................................................................................................   Passed    0.38 sec
+        Start 588: static_multimap multiplicity tests - int32_t, cuco::test::probe_sequence::linear_probing, 8
+581/700 Test #585: static_multimap count tests - int64_t, cuco::test::probe_sequence::linear_probing, 1 .........................................................................................................................   Passed    0.38 sec
+        Start 589: static_multimap retrieve_if - int64_t, int64_t, 1
+582/700 Test #586: static_multimap insert/contains test - int64_t, int64_t, cuco::test::probe_sequence::linear_probing, 2 .......................................................................................................   Passed    0.53 sec
+        Start 590: static_multimap multiplicity tests - int32_t, cuco::test::probe_sequence::double_hashing, 1
+583/700 Test #587: static_multimap insert_if - int32_t, int32_t, cuco::test::probe_sequence::double_hashing, 1 ..................................................................................................................   Passed    0.25 sec
+        Start 591: static_multimap insert_if - int64_t, int64_t, cuco::test::probe_sequence::linear_probing, 1
+584/700 Test #583: static_multimap insert/contains test - int64_t, int32_t, cuco::test::probe_sequence::linear_probing, 1 .......................................................................................................   Passed    0.61 sec
+        Start 592: static_multimap multiplicity tests - int64_t, cuco::test::probe_sequence::linear_probing, 1
+585/700 Test #561: static_multimap retrieve_if - int32_t, int32_t, 1 ............................................................................................................................................................   Passed    1.87 sec
+        Start 593: static_multimap insert_if - int32_t, int64_t, cuco::test::probe_sequence::double_hashing, 1
+586/700 Test #588: static_multimap multiplicity tests - int32_t, cuco::test::probe_sequence::linear_probing, 8 ..................................................................................................................   Passed    0.25 sec
+        Start 594: static_multimap retrieve tests - int64_t, cuco::test::probe_sequence::double_hashing, 1
+587/700 Test #465: cuco::static_multiset large input test - int64_t, cuco::test::probe_sequence::double_hashing, 2 ..............................................................................................................   Passed   40.06 sec
+        Start 595: static_multimap for_each tests - int32_t, cuco::test::probe_sequence::double_hashing, 1
+588/700 Test #519: static_multiset retrieve if tests - int64_t, cuco::test::probe_sequence::double_hashing, 2 ...................................................................................................................   Passed   11.88 sec
+        Start 596: static_multimap find tests - int32_t, cuco::test::probe_sequence::linear_probing, 2
+589/700 Test #589: static_multimap retrieve_if - int64_t, int64_t, 1 ............................................................................................................................................................   Passed    0.59 sec
+        Start 597: dynamic_bitset rank test
+590/700 Test #595: static_multimap for_each tests - int32_t, cuco::test::probe_sequence::double_hashing, 1 ......................................................................................................................   Passed    0.91 sec
+        Start 598: dynamic_bitset select test
+591/700 Test #593: static_multimap insert_if - int32_t, int64_t, cuco::test::probe_sequence::double_hashing, 1 ..................................................................................................................   Passed    0.96 sec
+        Start 599: dynamic_bitset find next set test
+592/700 Test #596: static_multimap find tests - int32_t, cuco::test::probe_sequence::linear_probing, 2 ..........................................................................................................................   Passed    0.93 sec
+        Start 600: dynamic_bitset size computation test
+593/700 Test #591: static_multimap insert_if - int64_t, int64_t, cuco::test::probe_sequence::linear_probing, 1 ..................................................................................................................   Passed    0.98 sec
+        Start 601: dynamic_bitset get test
+594/700 Test #590: static_multimap multiplicity tests - int32_t, cuco::test::probe_sequence::double_hashing, 1 ..................................................................................................................   Passed    1.00 sec
+595/700 Test #592: static_multimap multiplicity tests - int64_t, cuco::test::probe_sequence::linear_probing, 1 ..................................................................................................................   Passed    0.99 sec
+        Start 602: hyperloglog: Spark parity: deterministic cardinality estimation
+        Start 603: hyperloglog: device ref - __int128_t, cuco::xxhash_64<__int128_t>, 1
+596/700 Test #594: static_multimap retrieve tests - int64_t, cuco::test::probe_sequence::double_hashing, 1 ......................................................................................................................   Passed    0.97 sec
+        Start 604: hyperloglog: Spark parity: merging HLL instances
+597/700 Test #597: dynamic_bitset rank test .....................................................................................................................................................................................   Passed    0.69 sec
+        Start 605: hyperloglog: device ref - int32_t, cuco::xxhash_64<int32_t>, 1
+598/700 Test #599: dynamic_bitset find next set test ............................................................................................................................................................................   Passed    0.23 sec
+        Start 606: hyperloglog: unique sequence - int64_t, cuco::xxhash_64<int64_t>, 1
+599/700 Test #600: dynamic_bitset size computation test .........................................................................................................................................................................   Passed    0.26 sec
+        Start 607: hyperloglog: unique sequence - int32_t, cuco::xxhash_64<int32_t>, 1
+600/700 Test #601: dynamic_bitset get test ......................................................................................................................................................................................   Passed    0.26 sec
+601/700 Test #604: hyperloglog: Spark parity: merging HLL instances .............................................................................................................................................................   Passed    0.24 sec
+        Start 608: hyperloglog: type deduction bug with hash functions returning references
+        Start 609: hyperloglog: add_if with stencil predicate
+602/700 Test #602: hyperloglog: Spark parity: deterministic cardinality estimation ..............................................................................................................................................   Passed    0.39 sec
+        Start 610: hyperloglog: unique sequence - __int128_t, cuco::xxhash_64<__int128_t>, 1
+603/700 Test #608: hyperloglog: type deduction bug with hash functions returning references .....................................................................................................................................   Passed    0.22 sec
+        Start 611: hyperloglog: device ref - int64_t, cuco::xxhash_64<int64_t>, 1
+604/700 Test #609: hyperloglog: add_if with stencil predicate ...................................................................................................................................................................   Passed    0.24 sec
+        Start 612: hyperloglog: Spark parity: regression for issue #696
+605/700 Test #598: dynamic_bitset select test ...................................................................................................................................................................................   Passed    0.59 sec
+        Start 613: bloom_filter device ref cooperative clear - 8, int32_t, cuco::bloom_filter_policy<int32_t>
+606/700 Test #612: hyperloglog: Spark parity: regression for issue #696 .........................................................................................................................................................   Passed    0.25 sec
+        Start 614: bloom_filter: host bulk contains equals device ref contains - int32_t, cuco::bloom_filter_policy<int32_t>
+607/700 Test #613: bloom_filter device ref cooperative clear - 8, int32_t, cuco::bloom_filter_policy<int32_t> ...................................................................................................................   Passed    0.33 sec
+        Start 615: bloom_filter arrow-compatible policy bitset validation - float
+608/700 Test #606: hyperloglog: unique sequence - int64_t, cuco::xxhash_64<int64_t>, 1 ..........................................................................................................................................   Passed    1.34 sec
+        Start 616: bloom_filter device ref CG contains is reduced across the group - 4, int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 2, 4, 2>
+609/700 Test #615: bloom_filter arrow-compatible policy bitset validation - float ...............................................................................................................................................   Passed    0.76 sec
+        Start 617: bloom_filter: host bulk add equals device ref add - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>
+610/700 Test #614: bloom_filter: host bulk contains equals device ref contains - int32_t, cuco::bloom_filter_policy<int32_t> ....................................................................................................   Passed    0.93 sec
+        Start 618: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<8, 1, 8, 1>
+611/700 Test #607: hyperloglog: unique sequence - int32_t, cuco::xxhash_64<int32_t>, 1 ..........................................................................................................................................   Passed    1.58 sec
+        Start 619: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 16, 16, 16, 1, 2, 8, false, false, false, true>), 8
+612/700 Test #610: hyperloglog: unique sequence - __int128_t, cuco::xxhash_64<__int128_t>, 1 ....................................................................................................................................   Passed    1.69 sec
+        Start 620: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<4, 2, 2, 4>
+613/700 Test #611: hyperloglog: device ref - int64_t, cuco::xxhash_64<int64_t>, 1 ...............................................................................................................................................   Passed    2.68 sec
+        Start 621: bloom_filter: host bulk contains equals device ref contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>
+614/700 Test #616: bloom_filter device ref CG contains is reduced across the group - 4, int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 2, 4, 2> ..............................................   Passed    1.68 sec
+        Start 622: bloom_filter: PersistingL2Access is safe for shared-memory refs
+615/700 Test #617: bloom_filter: host bulk add equals device ref add - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1> ...............................................................   Passed    1.58 sec
+        Start 623: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 1, 8, 1, 8>
+616/700 Test #605: hyperloglog: device ref - int32_t, cuco::xxhash_64<int32_t>, 1 ...............................................................................................................................................   Passed    3.18 sec
+        Start 624: bloom_filter merge and intersect tests - int32_t, cuco::bloom_filter_policy<int32_t>, 1
+617/700 Test #619: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 16, 16, 16, 1, 2, 8, false, false, false, true>), 8 ...   Passed    1.66 sec
+        Start 625: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<4, 1, 4, 2>
+618/700 Test #620: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<4, 2, 2, 4> ..............................................................................................   Passed    1.45 sec
+        Start 626: bloom_filter: PersistingL2Access preserves global-memory results
+619/700 Test #618: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<8, 1, 8, 1> ..............................................................................................   Passed    1.92 sec
+        Start 627: bloom_filter large word indices - vertical_add_policy
+620/700 Test #603: hyperloglog: device ref - __int128_t, cuco::xxhash_64<__int128_t>, 1 .........................................................................................................................................   Passed    3.73 sec
+        Start 628: bloom_filter: bitset is invariant under ConditionalAdd
+621/700 Test #622: bloom_filter: PersistingL2Access is safe for shared-memory refs ..............................................................................................................................................   Passed    0.74 sec
+        Start 629: bloom_filter: host bulk add equals device ref add - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8>
+622/700 Test #621: bloom_filter: host bulk contains equals device ref contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1> .....................................................   Passed    0.83 sec
+        Start 630: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 8, 1>
+623/700 Test #626: bloom_filter: PersistingL2Access preserves global-memory results .............................................................................................................................................   Passed    0.49 sec
+        Start 631: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 2, 2>
+624/700 Test #625: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<4, 1, 4, 2> ..............................................................................................   Passed    0.53 sec
+        Start 632: bloom_filter: host bulk contains equals device ref contains - uint64_t, cuco::bloom_filter_policy<uint64_t, cuco::xxhash_64<uint64_t>, 4, 8, 12, 8, 1, 4, 2>
+625/700 Test #623: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 1, 8, 1, 8> .................................................   Passed    0.79 sec
+        Start 633: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8>
+626/700 Test #624: bloom_filter merge and intersect tests - int32_t, cuco::bloom_filter_policy<int32_t>, 1 ......................................................................................................................   Passed    0.76 sec
+        Start 634: bloom_filter: fast_l2_add has no effect on blocks smaller than one sector
+627/700 Test #628: bloom_filter: bitset is invariant under ConditionalAdd .......................................................................................................................................................   Passed    0.31 sec
+        Start 635: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<1, 8, 1, 8>
+628/700 Test #629: bloom_filter: host bulk add equals device ref add - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8> ...............................................................   Passed    0.22 sec
+        Start 636: bloom_filter arrow-compatible policy bitset validation - int64_t
+629/700 Test #630: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 8, 1> ...................................   Passed    0.27 sec
+        Start 637: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 8, 8, 8, 4, 2, 1, 8, false, false, false, true>), 4
+630/700 Test #633: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8> .................................................   Passed    0.29 sec
+        Start 638: bloom_filter: host bulk contains equals device ref contains - float, cuco::bloom_filter_policy<float, cuco::xxhash_64<float>, 8, 4, 4, 2, 2, 1, 2>
+631/700 Test #631: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 2, 2> ...................................   Passed    0.30 sec
+632/700 Test #632: bloom_filter: host bulk contains equals device ref contains - uint64_t, cuco::bloom_filter_policy<uint64_t, cuco::xxhash_64<uint64_t>, 4, 8, 12, 8, 1, 4, 2> .................................................   Passed    0.30 sec
+633/700 Test #634: bloom_filter: fast_l2_add has no effect on blocks smaller than one sector ....................................................................................................................................   Passed    0.27 sec
+        Start 639: bloom_filter: host bulk add equals device ref add - float, cuco::bloom_filter_policy<float, cuco::xxhash_64<float>, 8, 4, 4, 2, 2, 1, 2>
+        Start 640: bloom_filter arrow-compatible policy bitset validation - int32_t
+        Start 641: bloom_filter: bitset is invariant under dynamic vs static cuco::extent
+634/700 Test #635: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<1, 8, 1, 8> ..............................................................................................   Passed    0.27 sec
+        Start 642: bloom_filter: word byte selection
+635/700 Test #642: bloom_filter: word byte selection ............................................................................................................................................................................   Passed    0.03 sec
+        Start 643: bloom_filter device ref cooperative clear - 32, int32_t, cuco::bloom_filter_policy<int32_t>
+636/700 Test #636: bloom_filter arrow-compatible policy bitset validation - int64_t .............................................................................................................................................   Passed    0.18 sec
+        Start 644: bloom_filter: host bulk contains equals device ref contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8>
+637/700 Test #637: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 8, 8, 8, 4, 2, 1, 8, false, false, false, true>), 4 ......   Passed    0.22 sec
+        Start 645: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 8, 8, 8, 8, 1, 2, 4, false, false, false, true>), 4
+638/700 Test #638: bloom_filter: host bulk contains equals device ref contains - float, cuco::bloom_filter_policy<float, cuco::xxhash_64<float>, 8, 4, 4, 2, 2, 1, 2> ...........................................................   Passed    0.21 sec
+        Start 646: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 2, 1, 8>
+639/700 Test #639: bloom_filter: host bulk add equals device ref add - float, cuco::bloom_filter_policy<float, cuco::xxhash_64<float>, 8, 4, 4, 2, 2, 1, 2> .....................................................................   Passed    0.22 sec
+        Start 647: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<2, 4, 1, 8>
+640/700 Test #640: bloom_filter arrow-compatible policy bitset validation - int32_t .............................................................................................................................................   Passed    0.24 sec
+        Start 648: bloom_filter: host bulk add equals device ref add - int32_t, cuco::bloom_filter_policy<int32_t>
+641/700 Test #643: bloom_filter device ref cooperative clear - 32, int32_t, cuco::bloom_filter_policy<int32_t> ..................................................................................................................   Passed    0.25 sec
+        Start 649: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 2, 4>
+642/700 Test #641: bloom_filter: bitset is invariant under dynamic vs static cuco::extent .......................................................................................................................................   Passed    0.28 sec
+643/700 Test #644: bloom_filter: host bulk contains equals device ref contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8> .....................................................   Passed    0.23 sec
+        Start 650: bloom_filter policy tests - uint64_t, cuco::bloom_filter_policy<uint64_t, cuco::xxhash_64<uint64_t>, 4, 8, 12, 8, 1, 4, 2>, 1
+        Start 651: bloom_filter policy tests - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8>, 1
+644/700 Test #645: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 8, 8, 8, 8, 1, 2, 4, false, false, false, true>), 4 ......   Passed    0.20 sec
+        Start 652: bloom_filter: fast_l2_add cooperative bulk add matches the per-key layout on many keys
+645/700 Test #648: bloom_filter: host bulk add equals device ref add - int32_t, cuco::bloom_filter_policy<int32_t> ..............................................................................................................   Passed    0.21 sec
+        Start 653: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 8, 16, 16, 16, 1, 4, 4, false, false, false, true>), 4
+646/700 Test #647: bloom_filter: fast_l2_add bitset and contains are invariant under layout permutations - skip_policy<2, 4, 1, 8> ..............................................................................................   Passed    0.27 sec
+        Start 654: bloom_filter merge and intersect tests - int64_t, cuco::bloom_filter_policy<int64_t, cuco::xxhash_64<int64_t>, 8, 1, 1, 1, 1, 1, 1>, 1
+647/700 Test #646: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 2, 1, 8> .................................................   Passed    0.29 sec
+        Start 655: bloom_filter device ref CG contains is reduced across the group - 8, int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 8, 1>
+648/700 Test #650: bloom_filter policy tests - uint64_t, cuco::bloom_filter_policy<uint64_t, cuco::xxhash_64<uint64_t>, 4, 8, 12, 8, 1, 4, 2>, 1 ................................................................................   Passed    0.23 sec
+        Start 656: bloom_filter device ref scalar add and contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>
+649/700 Test #651: bloom_filter policy tests - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 2, 1, 8>, 1 ....................................................................................   Passed    0.24 sec
+        Start 657: bloom_filter device ref cooperative clear - 4, int32_t, cuco::bloom_filter_policy<int32_t>
+650/700 Test #649: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 2, 4> ...................................   Passed    0.25 sec
+        Start 658: bloom_filter merge and intersect tests - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>, 1
+651/700 Test #652: bloom_filter: fast_l2_add cooperative bulk add matches the per-key layout on many keys .......................................................................................................................   Passed    0.21 sec
+        Start 659: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 4, 1, 8>
+652/700 Test #653: bloom_filter: fast_l2_add on multi-sector blocks skips one word of the first sector - (cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 8, 16, 16, 16, 1, 4, 4, false, false, false, true>), 4 ...   Passed    0.24 sec
+        Start 660: bloom_filter device ref cooperative clear - 1, int32_t, cuco::bloom_filter_policy<int32_t>
+653/700 Test #655: bloom_filter device ref CG contains is reduced across the group - 8, int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 8, 1> ..............................................   Passed    0.24 sec
+        Start 661: bloom_filter: host bulk add equals device ref add - uint64_t, cuco::bloom_filter_policy<uint64_t, cuco::xxhash_64<uint64_t>, 4, 8, 12, 8, 1, 4, 2>
+654/700 Test #656: bloom_filter device ref scalar add and contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1> .................................................................   Passed    0.25 sec
+        Start 662: bloom_filter: contains results are invariant under EarlyExitContains
+655/700 Test #657: bloom_filter device ref cooperative clear - 4, int32_t, cuco::bloom_filter_policy<int32_t> ...................................................................................................................   Passed    0.25 sec
+        Start 663: bloom_filter merge and intersect tests - int64_t, cuco::bloom_filter_policy<int64_t, cuco::xxhash_64<int64_t>, 8, 8, 8>, 1
+656/700 Test #654: bloom_filter merge and intersect tests - int64_t, cuco::bloom_filter_policy<int64_t, cuco::xxhash_64<int64_t>, 8, 1, 1, 1, 1, 1, 1>, 1 .......................................................................   Passed    0.33 sec
+657/700 Test #658: bloom_filter merge and intersect tests - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>, 1 .......................................................................   Passed    0.29 sec
+        Start 664: bloom_filter device ref scalar add and contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 2, 4, 2>
+        Start 665: bloom_filter policy tests - float, cuco::bloom_filter_policy<float, cuco::xxhash_64<float>, 8, 4, 4, 2, 2, 1, 2>, 1
+658/700 Test #659: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 2, 4, 1, 8> .................................................   Passed    0.27 sec
+        Start 666: bloom_filter policy tests - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>, 1
+659/700 Test #627: bloom_filter large word indices - vertical_add_policy ........................................................................................................................................................   Passed    1.61 sec
+        Start 667: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 4, 2>
+660/700 Test #660: bloom_filter device ref cooperative clear - 1, int32_t, cuco::bloom_filter_policy<int32_t> ...................................................................................................................   Passed    1.25 sec
+        Start 668: bloom_filter: fast_l2_add leaves exactly one word of a key's block untouched
+661/700 Test #661: bloom_filter: host bulk add equals device ref add - uint64_t, cuco::bloom_filter_policy<uint64_t, cuco::xxhash_64<uint64_t>, 4, 8, 12, 8, 1, 4, 2> ...........................................................   Passed    1.25 sec
+        Start 669: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 1, 1, 8>
+662/700 Test #664: bloom_filter device ref scalar add and contains - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 2, 4, 2> .................................................................   Passed    1.19 sec
+        Start 670: bloom_filter device ref scalar add and contains - int32_t, cuco::bloom_filter_policy<int32_t>
+663/700 Test #665: bloom_filter policy tests - float, cuco::bloom_filter_policy<float, cuco::xxhash_64<float>, 8, 4, 4, 2, 2, 1, 2>, 1 ..........................................................................................   Passed    1.19 sec
+664/700 Test #666: bloom_filter policy tests - int32_t, cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 1, 1, 1, 1, 1, 1>, 1 ....................................................................................   Passed    1.19 sec
+        Start 671: bloom_filter large word indices - horizontal_add_policy
+        Start 672: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 1, 4>
+665/700 Test #667: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 4, 2> ...................................   Passed    1.12 sec
+        Start 673: bloom_filter policy tests - int32_t, cuco::bloom_filter_policy<int32_t>, 1
+666/700 Test #662: bloom_filter: contains results are invariant under EarlyExitContains .........................................................................................................................................   Passed    1.25 sec
+        Start 674: roaring_bitmap selects array and bitset containers at the format threshold
+667/700 Test #663: bloom_filter merge and intersect tests - int64_t, cuco::bloom_filter_policy<int64_t, cuco::xxhash_64<int64_t>, 8, 8, 8>, 1 ...................................................................................   Passed    1.26 sec
+        Start 675: roaring_bitmap builds the maximum number of containers
+668/700 Test #668: bloom_filter: fast_l2_add leaves exactly one word of a key's block untouched .................................................................................................................................   Passed    0.23 sec
+        Start 676: roaring_bitmap_storage_ref keeps computed offsets when copied
+669/700 Test #676: roaring_bitmap_storage_ref keeps computed offsets when copied ................................................................................................................................................   Passed    0.02 sec
+        Start 677: roaring_bitmap writes array and bitset containers in one grid
+670/700 Test #670: bloom_filter device ref scalar add and contains - int32_t, cuco::bloom_filter_policy<int32_t> ................................................................................................................   Passed    0.23 sec
+        Start 678: roaring_bitmap removes duplicates across a container boundary
+671/700 Test #669: bloom_filter: bitset is invariant under (AddH, AddV) layout permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 4, 1, 1, 8> .................................................   Passed    0.29 sec
+        Start 679: roaring_bitmap build supports cross-stream event handoff
+672/700 Test #673: bloom_filter policy tests - int32_t, cuco::bloom_filter_policy<int32_t>, 1 ...................................................................................................................................   Passed    0.27 sec
+        Start 680: roaring_bitmap build serialization is stream ordered
+673/700 Test #672: bloom_filter: contains results are invariant under (ContainsH, ContainsV) permutations - cuco::bloom_filter_policy<int32_t, cuco::xxhash_64<int32_t>, 4, 8, 8, 8, 1, 1, 4> ...................................   Passed    0.28 sec
+        Start 681: roaring_bitmap builds multiple array containers per block
+674/700 Test #675: roaring_bitmap builds the maximum number of containers .......................................................................................................................................................   Passed    0.28 sec
+        Start 682: roaring_bitmap builds an empty bitmap
+675/700 Test #674: roaring_bitmap selects array and bitset containers at the format threshold ...................................................................................................................................   Passed    0.32 sec
+        Start 683: roaring_bitmap writes a bitset after an odd-sized array container
+676/700 Test #677: roaring_bitmap writes array and bitset containers in one grid ................................................................................................................................................   Passed    0.23 sec
+        Start 684: roaring_bitmap accepts transformed input and removes duplicates
+677/700 Test #678: roaring_bitmap removes duplicates across a container boundary ................................................................................................................................................   Passed    0.22 sec
+        Start 685: roaring_bitmap factories produce identical serialized bytes
+678/700 Test #682: roaring_bitmap builds an empty bitmap ........................................................................................................................................................................   Passed    0.23 sec
+        Start 686: roaring_bitmap parses serialized round trips
+679/700 Test #680: roaring_bitmap build serialization is stream ordered .........................................................................................................................................................   Passed    0.29 sec
+        Start 687: roaring_bitmap factories use the supplied allocator
+680/700 Test #681: roaring_bitmap builds multiple array containers per block ....................................................................................................................................................   Passed    0.31 sec
+        Start 688: roaring_bitmap accepts a transformed sorted unique range
+681/700 Test #679: roaring_bitmap build supports cross-stream event handoff .....................................................................................................................................................   Passed    0.33 sec
+        Start 689: roaring_bitmap run container without offsets
+682/700 Test #683: roaring_bitmap writes a bitset after an odd-sized array container ............................................................................................................................................   Passed    0.28 sec
+        Start 690: roaring_bitmap builds a full container
+683/700 Test #685: roaring_bitmap factories produce identical serialized bytes ..................................................................................................................................................   Passed    0.21 sec
+        Start 691: roaring_bitmap builds format boundary indices
+684/700 Test #684: roaring_bitmap accepts transformed input and removes duplicates ..............................................................................................................................................   Passed    0.24 sec
+        Start 692: roaring_bitmap bulk contains from RoaringFormatSpec testdata
+685/700 Test #686: roaring_bitmap parses serialized round trips .................................................................................................................................................................   Passed    0.21 sec
+        Start 693: roaring_bitmap matches RoaringFormatSpec no-run serialization
+686/700 Test #689: roaring_bitmap run container without offsets .................................................................................................................................................................   Passed    0.23 sec
+        Start 694: roaring_bitmap rejects reversed input ranges
+687/700 Test #687: roaring_bitmap factories use the supplied allocator ..........................................................................................................................................................   Passed    0.28 sec
+        Start 695: CUCO_DEBUG rejects empty key insertion (death test)
+688/700 Test #688: roaring_bitmap accepts a transformed sorted unique range .....................................................................................................................................................   Passed    0.26 sec
+        Start 696: CUCO_DEBUG rejects empty payload insertion (death test)
+689/700 Test #690: roaring_bitmap builds a full container .......................................................................................................................................................................   Passed    0.26 sec
+        Start 697: CUCO_DEBUG rejects probing for an empty key sentinel (death test)
+690/700 Test #691: roaring_bitmap builds format boundary indices ................................................................................................................................................................   Passed    0.23 sec
+        Start 698: CUCO_DEBUG detects insertion probe exhaustion (death test)
+691/700 Test #692: roaring_bitmap bulk contains from RoaringFormatSpec testdata .................................................................................................................................................   Passed    0.25 sec
+        Start 699: CUCO_DEBUG detects out-of-bounds bucket access (death test)
+692/700 Test #694: roaring_bitmap rejects reversed input ranges .................................................................................................................................................................   Passed    0.19 sec
+        Start 700: CUCO_DEBUG detects negative bucket indices (death test)
+693/700 Test #693: roaring_bitmap matches RoaringFormatSpec no-run serialization ................................................................................................................................................   Passed    0.29 sec
+694/700 Test #671: bloom_filter large word indices - horizontal_add_policy ......................................................................................................................................................   Passed    1.48 sec
+695/700 Test #699: CUCO_DEBUG detects out-of-bounds bucket access (death test) ..................................................................................................................................................   Passed    6.14 sec
+696/700 Test #700: CUCO_DEBUG detects negative bucket indices (death test) ......................................................................................................................................................   Passed    8.76 sec
+697/700 Test #695: CUCO_DEBUG rejects empty key insertion (death test) ..........................................................................................................................................................   Passed    9.97 sec
+698/700 Test #696: CUCO_DEBUG rejects empty payload insertion (death test) ......................................................................................................................................................   Passed   10.96 sec
+699/700 Test #698: CUCO_DEBUG detects insertion probe exhaustion (death test) ...................................................................................................................................................   Passed   11.88 sec
+700/700 Test #697: CUCO_DEBUG rejects probing for an empty key sentinel (death test) ............................................................................................................................................   Passed   12.59 sec
+
+100% tests passed, 0 tests failed out of 700
+
+Total Test time (real) = 120.05 sec
+RC=0
+2026-11-20T05:08:41-08:00

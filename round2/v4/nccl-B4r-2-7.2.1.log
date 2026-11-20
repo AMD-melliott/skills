@@ -1,0 +1,53 @@
+deliverable: /data/melliott/moat-testing/round2/projects/nccl-B4r-2/amd-port/rocm-systems branch rccl-tests-sync-nccl-tests-2.21.1 tip 81b4cd8dc8f61c3fecdb759ae1fb8dc05ed51ff5
+fresh clone tip: ab27197f00ccce1b9a76d935f18b22b40d0a43a8
+base=45dfe66ff051dd830b7dd3346e9bfc1bdf1f8a6c rccl-tests tree fresh=5c77f4a8df30803543d04f596753e14a327f16b5 run=5c77f4a8df30803543d04f596753e14a327f16b5 MATCH
+image=rocm/dev-ubuntu-24.04:7.2.1-complete
+cmd=export LD_LIBRARY_PATH=/opt/rocm/lib; cd projects/rccl-tests && make -j32 GPU_TARGETS=gfx942 >/dev/null && cd build && n=0; ok=0; for b in ./*_perf; do n=$((n+1)); out=$($b -b 8 -e 64M -f 4 -c 1 -o all -d all 2>&1); rc=$?; w=$(echo "$out" | grep -c "Out of bounds values : 0 OK"); if [[ $rc -eq 0 && $w -ge 1 ]]; then ok=$((ok+1)); echo "PASS $b"; else echo "FAIL $b rc=$rc"; echo "$out" | grep -iE "wrong|error|abort|fail" | head -8; fi; done; echo "SWEEP $ok/$n binaries pass"
+2026-11-20T04:58:07-08:00
+make[1]: git: No such file or directory
+/bin/sh: 1: git: not found
+make[1]: git: No such file or directory
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:743:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  743 |   hipHostFree(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:1613:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1613 |   hipMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:2753:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2753 |         hipDeviceReset();
+      |         ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:2967:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2967 |     hipDeviceReset();
+      |     ^~~~~~~~~~~~~~~~
+4 warnings generated when compiling for gfx942.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:743:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  743 |   hipHostFree(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:1613:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1613 |   hipMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:2753:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2753 |         hipDeviceReset();
+      |         ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-2-7.2.1/projects/rccl-tests/build/hipify/common.cu.cpp:2967:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2967 |     hipDeviceReset();
+      |     ^~~~~~~~~~~~~~~~
+4 warnings generated when compiling for host.
+PASS ./all_gather_perf
+FAIL ./all_reduce_bias_perf rc=134
+#       size         count      type   redop    root     time   algbw   busbw  #wrong     time   algbw   busbw  #wrong 
+FAIL ./all_reduce_perf rc=134
+#       size         count      type   redop    root     time   algbw   busbw  #wrong     time   algbw   busbw  #wrong 
+PASS ./alltoall_perf
+PASS ./alltoallv_perf
+PASS ./broadcast_perf
+PASS ./gather_perf
+PASS ./hypercube_perf
+FAIL ./reduce_perf rc=134
+#       size         count      type   redop    root     time   algbw   busbw  #wrong     time   algbw   busbw  #wrong 
+PASS ./reduce_scatter_perf
+PASS ./scatter_perf
+PASS ./sendrecv_perf
+SWEEP 9/12 binaries pass
+RC=0
+2026-11-20T04:59:33-08:00

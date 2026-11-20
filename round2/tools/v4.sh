@@ -20,6 +20,11 @@ cat $LOG.pre >> $LOG
 PRE='(command -v git >/dev/null || (apt-get update -qq && apt-get install -y -qq git >/dev/null 2>&1)); python3 -m pip install -q --target /tmp/pt "cmake>=4" ninja >/dev/null 2>&1; export PATH=/tmp/pt/bin:$PATH PYTHONPATH=/tmp/pt'
 case $L in
  cuco-A1|cuco-A2) CMD="$PRE; cmake --version | head -1; cmake -S . -B build-hip -G Ninja -DCUCO_USE_HIP=ON -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_HIP_ARCHITECTURES=gfx942 && cmake --build build-hip -j 64 && ctest --test-dir build-hip -j 8";;
+ cuco-A5-1) CMD="apt-get update -qq && apt-get install -y -qq git ninja-build python3-pip >/dev/null && pip3 install -q --break-system-packages cmake && cmake -S . -B build -G Ninja -DCUCO_USE_HIP=ON -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ -DBUILD_BENCHMARKS=OFF && cmake --build build && ctest --test-dir build -j6";;
+ cuco-A5-2) # documented route: build ci/rocm image from the stock base, then the cmake/ctest lines inside it
+          ( cd $D && docker build -q -t moat-v4-cuco-a5-2:$V --build-arg BASE=$( [[ $V == 7.2.1 ]] && echo rocm/dev-ubuntu-24.04:7.2.1-complete || echo rocm/dev-ubuntu-24.04:$V-full ) ci/rocm ) >> $LOG.pre 2>&1 || echo "docker build failed" >> $LOG.pre
+          IMG=moat-v4-cuco-a5-2:$V
+          CMD="cmake -S . -B build-hip -G Ninja -DCUCO_USE_HIP=ON -DCMAKE_HIP_ARCHITECTURES=gfx942 && cmake --build build-hip && ctest --test-dir build-hip";;
  nccl-A1) CMD="make -j ROCM=1 GPU_TARGETS=gfx942 && make -C verifiable ROCM=1 GPU_TARGETS=gfx942 && tools/run_single_gpu_checks.sh build 64M";;
  nccl-A2) if [[ $V == 7.2.1 ]]; then CMD="make -j HIP=1 BUILDDIR=build-hip && make -C verifiable HIP=1 && hip/run_tests.sh build-hip";
           else CMD="make -j HIP=1 BUILDDIR=build-hip-10.1 && SELF_TEST=none hip/run_tests.sh build-hip-10.1"; fi;;
