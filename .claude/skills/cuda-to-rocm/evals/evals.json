@@ -79,6 +79,41 @@
       "files_exist": [
         "plan.md"
       ]
+    },
+    {
+      "id": "authoritative-amd-port-proceed-without-asking",
+      "skill_should_trigger": true,
+      "prompt": "Port this CUDA concurrent hash-table library (NVIDIA cuCollections) to ROCm/HIP so it builds and its tests pass on this MI300X; keep the CUDA build unchanged. Your existing-support check found ROCm/hipCollections (https://github.com/ROCm/hipCollections), AMD's own HIP port, part of ROCm-DS: active, tested on MI300X, HIP-only. It lags upstream: no HyperLogLog, no `dynamic_map`, and some recent upstream fixes. Write plan.md with your verdict and exactly what you will do in this run, then stop. Don't clone or build anything.",
+      "expected_behavior": [
+        "Record the verdict first: hipCollections found, with its URL, judged authoritative (AMD-official), and what it lacks against current upstream",
+        "Commit to a path in this run without waiting for an answer: contribute the gap (the missing data structures and upstream fixes) to a local clone of hipCollections and build and test it on the MI300X, or, if the gap is too large, validate hipCollections as it is and write the gap up",
+        "Read 'keep the CUDA build unchanged' as a limit on how this repo may change, satisfied by leaving it unchanged, not as a reason for a second port"
+      ],
+      "unexpected_behavior": [
+        "End with a question or a list of options for the user to choose from instead of a chosen path",
+        "Plan a parallel HIP port of this repo, citing the CUDA-build constraint or the AMD port's lag as the reason"
+      ],
+      "files_exist": [
+        "plan.md"
+      ]
+    },
+    {
+      "id": "authoritative-amd-port-single-tree-need",
+      "skill_should_trigger": true,
+      "prompt": "Port NVIDIA nccl-tests to ROCm/HIP. We need ONE source tree that builds for both NVIDIA and AMD from the same commits, so our CI can compare the two vendors line by line. Your existing-support check found AMD's rccl-tests (now in ROCm/rocm-systems under projects/rccl-tests): AMD-official, active, HIP-only, at nccl-tests 2.19.6 while upstream is at 2.21.1. Write plan.md with your verdict and exactly what you will do in this run, then stop. Don't clone or build anything.",
+      "expected_behavior": [
+        "Record the verdict: the AMD port, with where it lives, judged authoritative",
+        "State that the single-source-tree requirement is a need the AMD port cannot meet even with contributions, and so port this repo, saying so in the verdict",
+        "Use the AMD port as the reference for fixes and ROCm-specific handling it already found rather than rediscovering them",
+        "Proceed with the plan in this run rather than asking the user to choose"
+      ],
+      "unexpected_behavior": [
+        "Refuse to port this repo, or only validate the AMD port, despite the stated single-tree need",
+        "Ignore the AMD port entirely"
+      ],
+      "files_exist": [
+        "plan.md"
+      ]
     }
   ]
 }

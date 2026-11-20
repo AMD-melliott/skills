@@ -70,12 +70,16 @@ the reference. A README that LINKS a platform fork, rather than merging one, tel
 upstream may not take a platform PR, which changes where the result should go even when
 you port from scratch.
 
-**If the verdict names an authoritative AMD port and you were asked to port, stop and ask
-before writing port code.** Put three options to the user: contribute what the AMD port lacks
-to it; validate the AMD port as it is; or port current upstream anyway, saying why the AMD
-port cannot serve. A gap in the AMD port (it lags upstream, it lacks a feature) is the thing
-to contribute, not a reason for a parallel port. With no one to ask, take one of the first
-two and write the gap up.
+**If the verdict names an authoritative AMD port and you were asked to port, do not stop to
+ask** (unless the user is present and said to check in). Put the verdict and your path where
+the user will see it first, then take that path in the same run; the user can redirect.
+Default: clone the AMD port inside the working directory, commit what it lacks against
+current upstream (features, upstream fixes), and build and test it on the GPU; if that gap is
+too large for one run, validate the port as it is. Either way, say where the work is and what
+gap is left. "Keep the CUDA build unchanged" limits how THIS repo may change, and leaving it
+unchanged satisfies it. Port this repo anyway only for a need the AMD port cannot meet even
+with contributions (one source tree for both vendors), say so in the verdict, and still use
+the AMD port as the reference for fixes it already found.
 
 Some CUDA has no HIP analogue to translate INTO, so hipify succeeds at doing nothing and the port looks small. CUTLASS reimplements against Composable Kernel; CuTe has a real structural correspondence in AMD's FlyDSL, whose layout algebra is modelled on it. That is a reimplementation with a defined target, not the same verdict as "no target exists" -- and both get written off as "not portable" unless you say which. `references/no-hip-equivalent.md`.
 
