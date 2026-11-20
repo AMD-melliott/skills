@@ -3,7 +3,7 @@
 # Usage: screen.sh <name> "<label> <arm> <url> <commit> <est-usd>" ...   Status in round2/<name>.status.
 set -u
 R2=/data/melliott/moat-testing/round2
-CAP=150; NAME=$1; shift
+CAP=${CAP:-1000}; NAME=$1; shift
 st() { echo "$(date -Is) $*" | tee -a $R2/$NAME.status; }
 total() { awk -F'|' 'NR>6 && $5+0>0 {t=$5} END{printf "%.2f", t+0}' $R2/SPEND.md; }
 for r in "$@"; do
@@ -12,8 +12,8 @@ for r in "$@"; do
   [[ -f $R2/STOP ]] && { st "STOP file present; halting before $L"; exit 0; }
   T=$(total)
   if awk -v t=$T -v e=$EST -v c=$CAP 'BEGIN{exit !(t+e>c)}'; then st "HALT: $T + est $EST would cross cap $CAP (before $L)"; exit 1; fi
-  # Per-run hard limit: never more than the room left under the cap, and at most 25.
-  MB=$(awk -v t=$T -v c=$CAP 'BEGIN{m=c-t; if(m>25)m=25; printf "%.2f", m}')
+  # Per-run hard limit: never more than the room left under the cap, and at most 60.
+  MB=$(awk -v t=$T -v c=$CAP 'BEGIN{m=c-t; if(m>60)m=60; printf "%.2f", m}')
   st "start $L arm=$A total_so_far=$T max_budget=$MB"
   MAX_BUDGET=$MB $R2/tools/blind-port2.sh "$A" "$L" "$U" "$C"; rc=$?
   [[ $rc -ne 0 ]] && { st "HALT: harness rc=$rc for $L"; exit 1; }

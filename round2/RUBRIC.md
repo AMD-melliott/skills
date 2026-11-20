@@ -108,3 +108,34 @@ before its first run. Runs: cuco-B4r-1, cuco-B4r-2, then nccl-B4r-1, nccl-B4r-2 
 `arms/armB4r-di`. Gates (skills, harness-adapters, jargon) pass; report in `PR4-REVISION.md`. The diff
 against arm A names none of cuCollections, hipCollections, nccl-tests, rccl-tests, HyperLogLog or
 dynamic_map. Run order: cuco-B4r-1, cuco-B4r-2, nccl-B4r-1, nccl-B4r-2, after screen P5 completes.
+
+---
+## Addendum 2026-11-20, combined screen (P45) and phase 2 (written and pushed before any of these runs)
+
+**Cap.** Matt, 2026-11-20: the $150 figure is not real spend (private LLM gateway); raise it as needed and
+do not stop for it. Spend is still tracked in SPEND.md and reported. The driver's cap is set to $1000 and
+each run's `--max-budget-usd` to 60, high enough not to cut a normal run short (phase 1 max was $15.42).
+
+**Arm C** = arm A + revised PR 4 (`b7c7b1e2`) + a verdict-first wording fix (`90a2999a`: the verdict goes "in
+your first message, before any edit"; it responds to E2 0/4 in P4r) + PR 5 (`b3eb0d8f`, cherry-pick of
+`7b89b0a4`). Real-name branch `round2/armC` = `b3eb0d8f`, tree `06d950b8`. Test copy `round2/armC-di` =
+`ef94ea44`, tree `04da77cf`: same de-identification as before, plus the llm.c fork named in PR 4's
+regression-guard eval replaced with a generic one (llm.c is a phase-2 project). Its diff against arm A names
+none of cuCollections, hipCollections, nccl-tests, rccl-tests, HyperLogLog, dynamic_map, libhipcxx, ROCm-DS,
+llm.c, pytorch3d, anthonix or karpathy. Gates pass on both. PR 1-3 text (shared by both arms) still names
+llm.c and pytorch3d facts; no differential effect, accepted as in phase 1.
+
+**Screen P45:** cuCollections @ 403526d, cuco-C-1 and cuco-C-2; control = phase-1 cuco-A1/A2.
+Primary: E3 (contribute/validate = YES, stop = NO) and D (my rebuild of the deliverable with its documented
+commands passes on 7.2.1 and 10.1.0, strict: no added flags). Also: E2 (does the wording fix restore it),
+V3 strict and the fresh-copy behaviour, V1, cost.
+
+**Phase 2:** pytorch3d @ ddfc551 (p3d-A1, p3d-C1, p3d-A2, p3d-C2) then llm.c @ f1e2ace (llmc-A1, llmc-C1,
+llmc-A2, llmc-C2), generic request and env notes unchanged. Measures and decision rule as in the frozen
+rubric with arm C in the place of arm B: E3 for PR 4 (pytorch3d's AMD effort is upstream's own merged HIP
+support, so YES = building on it, not a separate port; llm.c's is AMD-Ecosystem/llm.c `moat-port` or
+karpathy/llm.c#854), V4 for the fresh-clone rule, V2 for the matrix rule on pytorch3d (torch whose
+`torch.version.hip` >= 7.16). D as in P45 where the deliverable is a contribution.
+
+**Scoring:** run labels in transcripts are scrubbed (fixed 2026-11-20); label-blind scorer per run;
+V4/D/Q by me, with disagreements listed.
