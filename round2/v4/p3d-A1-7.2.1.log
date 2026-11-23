@@ -1,0 +1,29 @@
+label=p3d-A1 ver=7.2.1 deliverable tip/base: ddfc55127fed1a74514cd24db08a7c2e62e76b08
+files changed vs HEAD: 10
+excluded from overlay (venvs, nested repos, build dirs): none
+files overlaid: 1061
+image=rocm/dev-ubuntu-24.04:7.2.1-complete
+cmd=export DEBIAN_FRONTEND=noninteractive; apt-get update -qq >/dev/null; apt-get install -y -qq python3-venv python3-dev python3-pip git ninja-build >/dev/null && python3 -m venv /tmp/venv && . /tmp/venv/bin/activate && pip install -q torch torchvision --index-url https://download.pytorch.org/whl/rocm7.1 && pip install -q iopath numpy matplotlib imageio tqdm pytest pytest-timeout scipy hydra-core omegaconf pandas sqlalchemy tabulate lpips plotly PyOpenGL visdom accelerate && PYTORCH_ROCM_ARCH=gfx942 MAX_JOBS=64 FORCE_CUDA=1 python setup.py build_ext --inplace >/dev/null && python -c 'import torch;print("torch",torch.__version__,torch.version.hip)' && python -m pytest tests -q --timeout=900 2>&1 | tail -15
+2026-11-23T13:42:21-08:00
+W: https://repo.radeon.com/amdgpu/30.30.1/ubuntu/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+W: https://repo.radeon.com/rocm/apt/7.2.1/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+debconf: delaying package configuration, since apt-utils is not installed
+[92mSuccessfully preprocessed all matching files.[0m
+torch 2.13.0+rocm7.1 7.1.52802
+tests/test_vis.py: 18 warnings
+  /tmp/venv/lib/python3.12/site-packages/_plotly_utils/basevalidators.py:133: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    np.array(v), kind=kind, force_numeric=force_numeric
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_filter_medley
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_limit_frames_per_sequence
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_subset_with_filters
+FAILED tests/pulsar/test_forward.py::TestForward::test_principal_point - Valu...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_load_save_load_cow_texturesvertex
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_cow - TypeError: only...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_ico_sphere - TypeErro...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_toy - TypeError: only...
+8 failed, 919 passed, 62 skipped, 396 warnings, 240 subtests passed in 292.98s (0:04:52)
+RC=0
+2026-11-23T13:53:51-08:00

@@ -1,0 +1,30 @@
+label=p3d-A2 ver=7.2.1 deliverable tip/base: ddfc55127fed1a74514cd24db08a7c2e62e76b08
+files changed vs HEAD: 8
+excluded from overlay (venvs, nested repos, build dirs): .port-env/head/, .port-env/patched/
+files overlaid: 4809
+sha256:fe39186552aa9e969fafd578c7b319437320a2bcde1221285ad9348c4f406605
+image=moat-v4-p3d-a2:7.2.1
+cmd=export PATH=/opt/venv/bin:$PATH; PYTORCH_ROCM_ARCH=gfx942 MAX_JOBS=32 python setup.py build_ext --inplace >/dev/null && python -c 'import torch;print("torch",torch.__version__,torch.version.hip)' && export ROCPROFILER_REGISTER_ENABLED=0; python -m pytest tests -n 16 -q 2>&1 | tail -15; FB_TEST=1 python -m pytest tests/pulsar -q 2>&1 | tail -3
+2026-11-23T14:28:59-08:00
+[92mSuccessfully preprocessed all matching files.[0m
+torch 2.14.1+rocm7.2 7.2.53211
+  /data/melliott/moat-testing/round2/v4/p3d-A2-7.2.1/pytorch3d/ops/laplacian_matrices.py:170: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+    L = torch.sparse_coo_tensor(e01, w01, (V, V), dtype=torch.float32)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_subset_with_filters
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_filter_medley
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_limit_frames_per_sequence
+FAILED tests/pulsar/test_forward.py::TestForward::test_principal_point - Valu...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_load_save_load_cow_texturesvertex
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_cow - TypeError: only...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_ico_sphere - TypeErro...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_toy - TypeError: only...
+ERROR tests/test_opengl_utils.py - ImportError while importing test module '/...
+8 failed, 919 passed, 61 skipped, 394 warnings, 1 error, 240 subtests passed in 107.13s (0:01:47)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+10 passed, 1 warning in 8.52s
+RC=0
+2026-11-23T14:31:47-08:00

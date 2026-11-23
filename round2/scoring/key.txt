@@ -12,3 +12,13 @@ cuco-B4r-1 run-ecf340
 cuco-B4r-2 run-6abd3e
 nccl-B4r-1 run-cf33e5
 nccl-B4r-2 run-baddc0
+cuco-C-1 run-1ebeaf
+cuco-C-2 run-c2575f
+p3d-A1 run-bd17b8
+p3d-C1 run-8dabc2
+p3d-A2 run-d1d0ac
+p3d-C2 run-e94be5
+llmc-A1 run-95fb0b
+llmc-C1 run-0b1986
+llmc-A2 run-cd2dee
+llmc-C2 run-624da6

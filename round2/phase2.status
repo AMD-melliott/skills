@@ -1,0 +1,17 @@
+2026-11-20T13:07:13-08:00 start p3d-A1 arm=A total_so_far=145.60 max_budget=60.00
+2026-11-20T13:41:59-08:00 end p3d-A1 exit=0 cost=2.72 turns=1 outward_denials=0 total=148.32
+2026-11-20T13:41:59-08:00 start p3d-C1 arm=C-di total_so_far=148.32 max_budget=60.00
+2026-11-20T14:33:23-08:00 end p3d-C1 exit=0 cost=4.81 turns=6 outward_denials=0 total=153.13
+2026-11-20T14:33:23-08:00 start p3d-A2 arm=A total_so_far=153.13 max_budget=60.00
+2026-11-20T15:46:40-08:00 end p3d-A2 exit=0 cost=5.43 turns=93 outward_denials=0 total=158.56
+2026-11-20T15:46:40-08:00 start p3d-C2 arm=C-di total_so_far=158.56 max_budget=60.00
+2026-11-20T17:33:35-08:00 end p3d-C2 exit=0 cost=11.85 turns=128 outward_denials=0 total=170.41
+2026-11-20T17:33:35-08:00 start llmc-A1 arm=A total_so_far=170.41 max_budget=60.00
+2026-11-20T18:16:24-08:00 end llmc-A1 exit=0 cost=8.17 turns=125 outward_denials=0 total=178.58
+2026-11-20T18:16:24-08:00 start llmc-C1 arm=C-di total_so_far=178.58 max_budget=60.00
+2026-11-20T19:23:08-08:00 end llmc-C1 exit=0 cost=11.42 turns=1 outward_denials=0 total=190.00
+2026-11-20T19:23:08-08:00 start llmc-A2 arm=A total_so_far=190.00 max_budget=60.00
+2026-11-20T20:02:57-08:00 end llmc-A2 exit=0 cost=7.19 turns=1 outward_denials=0 total=197.19
+2026-11-20T20:02:57-08:00 start llmc-C2 arm=C-di total_so_far=197.19 max_budget=60.00
+2026-11-20T20:39:47-08:00 end llmc-C2 exit=0 cost=4.90 turns=100 outward_denials=0 total=202.09
+2026-11-20T20:39:47-08:00 phase2 complete

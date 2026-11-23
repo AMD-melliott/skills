@@ -1,0 +1,5 @@
+2026-11-20T11:41:00-08:00 start cuco-C-1 arm=C-di total_so_far=123.34 max_budget=60.00
+2026-11-20T12:22:36-08:00 end cuco-C-1 exit=0 cost=11.52 turns=170 outward_denials=0 total=134.86
+2026-11-20T12:22:36-08:00 start cuco-C-2 arm=C-di total_so_far=134.86 max_budget=60.00
+2026-11-20T13:07:13-08:00 end cuco-C-2 exit=0 cost=10.74 turns=171 outward_denials=0 total=145.60
+2026-11-20T13:07:13-08:00 p45 complete

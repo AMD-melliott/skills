@@ -1,0 +1,32 @@
+label=p3d-C1 ver=10.1.0 deliverable tip/base: ddfc55127fed1a74514cd24db08a7c2e62e76b08
+files changed vs HEAD: 11
+excluded from overlay (venvs, nested repos, build dirs): .port-check/fresh/.venv
+files overlaid: 2124
+image=rocm/dev-ubuntu-24.04:10.1.0-full
+cmd=export DEBIAN_FRONTEND=noninteractive; apt-get update -qq >/dev/null; apt-get install -y -qq python3-venv python3-dev python3-pip git ninja-build >/dev/null && python3 -m venv /tmp/venv && . /tmp/venv/bin/activate && pip install -q torch==2.14.1 torchvision --index-url https://download.pytorch.org/whl/rocm7.2 && pip install -q 'numpy<2.3' 'pandas<3' iopath scipy imageio matplotlib pillow parameterized fvcore omegaconf ninja setuptools wheel pytest pyopengl plotly 'sqlalchemy>=2.0' hydra-core visdom lpips accelerate tqdm && PYTORCH_ROCM_ARCH=gfx942 MAX_JOBS=32 python setup.py build_ext --inplace >/dev/null && python -c 'import torch;print("torch",torch.__version__,torch.version.hip)' && python -m pytest tests -q 2>&1 | tail -15; FB_TEST=1 python -m pytest tests/pulsar/test_forward.py -q 2>&1 | tail -3
+2026-11-23T14:15:45-08:00
+debconf: delaying package configuration, since apt-utils is not installed
+(null): No such file or directory
+(null): No such file or directory
+[92mSuccessfully preprocessed all matching files.[0m
+(null): No such file or directory
+torch 2.14.1+rocm7.2 7.2.53211
+  /tmp/venv/lib/python3.12/site-packages/_plotly_utils/basevalidators.py:206: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    v_numpy = np.array(v)
+
+tests/test_vis.py: 30 warnings
+  /tmp/venv/lib/python3.12/site-packages/_plotly_utils/basevalidators.py:62: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    return to_scalar_or_list(np.array(v))
+
+tests/test_vis.py: 18 warnings
+  /tmp/venv/lib/python3.12/site-packages/_plotly_utils/basevalidators.py:133: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    np.array(v), kind=kind, force_numeric=force_numeric
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/pulsar/test_forward.py::TestForward::test_principal_point - Valu...
+1 failed, 926 passed, 62 skipped, 362 warnings, 240 subtests passed in 305.97s (0:05:05)
+.....                                                                    [100%]
+5 passed in 2.79s
+RC=0
+2026-11-23T14:28:55-08:00

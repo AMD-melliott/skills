@@ -1,0 +1,167 @@
+label=llmc-A2 ver=7.2.1 deliverable tip/base: f1e2ace651495b74ae22d45d1723443fd00ecd3a
+files changed vs HEAD: 11
+excluded from overlay (venvs, nested repos, build dirs): none
+files overlaid: 117
+image=rocm/dev-ubuntu-24.04:7.2.1-complete
+cmd=export DEBIAN_FRONTEND=noninteractive; apt-get update -qq >/dev/null; (command -v curl >/dev/null && command -v wget >/dev/null) || apt-get install -y -qq curl wget >/dev/null; ./dev/download_starter_pack.sh >/dev/null 2>&1; make test_gpt2hip train_gpt2hip test_gpt2fp32hip train_gpt2fp32hip profile_gpt2hip >/dev/null && ./test_gpt2hip | tail -4; echo BF16_RC=${PIPESTATUS[0]}; ./test_gpt2fp32hip | tail -3; echo FP32PROG_RC=${PIPESTATUS[0]}
+2026-11-23T13:32:45-08:00
+W: https://repo.radeon.com/amdgpu/30.30.1/ubuntu/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+W: https://repo.radeon.com/rocm/apt/7.2.1/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+debconf: delaying package configuration, since apt-utils is not installed
+In file included from test_gpt2.cu:2:
+In file included from ./train_gpt2.cu:71:
+./llmc/zero.cuh:237:28: warning: variable length arrays in C++ are a Clang extension [-Wvla-cxx-extension]
+  237 |         int client_sockets[MAX_CLIENTS];
+      |                            ^~~~~~~~~~~
+./llmc/zero.cuh:237:28: note: read of non-const variable 'MAX_CLIENTS' is not allowed in a constant expression
+./llmc/zero.cuh:236:13: note: declared here
+  236 |         int MAX_CLIENTS = result->num_processes - 1;
+      |             ^
+1 warning generated when compiling for gfx942.
+In file included from test_gpt2.cu:2:
+In file included from ./train_gpt2.cu:71:
+./llmc/zero.cuh:237:28: warning: variable length arrays in C++ are a Clang extension [-Wvla-cxx-extension]
+  237 |         int client_sockets[MAX_CLIENTS];
+      |                            ^~~~~~~~~~~
+./llmc/zero.cuh:237:28: note: read of non-const variable 'MAX_CLIENTS' is not allowed in a constant expression
+./llmc/zero.cuh:236:13: note: declared here
+  236 |         int MAX_CLIENTS = result->num_processes - 1;
+      |             ^
+1 warning generated when compiling for host.
+In file included from train_gpt2.cu:71:
+./llmc/zero.cuh:237:28: warning: variable length arrays in C++ are a Clang extension [-Wvla-cxx-extension]
+  237 |         int client_sockets[MAX_CLIENTS];
+      |                            ^~~~~~~~~~~
+./llmc/zero.cuh:237:28: note: read of non-const variable 'MAX_CLIENTS' is not allowed in a constant expression
+./llmc/zero.cuh:236:13: note: declared here
+  236 |         int MAX_CLIENTS = result->num_processes - 1;
+      |             ^
+train_gpt2.cu:1884:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1884 |         if (step == 3) { cudaProfilerStop(); }
+      |                          ^~~~~~~~~~~~~~~~~~
+2 warnings generated when compiling for gfx942.
+In file included from train_gpt2.cu:71:
+./llmc/zero.cuh:237:28: warning: variable length arrays in C++ are a Clang extension [-Wvla-cxx-extension]
+  237 |         int client_sockets[MAX_CLIENTS];
+      |                            ^~~~~~~~~~~
+./llmc/zero.cuh:237:28: note: read of non-const variable 'MAX_CLIENTS' is not allowed in a constant expression
+./llmc/zero.cuh:236:13: note: declared here
+  236 |         int MAX_CLIENTS = result->num_processes - 1;
+      |             ^
+train_gpt2.cu:1884:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1884 |         if (step == 3) { cudaProfilerStop(); }
+      |                          ^~~~~~~~~~~~~~~~~~
+2 warnings generated when compiling for host.
+In file included from test_gpt2_fp32.cu:2:
+./train_gpt2_fp32.cu:1477:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1477 |     cudaFreeHost(model->cpu_losses);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:45:50: note: expanded from macro 'cudaFreeHost'
+   45 | #define cudaFreeHost                             hipHostFree
+      |                                                  ^
+test_gpt2_fp32.cu:33:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   33 |     cudaGetDeviceProperties(&deviceProp, deviceIdx);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:28:50: note: expanded from macro 'cudaGetDeviceProperties'
+   28 | #define cudaGetDeviceProperties                  hipGetDeviceProperties
+      |                                                  ^
+/opt/rocm-7.2.1/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:103:32: note: expanded from macro 'hipGetDeviceProperties'
+  103 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
+      |                                ^
+test_gpt2_fp32.cu:186:13: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  186 |             cudaMemcpy(calculated_grads_memory, model.grads_memory, model.num_parameters * sizeof(float), cudaMemcpyDeviceToHost);
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:46:50: note: expanded from macro 'cudaMemcpy'
+   46 | #define cudaMemcpy                               hipMemcpy
+      |                                                  ^
+In file included from test_gpt2_fp32.cu:2:
+./train_gpt2_fp32.cu:381:17: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
+  381 | __global__ void layernorm_backward_kernel2(float* dinp, float* dweight, float* dbias,
+      |                 ^
+4 warnings generated when compiling for gfx942.
+In file included from test_gpt2_fp32.cu:2:
+./train_gpt2_fp32.cu:1477:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1477 |     cudaFreeHost(model->cpu_losses);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:45:50: note: expanded from macro 'cudaFreeHost'
+   45 | #define cudaFreeHost                             hipHostFree
+      |                                                  ^
+test_gpt2_fp32.cu:33:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   33 |     cudaGetDeviceProperties(&deviceProp, deviceIdx);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:28:50: note: expanded from macro 'cudaGetDeviceProperties'
+   28 | #define cudaGetDeviceProperties                  hipGetDeviceProperties
+      |                                                  ^
+/opt/rocm-7.2.1/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:103:32: note: expanded from macro 'hipGetDeviceProperties'
+  103 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
+      |                                ^
+test_gpt2_fp32.cu:186:13: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  186 |             cudaMemcpy(calculated_grads_memory, model.grads_memory, model.num_parameters * sizeof(float), cudaMemcpyDeviceToHost);
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:46:50: note: expanded from macro 'cudaMemcpy'
+   46 | #define cudaMemcpy                               hipMemcpy
+      |                                                  ^
+3 warnings generated when compiling for host.
+train_gpt2_fp32.cu:1477:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1477 |     cudaFreeHost(model->cpu_losses);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:45:50: note: expanded from macro 'cudaFreeHost'
+   45 | #define cudaFreeHost                             hipHostFree
+      |                                                  ^
+train_gpt2_fp32.cu:1618:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1618 |     cudaGetDeviceProperties(&deviceProp, deviceIdx);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:28:50: note: expanded from macro 'cudaGetDeviceProperties'
+   28 | #define cudaGetDeviceProperties                  hipGetDeviceProperties
+      |                                                  ^
+/opt/rocm-7.2.1/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:103:32: note: expanded from macro 'hipGetDeviceProperties'
+  103 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
+      |                                ^
+train_gpt2_fp32.cu:381:17: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
+  381 | __global__ void layernorm_backward_kernel2(float* dinp, float* dweight, float* dbias,
+      |                 ^
+3 warnings generated when compiling for gfx942.
+train_gpt2_fp32.cu:1477:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1477 |     cudaFreeHost(model->cpu_losses);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:45:50: note: expanded from macro 'cudaFreeHost'
+   45 | #define cudaFreeHost                             hipHostFree
+      |                                                  ^
+train_gpt2_fp32.cu:1618:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1618 |     cudaGetDeviceProperties(&deviceProp, deviceIdx);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llmc/rocm/cuda_to_hip.h:28:50: note: expanded from macro 'cudaGetDeviceProperties'
+   28 | #define cudaGetDeviceProperties                  hipGetDeviceProperties
+      |                                                  ^
+/opt/rocm-7.2.1/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:103:32: note: expanded from macro 'hipGetDeviceProperties'
+  103 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
+      |                                ^
+2 warnings generated when compiling for host.
+In file included from profile_gpt2.cu:28:
+In file included from ./train_gpt2.cu:71:
+./llmc/zero.cuh:237:28: warning: variable length arrays in C++ are a Clang extension [-Wvla-cxx-extension]
+  237 |         int client_sockets[MAX_CLIENTS];
+      |                            ^~~~~~~~~~~
+./llmc/zero.cuh:237:28: note: read of non-const variable 'MAX_CLIENTS' is not allowed in a constant expression
+./llmc/zero.cuh:236:13: note: declared here
+  236 |         int MAX_CLIENTS = result->num_processes - 1;
+      |             ^
+1 warning generated when compiling for gfx942.
+In file included from profile_gpt2.cu:28:
+In file included from ./train_gpt2.cu:71:
+./llmc/zero.cuh:237:28: warning: variable length arrays in C++ are a Clang extension [-Wvla-cxx-extension]
+  237 |         int client_sockets[MAX_CLIENTS];
+      |                            ^~~~~~~~~~~
+./llmc/zero.cuh:237:28: note: read of non-const variable 'MAX_CLIENTS' is not allowed in a constant expression
+./llmc/zero.cuh:236:13: note: declared here
+  236 |         int MAX_CLIENTS = result->num_processes - 1;
+      |             ^
+1 warning generated when compiling for host.
+MPI support is disabled. Please enable MPI support to use MPI-based NCCL-init method.
+BF16_RC=1
+loss ok at step 8: 0.624121 0.624080
+loss ok at step 9: 0.376524 0.376511
+overall okay: 1
+FP32PROG_RC=0
+RC=0
+2026-11-23T13:34:55-08:00

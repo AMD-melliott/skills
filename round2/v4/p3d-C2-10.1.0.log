@@ -1,0 +1,32 @@
+label=p3d-C2 ver=10.1.0 deliverable tip/base: ddfc55127fed1a74514cd24db08a7c2e62e76b08
+files changed vs HEAD: 9
+excluded from overlay (venvs, nested repos, build dirs): none
+files overlaid: 1059
+image=rocm/dev-ubuntu-24.04:10.1.0-full
+cmd=export DEBIAN_FRONTEND=noninteractive; apt-get update -qq >/dev/null; apt-get install -y -qq python3-venv python3-dev python3-pip git ninja-build >/dev/null && python3 -m venv /tmp/venv && . /tmp/venv/bin/activate && pip install -q torch==2.14.1 torchvision --index-url https://download.pytorch.org/whl/rocm7.2 && pip install -q iopath numpy pytest pytest-xdist imageio matplotlib tqdm scipy pillow fvcore hydra-core visdom lpips accelerate sqlalchemy omegaconf pandas plotly && export PYTORCH_ROCM_ARCH=gfx942 && python setup.py build_ext --inplace >/dev/null && python -c 'import torch;print("torch",torch.__version__,torch.version.hip)' && export LD_PRELOAD=/opt/rocm/lib/libhsa-runtime64.so.1 && python -m pytest tests -n 16 -q --ignore=tests/pulsar 2>&1 | tail -15; unset LD_PRELOAD; FB_TEST=1 python -m pytest tests/pulsar -q 2>&1 | tail -3
+2026-11-23T14:45:36-08:00
+debconf: delaying package configuration, since apt-utils is not installed
+(null): No such file or directory
+(null): No such file or directory
+[92mSuccessfully preprocessed all matching files.[0m
+(null): No such file or directory
+torch 2.14.1+rocm7.2 7.2.53211
+  /data/melliott/moat-testing/round2/v4/p3d-C2-10.1.0/tests/test_mesh_normal_consistency.py:117: UserWarning: Using torch.cross without specifying the dim arg is deprecated.
+  Please either pass the dim explicitly or simply use torch.linalg.cross.
+  The default value of dim will change to agree with that of linalg.cross in a future release. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/native/Cross.cpp:63.)
+    normals.append((v1 - v0).view(-1).cross((v2 - v0).view(-1)))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_filter_medley
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_subset_with_filters
+FAILED tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_limit_frames_per_sequence
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_load_save_load_cow_texturesvertex
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_cow - TypeError: only...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_ico_sphere - TypeErro...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_toy - TypeError: only...
+7 failed, 910 passed, 62 skipped, 379 warnings, 240 subtests passed in 118.16s (0:01:58)
+..........                                                               [100%]
+10 passed in 9.33s
+RC=0
+2026-11-23T14:52:29-08:00
