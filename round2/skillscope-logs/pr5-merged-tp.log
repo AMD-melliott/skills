@@ -1,0 +1,5 @@
+[evals] OK: 1 skill folder(s) in shape.
+[evals] OK: 23 case(s) across 1 skill(s) plus 5 shared negative(s).
+[evals] OK: 0 internal reference(s) across 21 markdown file(s).
+[evals] 12 external URL(s) not fetched. `--external` checks them over the network.
+[evals] repo: /mnt/data/melliott/moat-testing/round2/refit/ssw  skills: .claude/skills/cuda-to-rocm

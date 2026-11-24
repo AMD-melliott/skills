@@ -1,0 +1,464 @@
+{
+  "1b0701": {
+    "eval": "authoritative-amd-port-single-tree-need",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'AMD's rccl-tests, now at ROCm/rocm-systems, projects/rccl-tests. It is AMD-official and actively maintained, so it is authoritative'"
+      },
+      "E2": {
+        "verdict": "FAIL",
+        "evidence": "Verdict says rccl-tests 'doesn't fit here, because our requirement is structural' and ports this repo, but never states that contributing to rccl-tests could not meet the single-tree need; only mentions offering the layer to AMD 'to close the version gap'"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'Where it has fixed something RCCL- or AMD-specific ... we copy the finding into our layer'; step 4 diffs rccl-tests 2.19.6 vs upstream 2.19.6"
+      },
+      "E4": {
+        "verdict": "PASS",
+        "evidence": "Commits to 'What I will do in the porting run' steps 1-8; open items are hardware/API facts, not a path choice"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ports upstream 2.21.1 itself"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "rccl-tests assessed and used as reference"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "FAIL"
+  },
+  "56507a": {
+    "eval": "authoritative-amd-port-single-tree-need",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'AMD rccl-tests, now at ROCm/rocm-systems under projects/rccl-tests ... AMD-official and actively maintained, so it is authoritative'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'rccl-tests cannot meet the requirement ... no NVIDIA build ... Using it as the base would mean un-hipifying it ... and doing that again for every upstream release'; verdict: port upstream"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "Step 3 'Mine rccl-tests for AMD fixes' with carry-over table; 'carry them over deliberately rather than rediscover them'"
+      },
+      "E4": {
+        "verdict": "PASS",
+        "evidence": "Verdict and steps committed; 'Open questions/Decisions for you' are secondary (where tree lives, CI hosts, opt-in extras) with stated defaults, not a choice of path"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ports upstream nccl-tests"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "rccl-tests used as reference"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "932374": {
+    "eval": "authoritative-amd-port-single-tree-need",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'rccl-tests, now in ROCm/rocm-systems under projects/rccl-tests. It is authoritative: AMD-official and actively maintained'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'rccl-tests can't provide that, even with contributions from us' under Verdict; decision: port NVIDIA nccl-tests 2.21.1"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "Step 3 'Pull the AMD fix list out of rccl-tests' sorted into bins; 'Every real fix it contains gets carried into the port'"
+      },
+      "E4": {
+        "verdict": "PASS",
+        "evidence": "'What this run will do' steps 1-6 committed; questions are about hardware availability and long-term upstreaming"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ports upstream"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "rccl-tests central reference"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "be258c": {
+    "eval": "authoritative-amd-port-single-tree-need",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'rccl-tests, now at .../ROCm/rocm-systems/tree/develop/projects/rccl-tests. It is authoritative: AMD-official, actively maintained'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'rccl-tests cannot give us that, even if we contributed to it: AMD has no reason to take a CUDA build path into a ROCm monorepo'"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'How we use rccl-tests: as the reference for HIP fixes AMD has already found'; step 2 harvest"
+      },
+      "E4": {
+        "verdict": "PASS",
+        "evidence": "'What the run will do' committed; no questions to user"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ports upstream 2.21.1"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "rccl-tests harvested"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "ad523f": {
+    "eval": "authoritative-amd-port-single-tree-need",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "Table: rccl-tests, ROCm/rocm-systems projects/rccl-tests, 'Yes. AMD-official and actively maintained'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'Even if we contributed the 2.19.6 -> 2.21.1 gap to it, it would still not build against CUDA/NCCL'; 'So we port upstream nccl-tests itself'"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'use rccl-tests as the reference for HIP-specific fixes AMD has already found'; diff vs v2.19.6 into buckets"
+      },
+      "E4": {
+        "verdict": "PASS",
+        "evidence": "Path committed; 'Next run (proposed)... waiting for your go-ahead' reflects the prompt's 'then stop'; open questions are hosts and optional upstreaming, not a path choice"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ports upstream"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "rccl-tests used as reference"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "878b3b": {
+    "eval": "authoritative-amd-port-single-tree-need",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "Table: rccl-tests URL in ROCm/rocm-systems, 'AMD-official, actively maintained, authoritative'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'it doesn't meet the core requirement. It is HIP-only'; 'Making it build with nvcc again means un-hipifying it, and the NVIDIA side would no longer be the code NVIDIA ships'; verdict 'Port it'"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'How rccl-tests is used: as the authoritative list of what AMD had to change'; 'Cross-check every difference in rccl-tests'"
+      },
+      "E4": {
+        "verdict": "PASS",
+        "evidence": "Verdict committed; 'Decisions for you' are hardware, repo location, and RCCL-only options with a stated recommendation"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ports upstream"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "rccl-tests used as reference"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "d84eda": {
+    "eval": "authoritative-amd-port-proceed-without-asking",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "Table: ROCm/hipCollections, https://github.com/ROCm/hipCollections, 'Authoritative. It is AMD's own port'; lacks hyperloglog, dynamic_map, upstream fixes"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "Clone hipCollections, baseline on MI300X, port fixes/HLL/dynamic_map; 'If the gap is too large...hipCollections is still validated on MI300X as it stands'"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'Upstream cuCollections is not modified at all, so its CUDA build stays the same'"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ends with Limits; single-tree mentioned only as 'a separate decision' if it turns out to be required"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "No parallel HIP port of cuCollections; explicitly rejected"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "30b836": {
+    "eval": "authoritative-amd-port-proceed-without-asking",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'Existing AMD effort: https://github.com/ROCm/hipCollections ... Yes. It is AMD's own HIP port ... no HyperLogLog, no dynamic_map, missing some recent upstream fixes'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "Steps 1-6: clone, baseline ctest on MI300X, port fixes, HLL, dynamic_map, validate"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'I make no changes to upstream cuCollections, so its CUDA build stays unchanged'"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Path chosen; 'If that single tree is what you actually need, tell me' is a conditional fallback, not a request to pick"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "No parallel HIP port of cuCollections; explicitly rejected"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "ae29c9": {
+    "eval": "authoritative-amd-port-proceed-without-asking",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'ROCm/hipCollections, https://github.com/ROCm/hipCollections ... AMD ... part of ROCm-DS'; missing HLL, dynamic_map, upstream fixes"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'What this run will do': clone hipCollections, baseline on MI300X, add fixes/HLL/dynamic_map; fallback if both don't fit"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'I meet this by not touching the cuCollections tree at all'"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ends with 'Not covered' list; no question"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "No parallel HIP port of cuCollections; explicitly rejected"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "7daca6": {
+    "eval": "authoritative-amd-port-proceed-without-asking",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'ROCm/hipCollections \u2014 https://github.com/ROCm/hipCollections ... AMD-official, part of ROCm-DS'; no hyperloglog, no dynamic_map, missing fixes"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "Implementation run: baseline, port fixes, HLL, dynamic_map into hipCollections, validate on MI300X"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'That build stays as it is because nothing in that repo changes'; explicitly rejects additive single-source port"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "'One assumption to check with you... If you specifically want upstream cuCollections itself to carry a HIP path ... I'd re-plan' is a fallback condition; path is chosen"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "No parallel HIP port of cuCollections; explicitly rejected"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "f17aa8": {
+    "eval": "authoritative-amd-port-proceed-without-asking",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'ROCm/hipCollections, https://github.com/ROCm/hipCollections - Authoritative ... AMD's own HIP port'; no HLL, no dynamic_map, missing fixes"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "'What this run will do': baseline, gap list, port fixes, HLL, dynamic_map (stop and report size if legacy static_map missing)"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'NVIDIA/cuCollections is not modified at all, so its CUDA build cannot change'"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Final message headed 'Two things to decide' but both are a conditional fallback ('If you actually want one source tree ... Tell me') and a hardware note; plan 'commits this run to' one path"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "No parallel HIP port of cuCollections; explicitly rejected"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "fa5e65": {
+    "eval": "authoritative-amd-port-proceed-without-asking",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "Table: ROCm/hipCollections URL, 'Authoritative. AMD-official'; lacks HyperLogLog, dynamic_map, recent fixes"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "Clone, baseline, GAP.md, contribute fixes/HLL/dynamic_map on upstream-sync branch, validate on MI300X; stop-cleanly fallback"
+      },
+      "E3": {
+        "verdict": "PASS",
+        "evidence": "'met trivially: this run makes no change to NVIDIA/cuCollections'"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Ends with Report step; no question"
+      },
+      "U2": {
+        "verdict": "ABSENT",
+        "evidence": "No parallel HIP port of cuCollections; explicitly rejected"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "2ae795": {
+    "eval": "pr-checklist-port-with-patch-files",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'cmake/hip/patches/ ... not cmake/hip/patches/ ... Most likely, a .gitignore rule matches it (*.diff ...) ... on a fresh clone ... the configure step fails'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "git check-ignore -v, git status --short --ignored, git add -f on both patches, then 'git clone --no-local . /tmp/hipport-check' and build/ctest"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Stages by explicit path with -f for patches; warns against git add -A"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "b2a001": {
+    "eval": "pr-checklist-port-with-patch-files",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'cmake/hip/patches/ exists on disk ... not listed ... likely cause is a .gitignore rule such as *.diff ... every clean checkout ... fails at configure time'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "check-ignore -v and status --ignored; force-add offered (or .gitignore negation); build from 'git worktree add /tmp/hip-verify HEAD' (clean checkout of the commit)"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Stages by explicit path with -f for patches; warns against git add -A"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "5f2548": {
+    "eval": "pr-checklist-port-with-patch-files",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'these files are being ignored, most likely by a *.diff ... fail for everyone else, including CI'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "check-ignore -v, status --ignored, 'git add -f' option, then commit and build in 'git worktree add /tmp/hip-port-check HEAD'"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Stages by explicit path with -f for patches; warns against git add -A"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "9a298c": {
+    "eval": "pr-checklist-port-with-patch-files",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'An untracked directory that git status doesn't show is almost always ignored (probably a *.diff...) ... A clean clone or CI run then fails at the PATCHES step'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "check-ignore -v, status --ignored, force-add option; validation builds from 'git checkout-index -a --prefix=/tmp/hip-port-check/' (staged content, pre-commit), with git clone after commit if submodules"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Stages by explicit path with -f for patches; warns against git add -A"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "a7bc0d": {
+    "eval": "pr-checklist-port-with-patch-files",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'An untracked directory ... only disappears from git status when it is ignored ... a fresh clone or CI fails at configure'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "status --ignored, check-ignore -v, force-add (Option A) or rename (Option C), then 'git clone --branch hip-support . /tmp/hipcheck' and build/test"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Stages by explicit path with -f for patches; warns against git add -A"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  },
+  "aac48d": {
+    "eval": "pr-checklist-port-with-patch-files",
+    "items": {
+      "E1": {
+        "verdict": "PASS",
+        "evidence": "'the patches are being silently ignored ... CI and anyone who clones it will fail at configure time'"
+      },
+      "E2": {
+        "verdict": "PASS",
+        "evidence": "check-ignore -v, status --ignored, git add -f; validation from 'git archive $(git write-tree)' extract of the staged tree (pre-commit) in a fresh dir"
+      },
+      "U1": {
+        "verdict": "ABSENT",
+        "evidence": "Stages by explicit path with -f for patches; warns against git add -A"
+      },
+      "files_exist": "PASS"
+    },
+    "overall": "PASS"
+  }
+}
