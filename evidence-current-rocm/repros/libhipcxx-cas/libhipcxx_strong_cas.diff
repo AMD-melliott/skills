@@ -1,0 +1,50 @@
+diff --git a/include/cuda/std/__atomic/functions/atomic_hip_generated.h b/include/cuda/std/__atomic/functions/atomic_hip_generated.h
+index 06bd47866..1a341c860 100644
+--- a/include/cuda/std/__atomic/functions/atomic_hip_generated.h
++++ b/include/cuda/std/__atomic/functions/atomic_hip_generated.h
+@@ -124,7 +124,7 @@ static inline _CCCL_DEVICE void __atomic_store_cuda(volatile _Type *__ptr, _Type
+ }
+ 
+ template<class _Type>
+-[[nodiscard]] static inline _CCCL_DEVICE bool __atomic_compare_exchange_cuda(volatile _Type *__ptr, _Type *__expected, const _Type __desired, bool, int __success_memorder, int __failure_memorder, __thread_scope_block_tag) {
++[[nodiscard]] static inline _CCCL_DEVICE bool __atomic_compare_exchange_cuda(volatile _Type *__ptr, _Type *__expected, const _Type __desired, bool __is_weak, int __success_memorder, int __failure_memorder, __thread_scope_block_tag) {
+     if constexpr (sizeof(_Type) > 8) {
+         static_assert(::cuda::std::__always_false_v<_Type>,
+                       ">64-bit atomic compare_exchange is not supported on HIP (clang HIP __hip_atomic_compare_exchange_weak caps at 64-bit)");
+@@ -132,7 +132,12 @@ template<class _Type>
+     } else {
+         bool __success;
+         if (__cuda_compare_exchange_weak_if_local(__ptr, __expected, &__desired, &__success)) return __success;
+-        return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
++        // A weak CAS on a 1- or 2-byte object is a loop over a 32-bit CAS that also fails when the
++        // neighbouring bytes change, so compare_exchange_strong must use the strong builtin.
++        if (__is_weak) {
++            return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
++        }
++        return __hip_atomic_compare_exchange_strong(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
+     }
+ }
+ 
+@@ -317,7 +322,7 @@ static inline _CCCL_DEVICE void __atomic_store_cuda(volatile _Type *__ptr, _Type
+ }
+ 
+ template<class _Type>
+-[[nodiscard]] static inline _CCCL_DEVICE bool __atomic_compare_exchange_cuda(volatile _Type *__ptr, _Type *__expected, const _Type __desired, bool, int __success_memorder, int __failure_memorder, __thread_scope_device_tag) {
++[[nodiscard]] static inline _CCCL_DEVICE bool __atomic_compare_exchange_cuda(volatile _Type *__ptr, _Type *__expected, const _Type __desired, bool __is_weak, int __success_memorder, int __failure_memorder, __thread_scope_device_tag) {
+     if constexpr (sizeof(_Type) > 8) {
+         static_assert(::cuda::std::__always_false_v<_Type>,
+                       ">64-bit atomic compare_exchange is not supported on HIP (clang HIP __hip_atomic_compare_exchange_weak caps at 64-bit)");
+@@ -325,7 +330,12 @@ template<class _Type>
+     } else {
+         bool __success;
+         if (__cuda_compare_exchange_weak_if_local(__ptr, __expected, &__desired, &__success)) return __success;
+-        return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_AGENT);
++        // A weak CAS on a 1- or 2-byte object is a loop over a 32-bit CAS that also fails when the
++        // neighbouring bytes change, so compare_exchange_strong must use the strong builtin.
++        if (__is_weak) {
++            return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_AGENT);
++        }
++        return __hip_atomic_compare_exchange_strong(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_AGENT);
+     }
+ }
+ 

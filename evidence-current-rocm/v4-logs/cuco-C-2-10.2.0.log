@@ -1,0 +1,146 @@
+label=cuco-C-2 ver=10.2.0 deliverable tip/base: 895383092300392888bdbae8683a436ca3ce4794
+files changed vs HEAD: 0
+image=rocm/dev-ubuntu-24.04:10.2.0-full
+cmd=export DEBIAN_FRONTEND=noninteractive; apt-get update -qq >/dev/null; (command -v git >/dev/null || apt-get install -y -qq git >/dev/null); python3 -m pip install -q --break-system-packages 'cmake>=3.30,<4' ninja && cmake -S . -B build -G Ninja -DCMAKE_HIP_ARCHITECTURES=gfx942  && cmake --build build -j && cd build && ctest -j8 --timeout 900
+2026-11-24T14:55:18-08:00
+debconf: delaying package configuration, since apt-utils is not installed
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+-- Downloaded 'CUCO_RAPIDS.cmake' successfully!
+-- [download 2% complete]
+-- [download 3% complete]
+-- [download 5% complete]
+-- [download 7% complete]
+-- [download 9% complete]
+-- [download 11% complete]
+-- [download 13% complete]
+-- [download 15% complete]
+-- [download 17% complete]
+-- [download 19% complete]
+-- [download 21% complete]
+-- [download 23% complete]
+-- [download 24% complete]
+-- [download 26% complete]
+-- [download 28% complete]
+-- [download 29% complete]
+-- [download 31% complete]
+-- [download 33% complete]
+-- [download 35% complete]
+-- [download 37% complete]
+-- [download 39% complete]
+-- [download 41% complete]
+-- [download 44% complete]
+-- [download 46% complete]
+-- [download 48% complete]
+-- [download 50% complete]
+-- [download 52% complete]
+-- [download 54% complete]
+-- [download 56% complete]
+-- [download 58% complete]
+-- [download 60% complete]
+-- [download 62% complete]
+-- [download 64% complete]
+-- [download 66% complete]
+-- [download 68% complete]
+-- [download 70% complete]
+-- [download 72% complete]
+-- [download 74% complete]
+-- [download 76% complete]
+-- [download 78% complete]
+-- [download 81% complete]
+-- [download 83% complete]
+-- [download 85% complete]
+-- [download 87% complete]
+-- [download 89% complete]
+-- [download 91% complete]
+-- [download 93% complete]
+-- [download 95% complete]
+-- [download 96% complete]
+-- [download 97% complete]
+-- [download 99% complete]
+-- [download 100% complete]
+-- The CXX compiler identification is GNU 13.3.0
+-- The HIP compiler identification is Clang 24.0.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting HIP compiler ABI info
+-- Detecting HIP compiler ABI info - done
+-- Check for working HIP compiler: /opt/rocm/core-10.2/lib/llvm/bin/clang++ - skipped
+-- Detecting HIP compile features
+-- Detecting HIP compile features - done
+-- HIP: Using hipcc from relative path: /opt/rocm/bin/hipcc
+-- HIP_PLATFORM using hip_HIPCONFIG_EXECUTABLE: amd
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Create hipCCL CMake package and ALIAS targets
+-- HIP: Using hipcc from relative path: /opt/rocm/bin/hipcc
+-- CPM: Using local package rocthrust@4.7.0
+-- CPM: Adding package libhipcxx@3.4.0 (release/26.10)
+CMake Deprecation Warning at /opt/rocm/share/rocm/cmake/ROCMConfig.cmake:12 (message):
+  Use of find_package(ROCM) is deprecated as of ROCm 6.4.  Please use
+  find_package(ROCmCMakeBuildTools)
+Call Stack (most recent call first):
+  build/_deps/libhipcxx-src/cmake/FindROCMCmake.cmake:33 (find_package)
+  build/_deps/libhipcxx-src/CMakeLists.txt:52 (include)
+
+
+CMake Warning (dev) at /opt/rocm/share/rocmcmakebuildtools/cmake/ROCMInstallTargets.cmake:115 (install):
+  Policy CMP0177 is not set: install() DESTINATION paths are normalized.  Run
+  "cmake --help-policy CMP0177" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+Call Stack (most recent call first):
+  build/_deps/libhipcxx-src/cmake/libhipcxxInstallRules.cmake:69 (rocm_install)
+  build/_deps/libhipcxx-src/CMakeLists.txt:63 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /opt/rocm/share/rocmcmakebuildtools/cmake/ROCMInstallTargets.cmake:115 (install):
+  Policy CMP0177 is not set: install() DESTINATION paths are normalized.  Run
+  "cmake --help-policy CMP0177" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+Call Stack (most recent call first):
+  build/_deps/libhipcxx-src/cmake/libhipcxxInstallRules.cmake:90 (rocm_install)
+  build/_deps/libhipcxx-src/CMakeLists.txt:63 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Found libhipcxx: /data/melliott/moat-testing/round2/v4/cuco-C-2-10.2.0/build/_deps/libhipcxx-src/lib/cmake/libhipcxx/libhipcxx-config.cmake (found version "3.4.0.0")
+-- HIP: Using hipcc from relative path: /opt/rocm/bin/hipcc
+-- Roaring Bitmap test data downloaded to: /data/melliott/moat-testing/round2/v4/cuco-C-2-10.2.0/build/data/roaring_bitmap
+-- CPM: Adding package Catch2@3.10.0 (v3.10.0)
+-- Performing Test HAVE_FLAG__ffile_prefix_map__data_melliott_moat_testing_round2_v4_cuco_C_2_10_2_0_build__deps_catch2_src__
+-- Performing Test HAVE_FLAG__ffile_prefix_map__data_melliott_moat_testing_round2_v4_cuco_C_2_10_2_0_build__deps_catch2_src__ - Success
+-- Found 78 headers for testing
+-- CPM: Adding package nvbench@0.3.0 (release/26.10)
+[1/9] Creating directories for 'nvbench-populate'
+[1/9] Performing download step (git clone) for 'nvbench-populate'
+Cloning into 'nvbench-src'...
+fatal: invalid reference: release/26.10
+CMake Error at nvbench-subbuild/nvbench-populate-prefix/tmp/nvbench-populate-gitclone.cmake:61 (message):
+  Failed to checkout tag: 'release/26.10'
+
+
+FAILED: [code=1] nvbench-populate-prefix/src/nvbench-populate-stamp/nvbench-populate-download /data/melliott/moat-testing/round2/v4/cuco-C-2-10.2.0/build/_deps/nvbench-subbuild/nvbench-populate-prefix/src/nvbench-populate-stamp/nvbench-populate-download 
+cd /data/melliott/moat-testing/round2/v4/cuco-C-2-10.2.0/build/_deps && /usr/local/lib/python3.12/dist-packages/cmake/data/bin/cmake -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /data/melliott/moat-testing/round2/v4/cuco-C-2-10.2.0/build/_deps/nvbench-subbuild/nvbench-populate-prefix/tmp/nvbench-populate-gitclone.cmake && /usr/local/lib/python3.12/dist-packages/cmake/data/bin/cmake -E touch /data/melliott/moat-testing/round2/v4/cuco-C-2-10.2.0/build/_deps/nvbench-subbuild/nvbench-populate-prefix/src/nvbench-populate-stamp/nvbench-populate-download
+ninja: build stopped: subcommand failed.
+
+CMake Error at /usr/local/lib/python3.12/dist-packages/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:1918 (message):
+  Build step for nvbench failed: 1
+Call Stack (most recent call first):
+  /usr/local/lib/python3.12/dist-packages/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:1609 (__FetchContent_populateSubbuild)
+  /usr/local/lib/python3.12/dist-packages/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:2145:EVAL:2 (__FetchContent_doPopulation)
+  /usr/local/lib/python3.12/dist-packages/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:2145 (cmake_language)
+  /usr/local/lib/python3.12/dist-packages/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:2384 (__FetchContent_Populate)
+  build/cmake/CPM_0.42.0.cmake:1208 (FetchContent_MakeAvailable)
+  build/cmake/CPM_0.42.0.cmake:989 (cpm_fetch_package)
+  build/cmake/CPM_0.42.0.cmake:379 (CPMAddPackage)
+  build/_deps/rapids-cmake-src/rapids-cmake/cpm/find.cmake:200 (CPMFindPackage)
+  build/_deps/rapids-cmake-src/rapids-cmake/cpm/hipbench.cmake:110 (rapids_cpm_find)
+  build/_deps/rapids-cmake-src/rapids-cmake/cpm/hipbench.cmake:160 (rapids_cpm_hipbench)
+  CMakeLists.txt:225 (rapids_cpm_nvbench)
+
+
+-- Configuring incomplete, errors occurred!
+RC=1
+2026-11-24T14:55:46-08:00

@@ -1,0 +1,92 @@
+deliverable: /data/melliott/moat-testing/round2/projects/cuco-B4r-1/amd-port branch sync-upstream-876 tip 770883d1987538aea3584e489298e94ec0386fe2
+fresh clone tip: 770883d1987538aea3584e489298e94ec0386fe2
+image=rocm/dev-ubuntu-24.04:7.14.1-full
+cmd=(command -v git >/dev/null || (apt-get update -qq && apt-get install -y -qq git >/dev/null 2>&1)); python3 -m pip install -q --break-system-packages --target /tmp/pt "cmake>=3.31,<4" ninja >/dev/null 2>&1; export PATH=/tmp/pt/bin:$PATH PYTHONPATH=/tmp/pt; cmake -G Ninja -S . -B build -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_HIP_ARCHITECTURES=gfx942 -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release  && cmake --build build -j 64 && cd build && ctest -j8
+2026-11-24T15:17:15-08:00
+-- Downloaded 'CUCO_RAPIDS.cmake' successfully!
+-- The CXX compiler identification is GNU 13.3.0
+-- The HIP compiler identification is Clang 23.0.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting HIP compiler ABI info
+-- Detecting HIP compiler ABI info - done
+-- Check for working HIP compiler: /opt/rocm/lib/llvm/bin/clang++ - skipped
+-- Detecting HIP compile features
+-- Detecting HIP compile features - done
+-- HIP: Using hipcc from relative path: /opt/rocm/bin/hipcc
+-- HIP_PLATFORM using hip_HIPCONFIG_EXECUTABLE: amd
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Create hipCCL CMake package and ALIAS targets
+-- HIP: Using hipcc from relative path: /opt/rocm/bin/hipcc
+-- CPM: Using local package rocthrust@4.5.0
+-- CPM: Adding package libhipcxx@3.4.0 (release/26.10)
+CMake Deprecation Warning at /opt/rocm/share/rocm/cmake/ROCMConfig.cmake:12 (message):
+  Use of find_package(ROCM) is deprecated as of ROCm 6.4.  Please use
+  find_package(ROCmCMakeBuildTools)
+Call Stack (most recent call first):
+  build/_deps/libhipcxx-src/cmake/FindROCMCmake.cmake:33 (find_package)
+  build/_deps/libhipcxx-src/CMakeLists.txt:52 (include)
+
+
+CMake Warning (dev) at /opt/rocm/share/rocmcmakebuildtools/cmake/ROCMInstallTargets.cmake:115 (install):
+  Policy CMP0177 is not set: install() DESTINATION paths are normalized.  Run
+  "cmake --help-policy CMP0177" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+Call Stack (most recent call first):
+  build/_deps/libhipcxx-src/cmake/libhipcxxInstallRules.cmake:69 (rocm_install)
+  build/_deps/libhipcxx-src/CMakeLists.txt:63 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /opt/rocm/share/rocmcmakebuildtools/cmake/ROCMInstallTargets.cmake:115 (install):
+  Policy CMP0177 is not set: install() DESTINATION paths are normalized.  Run
+  "cmake --help-policy CMP0177" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+Call Stack (most recent call first):
+  build/_deps/libhipcxx-src/cmake/libhipcxxInstallRules.cmake:90 (rocm_install)
+  build/_deps/libhipcxx-src/CMakeLists.txt:63 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Found libhipcxx: /data/melliott/moat-testing/round2/v4/cuco-B4r-1-7.14.1/build/_deps/libhipcxx-src/lib/cmake/libhipcxx/libhipcxx-config.cmake (found version "3.4.0.0")
+-- HIP: Using hipcc from relative path: /opt/rocm/bin/hipcc
+-- Roaring Bitmap test data downloaded to: /data/melliott/moat-testing/round2/v4/cuco-B4r-1-7.14.1/build/data/roaring_bitmap
+-- CPM: Adding package Catch2@3.10.0 (v3.10.0)
+-- Performing Test HAVE_FLAG__ffile_prefix_map__data_melliott_moat_testing_round2_v4_cuco_B4r_1_7_14_1_build__deps_catch2_src__
+-- Performing Test HAVE_FLAG__ffile_prefix_map__data_melliott_moat_testing_round2_v4_cuco_B4r_1_7_14_1_build__deps_catch2_src__ - Success
+-- Found 78 headers for testing
+-- CPM: Adding package nvbench@0.3.0 (release/26.10)
+[1/9] Creating directories for 'nvbench-populate'
+[1/9] Performing download step (git clone) for 'nvbench-populate'
+Cloning into 'nvbench-src'...
+fatal: invalid reference: release/26.10
+CMake Error at nvbench-subbuild/nvbench-populate-prefix/tmp/nvbench-populate-gitclone.cmake:61 (message):
+  Failed to checkout tag: 'release/26.10'
+
+
+FAILED: [code=1] nvbench-populate-prefix/src/nvbench-populate-stamp/nvbench-populate-download /data/melliott/moat-testing/round2/v4/cuco-B4r-1-7.14.1/build/_deps/nvbench-subbuild/nvbench-populate-prefix/src/nvbench-populate-stamp/nvbench-populate-download 
+cd /data/melliott/moat-testing/round2/v4/cuco-B4r-1-7.14.1/build/_deps && /tmp/pt/cmake/data/bin/cmake -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /data/melliott/moat-testing/round2/v4/cuco-B4r-1-7.14.1/build/_deps/nvbench-subbuild/nvbench-populate-prefix/tmp/nvbench-populate-gitclone.cmake && /tmp/pt/cmake/data/bin/cmake -E touch /data/melliott/moat-testing/round2/v4/cuco-B4r-1-7.14.1/build/_deps/nvbench-subbuild/nvbench-populate-prefix/src/nvbench-populate-stamp/nvbench-populate-download
+ninja: build stopped: subcommand failed.
+
+CMake Error at /tmp/pt/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:1918 (message):
+  Build step for nvbench failed: 1
+Call Stack (most recent call first):
+  /tmp/pt/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:1609 (__FetchContent_populateSubbuild)
+  /tmp/pt/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:2145:EVAL:2 (__FetchContent_doPopulation)
+  /tmp/pt/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:2145 (cmake_language)
+  /tmp/pt/cmake/data/share/cmake-3.31/Modules/FetchContent.cmake:2384 (__FetchContent_Populate)
+  build/cmake/CPM_0.42.0.cmake:1208 (FetchContent_MakeAvailable)
+  build/cmake/CPM_0.42.0.cmake:989 (cpm_fetch_package)
+  build/cmake/CPM_0.42.0.cmake:379 (CPMAddPackage)
+  build/_deps/rapids-cmake-src/rapids-cmake/cpm/find.cmake:200 (CPMFindPackage)
+  build/_deps/rapids-cmake-src/rapids-cmake/cpm/hipbench.cmake:110 (rapids_cpm_find)
+  build/_deps/rapids-cmake-src/rapids-cmake/cpm/hipbench.cmake:160 (rapids_cpm_hipbench)
+  CMakeLists.txt:214 (rapids_cpm_nvbench)
+
+
+-- Configuring incomplete, errors occurred!
+RC=1
+2026-11-24T15:17:41-08:00

@@ -1,0 +1,11 @@
+pip rc=0
+bash: line 1: python: command not found
+torch 2.15.0+rocm10.2.0 hip 7.17.26434
+build rc=0
+0
+pytest rc=1
+6 failed, 921 passed, 61 skipped, 359 warnings, 240 subtests passed in 250.01s (0:04:10)
+10 passed in 8.63s
+large rc=0
+PASS box3d_overlap 400x500 maxerr=3.58e-07
+ALL PASS

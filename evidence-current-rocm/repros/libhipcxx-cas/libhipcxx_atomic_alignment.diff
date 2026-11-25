@@ -1,0 +1,149 @@
+diff --git a/include/cuda/std/__atomic/functions/atomic_hip_generated.h b/include/cuda/std/__atomic/functions/atomic_hip_generated.h
+index cbb3662e9..06bd47866 100644
+--- a/include/cuda/std/__atomic/functions/atomic_hip_generated.h
++++ b/include/cuda/std/__atomic/functions/atomic_hip_generated.h
+@@ -70,6 +70,33 @@ _CCCL_DIAG_SUPPRESS_CLANG("-Whip-deprecated-builtins")
+ 
+ _CCCL_BEGIN_NAMESPACE_CUDA_STD
+ 
++// atomic_ref<T> requires its referent to be aligned to sizeof(T), but T itself may be less aligned
++// (e.g. `struct { int a, b; }`). The __hip_atomic_* builtins take the alignment of the operation
++// from the pointee type, and the AMDGPU backend rejects an under-aligned 8-byte cmpxchg/store
++// ("unsupported cmpxchg"). View the object through a type carrying the required alignment.
++template <class _Type>
++struct __hip_atomic_aligned
++{
++  static constexpr ::cuda::std::size_t __align =
++    ((sizeof(_Type) & (sizeof(_Type) - 1)) == 0 && sizeof(_Type) > alignof(_Type)) ? sizeof(_Type) : alignof(_Type);
++  typedef _Type __attribute__((aligned(__align))) type;
++};
++
++template <class _Type>
++static inline _CCCL_DEVICE volatile typename __hip_atomic_aligned<_Type>::type* __hip_atomic_aligned_ptr(volatile _Type* __ptr) {
++    return reinterpret_cast<volatile typename __hip_atomic_aligned<_Type>::type*>(__ptr);
++}
++
++template <class _Type>
++static inline _CCCL_DEVICE const volatile typename __hip_atomic_aligned<_Type>::type* __hip_atomic_aligned_ptr(const volatile _Type* __ptr) {
++    return reinterpret_cast<const volatile typename __hip_atomic_aligned<_Type>::type*>(__ptr);
++}
++
++template <class _Type>
++static inline _CCCL_DEVICE typename __hip_atomic_aligned<_Type>::type* __hip_atomic_aligned_ptr(_Type* __ptr) {
++    return reinterpret_cast<typename __hip_atomic_aligned<_Type>::type*>(__ptr);
++}
++
+ static inline _CCCL_DEVICE void __atomic_thread_fence_cuda([[maybe_unused]] int __memorder, __thread_scope_block_tag) {
+     __threadfence_block();
+ }
+@@ -81,7 +108,7 @@ static inline _CCCL_DEVICE void __atomic_load_cuda(const volatile _Type *__ptr,
+                       ">64-bit atomic load is not supported on HIP (clang HIP __hip_atomic_load caps at 64-bit)");
+     } else {
+         if (__cuda_load_weak_if_local(__ptr, &__dst, sizeof(_Type))) return;
+-        __dst = __hip_atomic_load(__ptr, __memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
++        __dst = __hip_atomic_load(__hip_atomic_aligned_ptr(__ptr), __memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
+     }
+ }
+ 
+@@ -92,7 +119,7 @@ static inline _CCCL_DEVICE void __atomic_store_cuda(volatile _Type *__ptr, _Type
+                       ">64-bit atomic store is not supported on HIP (clang HIP __hip_atomic_store caps at 64-bit)");
+     } else {
+         if (__cuda_store_weak_if_local(__ptr, &__val, sizeof(_Type))) return;
+-        __hip_atomic_store(__ptr, __val, __memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
++        __hip_atomic_store(__hip_atomic_aligned_ptr(__ptr), __val, __memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
+     }
+ }
+ 
+@@ -105,7 +132,7 @@ template<class _Type>
+     } else {
+         bool __success;
+         if (__cuda_compare_exchange_weak_if_local(__ptr, __expected, &__desired, &__success)) return __success;
+-        return __hip_atomic_compare_exchange_weak(__ptr, __expected, __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
++        return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
+     }
+ }
+ 
+@@ -116,7 +143,7 @@ static inline _CCCL_DEVICE void __atomic_exchange_cuda(volatile _Type* __ptr, _T
+                       ">64-bit atomic exchange is not supported on HIP (clang HIP __hip_atomic_exchange caps at 64-bit)");
+     } else {
+         if (__cuda_exchange_weak_if_local(__ptr, &__new, &__old)) return;
+-        __old = __hip_atomic_exchange(__ptr, __new, __memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
++        __old = __hip_atomic_exchange(__hip_atomic_aligned_ptr(__ptr), __new, __memorder, __HIP_MEMORY_SCOPE_WORKGROUP);
+     }
+ }
+ 
+@@ -274,7 +301,7 @@ static inline _CCCL_DEVICE void __atomic_load_cuda(const volatile _Type *__ptr,
+                       ">64-bit atomic load is not supported on HIP (clang HIP __hip_atomic_load caps at 64-bit)");
+     } else {
+         if (__cuda_load_weak_if_local(__ptr, &__dst, sizeof(_Type))) return;
+-        __dst = __hip_atomic_load(__ptr, __memorder, __HIP_MEMORY_SCOPE_AGENT);
++        __dst = __hip_atomic_load(__hip_atomic_aligned_ptr(__ptr), __memorder, __HIP_MEMORY_SCOPE_AGENT);
+     }
+ }
+ 
+@@ -285,7 +312,7 @@ static inline _CCCL_DEVICE void __atomic_store_cuda(volatile _Type *__ptr, _Type
+                       ">64-bit atomic store is not supported on HIP (clang HIP __hip_atomic_store caps at 64-bit)");
+     } else {
+         if (__cuda_store_weak_if_local(__ptr, &__val, sizeof(_Type))) return;
+-        __hip_atomic_store(__ptr, __val, __memorder, __HIP_MEMORY_SCOPE_AGENT);
++        __hip_atomic_store(__hip_atomic_aligned_ptr(__ptr), __val, __memorder, __HIP_MEMORY_SCOPE_AGENT);
+     }
+ }
+ 
+@@ -298,7 +325,7 @@ template<class _Type>
+     } else {
+         bool __success;
+         if (__cuda_compare_exchange_weak_if_local(__ptr, __expected, &__desired, &__success)) return __success;
+-        return __hip_atomic_compare_exchange_weak(__ptr, __expected, __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_AGENT);
++        return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_AGENT);
+     }
+ }
+ 
+@@ -309,7 +336,7 @@ static inline _CCCL_DEVICE void __atomic_exchange_cuda(volatile _Type* __ptr, _T
+                       ">64-bit atomic exchange is not supported on HIP (clang HIP __hip_atomic_exchange caps at 64-bit)");
+     } else {
+         if (__cuda_exchange_weak_if_local(__ptr, &__new, &__old)) return;
+-        __old = __hip_atomic_exchange(__ptr, __new, __memorder, __HIP_MEMORY_SCOPE_AGENT);
++        __old = __hip_atomic_exchange(__hip_atomic_aligned_ptr(__ptr), __new, __memorder, __HIP_MEMORY_SCOPE_AGENT);
+     }
+ }
+ 
+@@ -392,7 +419,7 @@ static inline _CCCL_DEVICE void __atomic_load_cuda(const volatile _Type *__ptr,
+                       ">64-bit atomic load is not supported on HIP (clang HIP __hip_atomic_load caps at 64-bit)");
+     } else {
+         if (__cuda_load_weak_if_local(__ptr, &__dst, sizeof(_Type))) return;
+-        __dst = __hip_atomic_load(__ptr, __memorder, __HIP_MEMORY_SCOPE_SYSTEM);
++        __dst = __hip_atomic_load(__hip_atomic_aligned_ptr(__ptr), __memorder, __HIP_MEMORY_SCOPE_SYSTEM);
+     }
+ }
+ 
+@@ -403,7 +430,7 @@ static inline _CCCL_DEVICE void __atomic_store_cuda(volatile _Type *__ptr, _Type
+                       ">64-bit atomic store is not supported on HIP (clang HIP __hip_atomic_store caps at 64-bit)");
+     } else {
+         if (__cuda_store_weak_if_local(__ptr, &__val, sizeof(_Type))) return;
+-        __hip_atomic_store(__ptr, __val, __memorder, __HIP_MEMORY_SCOPE_SYSTEM);
++        __hip_atomic_store(__hip_atomic_aligned_ptr(__ptr), __val, __memorder, __HIP_MEMORY_SCOPE_SYSTEM);
+     }
+ }
+ 
+@@ -417,9 +444,9 @@ template<class _Type>
+         bool __success;
+         if (__cuda_compare_exchange_weak_if_local(__ptr, __expected, &__desired, &__success)) return __success;
+         if(__is_weak)
+-            return __hip_atomic_compare_exchange_weak(__ptr, __expected, __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_SYSTEM);
++            return __hip_atomic_compare_exchange_weak(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_SYSTEM);
+         else
+-            return __hip_atomic_compare_exchange_strong(__ptr, __expected, __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_SYSTEM);
++            return __hip_atomic_compare_exchange_strong(__hip_atomic_aligned_ptr(__ptr), __hip_atomic_aligned_ptr(__expected), __desired, __success_memorder, __failure_memorder, __HIP_MEMORY_SCOPE_SYSTEM);
+     }
+ }
+ 
+@@ -430,7 +457,7 @@ static inline _CCCL_DEVICE void __atomic_exchange_cuda(volatile _Type* __ptr, _T
+                       ">64-bit atomic exchange is not supported on HIP (clang HIP __hip_atomic_exchange caps at 64-bit)");
+     } else {
+         if (__cuda_exchange_weak_if_local(__ptr, &__new, &__old)) return;
+-        __old = __hip_atomic_exchange(__ptr, __new, __memorder, __HIP_MEMORY_SCOPE_SYSTEM);
++        __old = __hip_atomic_exchange(__hip_atomic_aligned_ptr(__ptr), __new, __memorder, __HIP_MEMORY_SCOPE_SYSTEM);
+     }
+ }
+ 

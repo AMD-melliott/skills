@@ -1,0 +1,109 @@
+deliverable: /data/melliott/moat-testing/round2/projects/nccl-B4r-1/_amd/rocm-systems branch nccl-tests-2.21-sync tip 3d1cfabf6e3a3585bfe8352faa02d2260c408122
+fresh clone tip: 41b74bcf178bc7ed37752e77d86e37eb37644d64
+base=45dfe66ff051dd830b7dd3346e9bfc1bdf1f8a6c rccl-tests tree fresh=8d2206bb3f48fe02d0d5d16fa22305f1e1a22ed4 run=8d2206bb3f48fe02d0d5d16fa22305f1e1a22ed4 MATCH
+image=rocm/dev-ubuntu-24.04:10.2.0-full
+cmd=cd projects/rccl-tests && GPU_TARGETS=gfx942 make -j32 NCCL_HOME=/opt/rocm >/dev/null && cd build && n=0; ok=0; for b in ./*_perf; do n=$((n+1)); out=$($b -b 8 -e 64M -f 4 -c 1 -o all -d all 2>&1); rc=$?; w=$(echo "$out" | grep -c "Out of bounds values : 0 OK"); if [[ $rc -eq 0 && $w -ge 1 ]]; then ok=$((ok+1)); echo "PASS $b"; else echo "FAIL $b rc=$rc"; echo "$out" | grep -iE "wrong|error|abort|fail" | head -8; fi; done; echo "SWEEP $ok/$n binaries pass"
+2026-11-24T14:41:37-08:00
+make[1]: git: No such file or directory
+/bin/sh: 1: git: not found
+make[1]: git: No such file or directory
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 2021, <INFILE> chunk 1.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/alltoall.cu.cpp:652:17: warning: 'ncclAllToAll' is deprecated: ncclAllToAll is replaced with ncclAlltoAll and will be removed in the future [-Wdeprecated-declarations]
+  652 |       NCCLCHECK(ncclAllToAll(sptr, rptr, count, type, comm, stream));
+      |                 ^
+/opt/rocm/core-10.2/lib/llvm/bin/../../../include/rccl/rccl.h:1051:21: note: 'ncclAllToAll' has been explicitly marked deprecated here
+ 1051 |     __attribute__ ((deprecated("ncclAllToAll is replaced with ncclAlltoAll and will be removed in the future")));
+      |                     ^
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/alltoallv.cu.cpp:662:15: warning: 'ncclAllToAllv' is deprecated: ncclAllToAllv is replaced with ncclAlltoAllv and will be removed in the future [-Wdeprecated-declarations]
+  662 |     NCCLCHECK(ncclAllToAllv(sptr, sendCounts.data(), sendDisplacements.data(),
+      |               ^
+/opt/rocm/core-10.2/lib/llvm/bin/../../../include/rccl/rccl.h:1079:21: note: 'ncclAllToAllv' has been explicitly marked deprecated here
+ 1079 |     __attribute__ ((deprecated("ncclAllToAllv is replaced with ncclAlltoAllv and will be removed in the future")));
+      |                     ^
+1 warning generated when compiling for gfx942.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:735:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  735 |   hipHostFree(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:1601:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1601 |   hipMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated when compiling for gfx942.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:2740:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2740 |         hipDeviceReset();
+      |         ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:2953:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2953 |     hipDeviceReset();
+      |     ^~~~~~~~~~~~~~~~
+4 warnings generated when compiling for gfx942.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/alltoall.cu.cpp:652:17: warning: 'ncclAllToAll' is deprecated: ncclAllToAll is replaced with ncclAlltoAll and will be removed in the future [-Wdeprecated-declarations]
+  652 |       NCCLCHECK(ncclAllToAll(sptr, rptr, count, type, comm, stream));
+      |                 ^
+/opt/rocm/core-10.2/lib/llvm/bin/../../../include/rccl/rccl.h:1051:21: note: 'ncclAllToAll' has been explicitly marked deprecated here
+ 1051 |     __attribute__ ((deprecated("ncclAllToAll is replaced with ncclAlltoAll and will be removed in the future")));
+      |                     ^
+1 warning generated when compiling for host.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/alltoallv.cu.cpp:662:15: warning: 'ncclAllToAllv' is deprecated: ncclAllToAllv is replaced with ncclAlltoAllv and will be removed in the future [-Wdeprecated-declarations]
+  662 |     NCCLCHECK(ncclAllToAllv(sptr, sendCounts.data(), sendDisplacements.data(),
+      |               ^
+/opt/rocm/core-10.2/lib/llvm/bin/../../../include/rccl/rccl.h:1079:21: note: 'ncclAllToAllv' has been explicitly marked deprecated here
+ 1079 |     __attribute__ ((deprecated("ncclAllToAllv is replaced with ncclAlltoAllv and will be removed in the future")));
+      |                     ^
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:735:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  735 |   hipHostFree(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:1601:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1601 |   hipMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated when compiling for host.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:2740:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2740 |         hipDeviceReset();
+      |         ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-10.2.0/projects/rccl-tests/build/hipify/common.cu.cpp:2953:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2953 |     hipDeviceReset();
+      |     ^~~~~~~~~~~~~~~~
+4 warnings generated when compiling for host.
+PASS ./all_gather_perf
+PASS ./all_reduce_bias_perf
+PASS ./all_reduce_perf
+PASS ./alltoall_perf
+PASS ./alltoallv_perf
+PASS ./broadcast_perf
+PASS ./gather_perf
+PASS ./hypercube_perf
+PASS ./reduce_perf
+PASS ./reduce_scatter_perf
+PASS ./scatter_perf
+PASS ./sendrecv_perf
+SWEEP 12/12 binaries pass
+RC=0
+2026-11-24T14:42:12-08:00

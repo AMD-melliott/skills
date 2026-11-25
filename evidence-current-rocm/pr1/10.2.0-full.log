@@ -1,0 +1,79 @@
+### image 10.2.0-full hip=7.17.26434-0000000 hiplib=/opt/rocm/core-10.2/lib
+2026-11-24T22:23:56+00:00
+### device properties (grid-overshoot arithmetic)
+AMD Instinct MI300X gfx942:sramecc+:xnack- multiProcessorCount=304 maxThreadsPerMultiProcessor=2048 -> blocks of 512 at full occupancy=1216
+### wave64-partial
+warpSize=64 shfl_sum block=64: 0/4096 blocks wrong (e.g. 64)
+warpSize=64 shfl_sum block=32: 4096/4096 blocks wrong (e.g. 64)
+tree32 block=32 after dirty LDS: 0/4096 blocks wrong (e.g. 32)
+tree32 block=16 after dirty LDS: 4096/4096 blocks wrong (e.g. 16016)
+### lds-optin
+gfx942:sramecc+:xnack- sharedMemPerBlock=65536 maxSharedMemoryPerMultiProcessor=65536 SharedMemPerBlockOptin=65536
+  48 KiB: setAttr=hipSuccess (lastErr=hipSuccess)  launch=hipSuccess  sync=hipSuccess  result=correct
+  64 KiB: setAttr=hipSuccess (lastErr=hipSuccess)  launch=hipSuccess  sync=hipSuccess  result=correct
+  65 KiB: setAttr=hipErrorInvalidValue (lastErr=hipErrorInvalidValue)  launch=hipErrorInvalidValue  sync=hipSuccess  result=WRONG/none
+  80 KiB: setAttr=hipErrorInvalidValue (lastErr=hipErrorInvalidValue)  launch=hipErrorInvalidValue  sync=hipSuccess  result=WRONG/none
+  96 KiB: setAttr=hipErrorInvalidValue (lastErr=hipErrorInvalidValue)  launch=hipErrorInvalidValue  sync=hipSuccess  result=WRONG/none
+ 160 KiB: setAttr=hipErrorInvalidValue (lastErr=hipErrorInvalidValue)  launch=hipErrorInvalidValue  sync=hipSuccess  result=WRONG/none
+ 228 KiB: setAttr=hipErrorInvalidValue (lastErr=hipErrorInvalidValue)  launch=hipErrorInvalidValue  sync=hipSuccess  result=WRONG/none
+### image-support
+AMD Instinct MI300X gfx942:sramecc+:xnack- imageSupport=0 maxTex1DLinear=0
+hipMallocArray: hipErrorNotSupported
+hipCreateTextureObject(linear): hipErrorNotSupported
+### device-constexpr-host (dc)
+host_sum=12 (expect 12) table[2]=3.5 scalar=42
+### device-constexpr-host (dc2)
+host via __device__ table: 0 9.22337e+18 0 0 (expect 1.5 2.5 3.5 4.5)
+host via plain constexpr:  3.5
+device: __device__ table 3.5, plain 3.5 (expect 3.5 3.5)
+### host-minmax: default build
+min(0.25f,3.7f)=0 max(0.5,0.75)=0 clampf(2.5f)=2
+max(3000000000u,1u)=1
+### host-minmax: macro default
+__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__ default: #define __HIP_DEFINE_EXTENDED_HOST_MIN_MAX__ 0
+### host-minmax: with -D__HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1
+min(0.25f,3.7f)=0.25 max(0.5,0.75)=0.75 clampf(2.5f)=2.5
+max(3000000000u,1u)=3000000000
+### host-minmax: static_assert guard (expect build failure by default)
+host-minmax/g.hip:5:15: error: static assertion failed due to requirement 'std::is_same<int, float>::value': host min(float,float) truncates to int: fix call sites or use ROCm >= 7.2 with __HIP_DEFINE_EXTENDED_HOST_MIN_MAX__=1
+guard build rc=141
+### host-minmax: guard with the define (expect build ok)
+rc=0
+### hiprtc-version
+hiprtcVersion=9.0 hipRuntimeGetVersion=71726434 hipDriverGetVersion=71726434 HIP_VERSION=71726434
+### libhipcxx CAS, libhipcxx amd-develop head (unpatched)
+cuda::atomic_ref strong (libhipcxx) sizeof=1: 393216000 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=1: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_weak              sizeof=1: 393216000 spurious failures of 524288000 CAS
+cuda::atomic_ref strong (libhipcxx) sizeof=2: 262144000 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=2: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_weak              sizeof=2: 262144000 spurious failures of 524288000 CAS
+cuda::atomic_ref strong (libhipcxx) sizeof=4: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=4: 0 spurious failures of 524288000 CAS
+### libhipcxx CAS, cuco port patch applied
+cuda::atomic_ref strong (libhipcxx) sizeof=1: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=1: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_weak              sizeof=1: 393216000 spurious failures of 524288000 CAS
+cuda::atomic_ref strong (libhipcxx) sizeof=2: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=2: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_weak              sizeof=2: 262144000 spurious failures of 524288000 CAS
+cuda::atomic_ref strong (libhipcxx) sizeof=4: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=4: 0 spurious failures of 524288000 CAS
+### libhipcxx CAS, bundled hipccl: /opt/rocm/core-10.2/include/hipccl
+cuda::atomic_ref strong (libhipcxx) sizeof=1: 393216000 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=1: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_weak              sizeof=1: 393216000 spurious failures of 524288000 CAS
+cuda::atomic_ref strong (libhipcxx) sizeof=2: 262144000 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=2: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_weak              sizeof=2: 262144000 spurious failures of 524288000 CAS
+cuda::atomic_ref strong (libhipcxx) sizeof=4: 0 spurious failures of 524288000 CAS
+__hip_atomic_cas_strong            sizeof=4: 0 spurious failures of 524288000 CAS
+### libhipcxx atomic_ref under-aligned 8-byte, head (expect link error)
+ld.lld: error: unsupported cmpxchg: instruction alignment 4 is smaller than the required 8-byte alignment for this atomic operation
+clang: error: ld.lld command failed with exit code 1 (use -v to see invocation)
+### atomic_ref under-aligned, bundled hipccl
+ld.lld: error: unsupported cmpxchg: instruction alignment 4 is smaller than the required 8-byte alignment for this atomic operation
+clang: error: ld.lld command failed with exit code 1 (use -v to see invocation)
+### atomic_ref under-aligned, cuco port patch (expect {1,2})
+result {1,2} (expect {1,2})
+2026-11-24T22:24:28+00:00

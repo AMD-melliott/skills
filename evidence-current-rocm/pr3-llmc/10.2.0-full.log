@@ -1,0 +1,11 @@
+### image 10.2.0-full hip=7.17.26434-0000000
+2026-11-24T22:34:42+00:00
+11:#if __has_include(<hip/cooperative_groups/hip_reduce.h>)
+build rc=0
+  218 |         cudaGetLastError(); // reset the error before the next API call
+  218 |         cudaGetLastError(); // reset the error before the next API call
+test_gpt2cu: overall okay: 1
+test_gpt2fp32cu: overall okay: 1
+C=768: C=768 floatX=4B smem request=30720 bytes (<= 64 KiB) layernorm_forward returned normally 
+C=1920: C=1920 floatX=4B smem request=76800 bytes (> 64 KiB) layernorm_forward returned normally 
+2026-11-24T22:34:57+00:00

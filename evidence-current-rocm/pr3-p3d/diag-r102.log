@@ -1,0 +1,12 @@
+FoVOrthographicCameras   phong         gpu-vs-ref      1px  cpu-vs-ref      1px  gpu-vs-cpu      0px  maxdiff 0.498
+FoVOrthographicCameras   gouraud       gpu-vs-ref      1px  cpu-vs-ref      1px  gpu-vs-cpu      0px  maxdiff 0.498
+FoVOrthographicCameras   flat          gpu-vs-ref      1px  cpu-vs-ref      1px  gpu-vs-cpu      0px  maxdiff 0.498
+PerspectiveCameras       phong         gpu-vs-ref      0px  cpu-vs-ref      0px  gpu-vs-cpu      0px  maxdiff 0.020
+PerspectiveCameras       gouraud       gpu-vs-ref      0px  cpu-vs-ref      0px  gpu-vs-cpu      0px  maxdiff 0.029
+PerspectiveCameras       flat          gpu-vs-ref      0px  cpu-vs-ref      0px  gpu-vs-cpu      0px  maxdiff 0.029
+OrthographicCameras      phong         gpu-vs-ref      1px  cpu-vs-ref      1px  gpu-vs-cpu      0px  maxdiff 0.498
+OrthographicCameras      gouraud       gpu-vs-ref      1px  cpu-vs-ref      1px  gpu-vs-cpu      0px  maxdiff 0.498
+OrthographicCameras      flat          gpu-vs-ref      1px  cpu-vs-ref      1px  gpu-vs-cpu      0px  maxdiff 0.498
+FishEyeCameras           phong         gpu-vs-ref      0px  cpu-vs-ref      0px  gpu-vs-cpu      0px  maxdiff 0.004
+FishEyeCameras           gouraud       gpu-vs-ref      0px  cpu-vs-ref      0px  gpu-vs-cpu      0px  maxdiff 0.004
+FishEyeCameras           flat          gpu-vs-ref      0px  cpu-vs-ref      0px  gpu-vs-cpu      0px  maxdiff 0.004

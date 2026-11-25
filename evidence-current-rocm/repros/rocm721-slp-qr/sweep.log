@@ -1,0 +1,85 @@
+== 7.2.1-complete
+hip=7.2.53211-e1a6bc5663
+[-O1] max |device - host| = 3.8147e-06
+[-O2] max |device - host| = 15.953
+[-O3] max |device - host| = 15.953
+[-O3 -fno-slp-vectorize] max |device - host| = 3.8147e-06
+== 7.2.2-complete
+hip=7.2.53211-671d39a71e
+[-O1] max |device - host| = 3.8147e-06
+[-O2] max |device - host| = 15.953
+[-O3] max |device - host| = 15.953
+[-O3 -fno-slp-vectorize] max |device - host| = 3.8147e-06
+== 7.2.4-complete
+hip=7.2.53211-97f5574fe2
+[-O1] max |device - host| = 3.8147e-06
+[-O2] max |device - host| = 15.953
+[-O3] max |device - host| = 15.953
+[-O3 -fno-slp-vectorize] max |device - host| = 3.8147e-06
+== 7.1.1-complete
+hip=7.1.52802-26aae437f6
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.1.1/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O1 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O1] bash: line 4: /tmp/qr: No such file or directory
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.1.1/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O2 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O2] bash: line 4: /tmp/qr: No such file or directory
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.1.1/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O3 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O3] bash: line 4: /tmp/qr: No such file or directory
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.1.1/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O3 -fno-slp-vectorize -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O3 -fno-slp-vectorize] bash: line 4: /tmp/qr: No such file or directory
+== 7.0.2-complete
+hip=7.0.51831-7c9236b16
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.0.2/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O1 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O1] bash: line 4: /tmp/qr: No such file or directory
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.0.2/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O2 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O2] bash: line 4: /tmp/qr: No such file or directory
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.0.2/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O3 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O3] bash: line 4: /tmp/qr: No such file or directory
+11 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-7.0.2/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O3 -fno-slp-vectorize -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O3 -fno-slp-vectorize] bash: line 4: /tmp/qr: No such file or directory
+== 6.4.4-complete
+hip=6.4.43484-123eb5128
+20 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-6.4.4/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O1 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O1] bash: line 4: /tmp/qr: No such file or directory
+20 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-6.4.4/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O2 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O2] bash: line 4: /tmp/qr: No such file or directory
+20 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-6.4.4/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O3 -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O3] bash: line 4: /tmp/qr: No such file or directory
+20 errors generated when compiling for gfx942.
+failed to execute:/opt/rocm-6.4.4/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -std=c++17 -O3 -fno-slp-vectorize -I warp/native -w -o "/tmp/qr" -x hip qr_repro.hip
+[-O3 -fno-slp-vectorize] bash: line 4: /tmp/qr: No such file or directory
+== 7.14.1-full
+hip=7.14.60850-0000000
+[-O1] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+[-O2] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+[-O3] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+[-O3 -fno-slp-vectorize] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+== 10.0.0-full
+hip=7.15.26333-0000000
+[-O1] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+[-O2] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+[-O3] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+[-O3 -fno-slp-vectorize] /tmp/qr: error while loading shared libraries: libamdhip64.so.7: cannot open shared object file: No such file or directory
+== 10.1.0-full
+hip=7.16.26385-0000000
+[-O1] max |device - host| = 3.8147e-06
+[-O2] max |device - host| = 3.8147e-06
+[-O3] max |device - host| = 3.8147e-06
+[-O3 -fno-slp-vectorize] max |device - host| = 3.8147e-06
+== 10.2.0-full
+hip=7.17.26434-0000000
+[-O1] max |device - host| = 3.8147e-06
+[-O2] max |device - host| = 3.8147e-06
+[-O3] max |device - host| = 3.8147e-06
+[-O3 -fno-slp-vectorize] max |device - host| = 3.8147e-06
+SWEEPDONE

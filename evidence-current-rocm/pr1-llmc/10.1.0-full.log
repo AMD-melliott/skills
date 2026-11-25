@@ -1,0 +1,29 @@
+### image 10.1.0-full hip=7.16.26385-0000000
+2026-11-24T22:29:55+00:00
+### port as delivered: test matrix (BF16/FP32 x 5 configs, then test_gpt2fp32cu)
+BF16 [] overall okay: 1 | nondet=0 | NOT-OK=0
+BF16 [-r 0] overall okay: 1 | nondet=0 | NOT-OK=0
+BF16 [-r 2] overall okay: 1 | nondet=0 | NOT-OK=0
+BF16 [-w 0] overall okay: 1 | nondet=0 | NOT-OK=0
+BF16 [-b 32] overall okay: 1 | nondet=0 | NOT-OK=0
+FP32 [] overall okay: 1 | nondet=0 | NOT-OK=0
+FP32 [-r 0] overall okay: 1 | nondet=0 | NOT-OK=0
+FP32 [-r 2] overall okay: 1 | nondet=0 | NOT-OK=0
+FP32 [-w 0] overall okay: 1 | nondet=0 | NOT-OK=0
+FP32 [-b 32] overall okay: 1 | nondet=0 | NOT-OK=0
+BUILD FAIL test_gpt2fp32cu
+llmc/hip_compat/cooperative_groups/reduce.h:16:8: error: redefinition of 'plus'
+llmc/hip_compat/cooperative_groups/reduce.h:21:8: error: redefinition of 'less'
+llmc/hip_compat/cooperative_groups/reduce.h:26:8: error: redefinition of 'greater'
+### LDS: layernorm_forward probe via the port, FP32 (no fallback for the refused opt-in in this port)
+C=768: C=768 floatX=4B smem request=30720 bytes (<= 64 KiB) layernorm_forward returned normally 
+C=1638: C=1638 floatX=4B smem request=65520 bytes (<= 64 KiB) layernorm_forward returned normally 
+C=1639: [CUDA ERROR] at file ldsprobe/../llmc/layernorm.cuh:453: invalid argument 
+C=1920: [CUDA ERROR] at file ldsprobe/../llmc/layernorm.cuh:453: invalid argument 
+### fence A/B: layernorm.cuh reverted to upstream (no __threadfence), BF16 test x3
+run 1: overall okay: 0 | Nondeterminism! Loss mismatch at step 1: 6.895120620727539 vs 6.901258468627930
+run 2: overall okay: 0 | Nondeterminism! Loss mismatch at step 1: 6.800487518310547 vs 6.789380550384521
+run 3: overall okay: 0 | Nondeterminism! Loss mismatch at step 1: 6.837944984436035 vs 6.841486454010010
+### grid: global_norm.cuh reverted to upstream (grid from multiProcessorCount)
+TENSOR NOT OK, max diff: 1.387e-01, with rel error: 3.661e-01 (calculated= -0.240234test_gpt2cu: ./llmc/global_norm.cuh:82: void global_norm_squared(float *, const T *, size_t, ptrdiff_t, int, int, bool, hipStream_t) [T = __hip_bfloat16]: Assertion `gx * gy < 1024' failed.
+2026-11-24T22:31:38+00:00

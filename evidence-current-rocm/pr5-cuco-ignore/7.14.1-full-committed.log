@@ -1,0 +1,13 @@
+variant=committed ignored-by-upstream:
+!! cmake/hip/patches/
+.gitignore:55:*.diff	cmake/hip/patches/libhipcxx_atomic_alignment.diff
+.gitignore:55:*.diff	cmake/hip/patches/libhipcxx_strong_cas.diff
+ls: cannot access '/data/melliott/moat-testing/evidence/pr5-cuco-ignore/7.14.1-full-committed/cmake/hip/patches/': No such file or directory
+debconf: delaying package configuration, since apt-utils is not installed
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+CMake Error at build-hip/cmake/CPM_0.42.0.cmake:578 (message):
+  Couldn't find patch file:
+  '/data/melliott/moat-testing/evidence/pr5-cuco-ignore/7.14.1-full-committed/cmake/hip/patches/libhipcxx_atomic_alignment.diff'
+  build-hip/cmake/CPM_0.42.0.cmake:834 (cpm_add_patches)
+-- Configuring incomplete, errors occurred!
+configure rc=1

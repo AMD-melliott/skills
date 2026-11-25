@@ -1,0 +1,197 @@
+deliverable: /data/melliott/moat-testing/round2/projects/nccl-B4r-1/_amd/rocm-systems branch nccl-tests-2.21-sync tip 3d1cfabf6e3a3585bfe8352faa02d2260c408122
+fresh clone tip: fb935c8da3b50d8a0f6e855f6ee0f8d1baab4581
+base=45dfe66ff051dd830b7dd3346e9bfc1bdf1f8a6c rccl-tests tree fresh=8d2206bb3f48fe02d0d5d16fa22305f1e1a22ed4 run=8d2206bb3f48fe02d0d5d16fa22305f1e1a22ed4 MATCH
+image=rocm/dev-ubuntu-24.04:7.14.1-full
+cmd=cd projects/rccl-tests && GPU_TARGETS=gfx942 make -j32 NCCL_HOME=/opt/rocm >/dev/null && cd build && n=0; ok=0; for b in ./*_perf; do n=$((n+1)); out=$($b -b 8 -e 64M -f 4 -c 1 -o all -d all 2>&1); rc=$?; w=$(echo "$out" | grep -c "Out of bounds values : 0 OK"); if [[ $rc -eq 0 && $w -ge 1 ]]; then ok=$((ok+1)); echo "PASS $b"; else echo "FAIL $b rc=$rc"; echo "$out" | grep -iE "wrong|error|abort|fail" | head -8; fi; done; echo "SWEEP $ok/$n binaries pass"
+2026-11-24T15:18:28-08:00
+make[1]: git: No such file or directory
+/bin/sh: 1: git: not found
+make[1]: git: No such file or directory
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+Use of uninitialized value $d in numeric eq (==) at /opt/rocm/bin/hipify-perl line 10023, <INFILE> chunk 1.
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/alltoallv.cu.cpp:118:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/all_reduce.cu.cpp:27:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/sendrecv.cu.cpp:9:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/util.cu.cpp:21:
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/util.h:10:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/gather.cu.cpp:10:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/all_gather.cu.cpp:12:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/broadcast.cu.cpp:12:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/reduce_scatter.cu.cpp:9:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/alltoall.cu.cpp:10:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/reduce.cu.cpp:9:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/scatter.cu.cpp:9:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_G/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.hI:N_130T:Y49P:E/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h_ :Rerror: 130Ouse of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'C:
+S49H:M E  Merror: 130_use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'G
+ | D A ,     130(   | i  n  t   )  N (C iC nL t_ )G(NIiCNCn_L_TtGY)IPNNE_C_TACYNLPV_EIG_LIR_SNDO_MCTASY)HP;ME
+E_      M| R_                                                ^~~~~~~~~~~~~~~~~~~~~~~~OG
+CDSAH,M E(M_iGnDtA),N C(CiLn_t)GNICNC_LTY_PGIE_NA_NVTIYPLE__SADNMVAI)L;_
+S      D|                                                 ^~~~~~~~~~~~~~~~~~~~~~~~M
+A);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/hypercube.cu.cpp:9:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/all_reduce_bias.cu.cpp:9:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/alltoall.cu.cpp:653:17: warning: 'ncclAllToAll' is deprecated: ncclAllToAll is replaced with ncclAlltoAll and will be removed in the future [-Wdeprecated-declarations]
+  653 |       NCCLCHECK(ncclAllToAll(sptr, rptr, count, type, comm, stream));
+      |                 ^
+/opt/rocm/include/rccl/rccl.h:919:21: note: 'ncclAllToAll' has been explicitly marked deprecated here
+  919 |     __attribute__ ((deprecated("ncclAllToAll is replaced with ncclAlltoAll and will be removed in the future")));
+      |                     ^
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/alltoallv.cu.cpp:663:15: warning: 'ncclAllToAllv' is deprecated: ncclAllToAllv is replaced with ncclAlltoAllv and will be removed in the future [-Wdeprecated-declarations]
+  663 |     NCCLCHECK(ncclAllToAllv(sptr, sendCounts.data(), sendDisplacements.data(),
+      |               ^
+/opt/rocm/include/rccl/rccl.h:947:21: note: 'ncclAllToAllv' has been explicitly marked deprecated here
+  947 |     __attribute__ ((deprecated("ncclAllToAllv is replaced with ncclAlltoAllv and will be removed in the future")));
+      |                     ^
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/all_reduce.o] Error 1
+make[1]: *** Waiting for unfinished jobs....
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/sendrecv.o] Error 1
+In file included from /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.cu.cpp:14:
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:16: error: use of undeclared identifier 'NCCL_GIN_TYPE_ROCSHMEM_GDA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.h:130:49: error: use of undeclared identifier 'NCCL_GIN_TYPE_ANVIL_SDMA'
+  130 |           (int)NCCL_GIN_TYPE_ROCSHMEM_GDA, (int)NCCL_GIN_TYPE_ANVIL_SDMA);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+2 errors generated when compiling for gfx942.
+1 warning and 2 errors generated when compiling for gfx942.
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/reduce.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/gather.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/reduce_scatter.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/scatter.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/all_gather.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/broadcast.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/alltoall.o] Error 1
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+2 errors generated when compiling for gfx942.
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hypercube.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/all_reduce_bias.o] Error 1
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/util.o] Error 1
+1 warning and 2 errors generated when compiling for gfx942.
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/alltoallv.o] Error 1
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.cu.cpp:737:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  737 |   hipHostFree(wrongPerGpu);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.cu.cpp:1603:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 1603 |   hipMemGetInfo(&freeGpuMem, &totalGpuMem);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.cu.cpp:2742:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2742 |         hipDeviceReset();
+      |         ^~~~~~~~~~~~~~~~
+/data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/hipify/common.cu.cpp:2955:5: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+ 2955 |     hipDeviceReset();
+      |     ^~~~~~~~~~~~~~~~
+4 warnings and 2 errors generated when compiling for gfx942.
+make[1]: *** [Makefile:250: /data/melliott/moat-testing/round2/v4/nccl-B4r-1-7.14.1/projects/rccl-tests/build/common.o] Error 1
+make: *** [Makefile:20: src.build] Error 2
+FAIL ./*_perf rc=127
+SWEEP 0/1 binaries pass
+RC=0
+2026-11-24T15:18:36-08:00

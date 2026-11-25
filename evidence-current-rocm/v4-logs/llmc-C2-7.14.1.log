@@ -1,0 +1,47 @@
+label=llmc-C2 ver=7.14.1 deliverable tip/base: bc2084657f3e4d71365ca24d25948598417d06f1
+files changed vs HEAD: 0
+image=rocm/dev-ubuntu-24.04:7.14.1-full
+cmd=export DEBIAN_FRONTEND=noninteractive; apt-get update -qq >/dev/null; (command -v curl >/dev/null && command -v wget >/dev/null) || apt-get install -y -qq curl wget >/dev/null; ./dev/download_starter_pack.sh >/dev/null 2>&1; make USE_HIP=1 NO_MULTI_GPU=1 NO_USE_MPI=1 train_gpt2cu test_gpt2cu >/dev/null && ./test_gpt2cu | tail -4; echo BF16_RC=${PIPESTATUS[0]}
+2026-11-24T15:32:58-08:00
+debconf: delaying package configuration, since apt-utils is not installed
+In file included from train_gpt2.cu:41:
+./llmc/cuda_utils.cuh:235:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  235 |         cudaGetLastError(); // reset the error before the next API call
+      |         ^~~~~~~~~~~~~~~~~~
+./llmc/cuda_to_hip.h:37:46: note: expanded from macro 'cudaGetLastError'
+   37 | #define cudaGetLastError                     hipGetLastError
+      |                                              ^
+1 warning generated when compiling for gfx942.
+In file included from train_gpt2.cu:41:
+./llmc/cuda_utils.cuh:235:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  235 |         cudaGetLastError(); // reset the error before the next API call
+      |         ^~~~~~~~~~~~~~~~~~
+./llmc/cuda_to_hip.h:37:46: note: expanded from macro 'cudaGetLastError'
+   37 | #define cudaGetLastError                     hipGetLastError
+      |                                              ^
+1 warning generated when compiling for host.
+In file included from test_gpt2.cu:2:
+In file included from ./train_gpt2.cu:41:
+./llmc/cuda_utils.cuh:235:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  235 |         cudaGetLastError(); // reset the error before the next API call
+      |         ^~~~~~~~~~~~~~~~~~
+./llmc/cuda_to_hip.h:37:46: note: expanded from macro 'cudaGetLastError'
+   37 | #define cudaGetLastError                     hipGetLastError
+      |                                              ^
+1 warning generated when compiling for gfx942.
+In file included from test_gpt2.cu:2:
+In file included from ./train_gpt2.cu:41:
+./llmc/cuda_utils.cuh:235:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  235 |         cudaGetLastError(); // reset the error before the next API call
+      |         ^~~~~~~~~~~~~~~~~~
+./llmc/cuda_to_hip.h:37:46: note: expanded from macro 'cudaGetLastError'
+   37 | #define cudaGetLastError                     hipGetLastError
+      |                                              ^
+1 warning generated when compiling for host.
+loss ok at step 7: 4.847380 4.847380
+loss ok at step 8: 4.518262 4.518262
+loss ok at step 9: 4.129011 4.129011
+overall okay: 1
+BF16_RC=0
+RC=0
+2026-11-24T15:33:41-08:00

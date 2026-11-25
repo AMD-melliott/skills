@@ -1,0 +1,986 @@
+...........................ssssssss........................... [  6%]
+..ssssss...sss......sssssssss.................. [ 11%]
+............................................................. [ 17%]
+..F..................................................................... [ 24%]
+........................................................................ [ 31%]
+..........s..FFFF..................................................... [ 38%]
+.....................s.............................. [ 44%]
+........................................................................ [ 51%]
+............................................................. [ 57%]
+.......ss........................sssssss............................ [ 64%]
+...........s...s..s.ssss.................s...s.s..s.s.....F..s [ 70%]
+...ss...........ssss......................................... [ 76%]
+..........................................sssss....................................... [ 85%]
+........................................................................ [ 92%]
+...................................................................... [100%]
+=================================== FAILURES ===================================
+_______________________ TestForward.test_principal_point _______________________
+
+self = <tests.pulsar.test_forward.TestForward testMethod=test_principal_point>
+
+    def test_principal_point(self):
+        """Test shifting the principal point."""
+        from pytorch3d.renderer.points.pulsar import Renderer
+    
+        LOGGER.info("Setting up rendering test for shifted principal point...")
+        n_points = 1
+        width = 1_000
+        height = 1_000
+        renderer = Renderer(width, height, n_points, n_channels=1)
+        vert_pos = torch.tensor([[0.0, 0.0, 25.0]], dtype=torch.float32)
+        vert_col = torch.tensor([[0.0]], dtype=torch.float32)
+        vert_rad = torch.tensor([1.0], dtype=torch.float32)
+        cam_params = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 2.0, 0.0, 0.0], dtype=torch.float32
+        )
+        for device in devices:
+            vert_pos = vert_pos.to(device)
+            vert_col = vert_col.to(device)
+            vert_rad = vert_rad.to(device)
+            cam_params = cam_params.to(device)
+            cam_params[-2] = -250.0
+            cam_params[-1] = -250.0
+            renderer = renderer.to(device)
+            LOGGER.info("Rendering...")
+            # Measurements.
+            result = renderer.forward(
+                vert_pos, vert_col, vert_rad, cam_params, 1.0e-1, 45.0
+            )
+            if not os.environ.get("FB_TEST", False):
+>               imageio.imsave(
+                    path.join(
+                        path.dirname(__file__),
+                        "test_out",
+                        "test_forward_TestForward_test_principal_point.png",
+                    ),
+                    (result * 255.0).cpu().to(torch.uint8).numpy(),
+                )
+
+tests/pulsar/test_forward.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.12/dist-packages/imageio/v2.py:397: in imwrite
+    return file.write(im, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <imageio.plugins.pillow.PillowPlugin object at 0x73d8a2af7e30>
+ndimage = array([[[255],
+        [255],
+        [255],
+        ...,
+        [255],
+        [255],
+        [255]],
+
+       [[255]...  [255],
+        [255],
+        ...,
+        [255],
+        [255],
+        [255]]], shape=(1000, 1000, 1), dtype=uint8)
+mode = None, format = None, is_batch = None, kwargs = {}
+
+    def write(
+        self,
+        ndimage: Union[ArrayLike, List[ArrayLike]],
+        *,
+        mode: str = None,
+        format: str = None,
+        is_batch: bool = None,
+        **kwargs,
+    ) -> Optional[bytes]:
+        """
+        Write an ndimage to the URI specified in path.
+    
+        If the URI points to a file on the current host and the file does not
+        yet exist it will be created. If the file exists already, it will be
+        appended if possible; otherwise, it will be replaced.
+    
+        If necessary, the image is broken down along the leading dimension to
+        fit into individual frames of the chosen format. If the format doesn't
+        support multiple frames, and IOError is raised.
+    
+        Parameters
+        ----------
+        image : ndarray or list
+            The ndimage to write. If a list is given each element is expected to
+            be an ndimage.
+        mode : str
+            Specify the image's color format. If None (default), the mode is
+            inferred from the array's shape and dtype. Possible modes can be
+            found at:
+            https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
+        format : str
+            Optional format override. If omitted, the format to use is
+            determined from the filename extension. If a file object was used
+            instead of a filename, this parameter must always be used.
+        is_batch : bool
+            Explicitly tell the writer that ``image`` is a batch of images
+            (True) or not (False). If None, the writer will guess this from the
+            provided ``mode`` or ``image.shape``. While the latter often works,
+            it may cause problems for small images due to aliasing of spatial
+            and color-channel axes.
+        kwargs : ...
+            Extra arguments to pass to pillow. If a writer doesn't recognise an
+            option, it is silently ignored. The available options are described
+            in pillow's `image format documentation
+            <https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html>`_
+            for each writer.
+    
+        Notes
+        -----
+        When writing batches of very narrow (2-4 pixels wide) gray images set
+        the ``mode`` explicitly to avoid the batch being identified as a colored
+        image.
+    
+        """
+        if "fps" in kwargs:
+            warnings.warn(
+                "The keyword `fps` is no longer supported. Use `duration`"
+                "(in ms) instead, e.g. `fps=50` == `duration=20` (1000 * 1/50).",
+                DeprecationWarning,
+            )
+            kwargs["duration"] = 1000 * 1 / kwargs.get("fps")
+    
+        if isinstance(ndimage, list):
+            ndimage = np.stack(ndimage, axis=0)
+            is_batch = True
+        else:
+            ndimage = np.asarray(ndimage)
+    
+        # check if ndimage is a batch of frames/pages (e.g. for writing GIF)
+        # if mode is given, use it; otherwise fall back to image.ndim only
+        if is_batch is not None:
+            pass
+        elif mode is not None:
+            is_batch = (
+                ndimage.ndim > 3 if Image.getmodebands(mode) > 1 else ndimage.ndim > 2
+            )
+        elif ndimage.ndim == 2:
+            is_batch = False
+        elif ndimage.ndim == 3 and ndimage.shape[-1] == 1:
+>           raise ValueError("Can't write images with one color channel.")
+E           ValueError: Can't write images with one color channel.
+
+/usr/local/lib/python3.12/dist-packages/imageio/plugins/pillow.py:434: ValueError
+____________ TestMeshGltfIO.test_load_save_load_cow_texturesvertex _____________
+
+self = <tests.test_io_gltf.TestMeshGltfIO testMethod=test_load_save_load_cow_texturesvertex>
+
+    def test_load_save_load_cow_texturesvertex(self):
+        """
+        Load the cow as converted to a single mesh in a glb file and then save it to a glb file.
+        """
+    
+        glb = DATA_DIR / "cow.glb"
+        self.assertTrue(glb.is_file())
+        device = torch.device("cuda:0")
+        mesh = _load(glb, device=device, include_textures=False)
+        self.assertEqual(len(mesh), 1)
+        self.assertIsNone(mesh.textures)
+    
+        self.assertEqual(mesh.faces_packed().shape, (5856, 3))
+        self.assertEqual(mesh.verts_packed().shape, (3225, 3))
+        mesh_obj = _load(TUTORIAL_DATA_DIR / "cow_mesh/cow.obj")
+        self.assertClose(mesh.get_bounding_boxes().cpu(), mesh_obj.get_bounding_boxes())
+    
+        mesh.textures = TexturesVertex(0.5 * torch.ones_like(mesh.verts_padded()))
+    
+        image = _render(mesh, "cow_gray")
+    
+        with Image.open(DATA_DIR / "glb_cow_gray.png") as f:
+            expected = np.array(f)
+    
+        self.assertClose(image, expected)
+    
+        # save the mesh to a glb file
+        glb = DATA_DIR / "cow_write_texturesvertex.glb"
+>       _write(mesh, glb)
+
+tests/test_io_gltf.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_io_gltf.py:53: in _write
+    io.save_mesh(mesh, path, **kwargs)
+pytorch3d/io/pluggable.py:167: in save_mesh
+    success = mesh_interpreter.save(
+pytorch3d/io/experimental_gltf_io.py:876: in save
+    writer.save()
+pytorch3d/io/experimental_gltf_io.py:745: in save
+    idx_byte, idx_data = self._write_accessor_json("indices")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pytorch3d.io.experimental_gltf_io._GLTFWriter object at 0x73d9eb3f5e50>
+key = 'indices'
+
+    def _write_accessor_json(self, key: str) -> Tuple[int, np.ndarray]:
+        name = "Node-Mesh_%s" % key
+        byte_offset = 0
+        if key == "positions":
+            data = self.mesh.verts_packed().cpu().numpy()
+            component_type = _ComponentType.FLOAT
+            element_type = "VEC3"
+            buffer_view = 0
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texcoords":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_uvs_list()[0].cpu().numpy()
+            data[:, 1] = 1 - data[:, -1]  # flip y tex-coordinate
+            element_type = "VEC2"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 2 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texvertices":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_features_list()[0].cpu().numpy()
+            element_type = "VEC3"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "indices":
+            component_type = _ComponentType.UNSIGNED_SHORT
+            data = (
+                self.mesh.faces_packed()
+                .cpu()
+                .numpy()
+                .astype(_ITEM_TYPES[component_type])
+            )
+            element_type = "SCALAR"
+            buffer_view = 1
+>           element_min = list(map(int, np.min(data, keepdims=True)))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: only 0-dimensional arrays can be converted to Python scalars
+
+pytorch3d/io/experimental_gltf_io.py:656: TypeError
+_________________________ TestMeshGltfIO.test_save_cow _________________________
+
+self = <tests.test_io_gltf.TestMeshGltfIO testMethod=test_save_cow>
+
+    def test_save_cow(self):
+        """
+        Save the cow mesh to a glb file
+        """
+        # load cow mesh from a glb file
+        glb = DATA_DIR / "cow.glb"
+        self.assertTrue(glb.is_file())
+        device = torch.device("cuda:0")
+        mesh = _load(glb, device=device)
+    
+        # save the mesh to a glb file
+        glb_reload = DATA_DIR / "cow_write.glb"
+>       _write(mesh, glb_reload)
+
+tests/test_io_gltf.py:195: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_io_gltf.py:53: in _write
+    io.save_mesh(mesh, path, **kwargs)
+pytorch3d/io/pluggable.py:167: in save_mesh
+    success = mesh_interpreter.save(
+pytorch3d/io/experimental_gltf_io.py:876: in save
+    writer.save()
+pytorch3d/io/experimental_gltf_io.py:745: in save
+    idx_byte, idx_data = self._write_accessor_json("indices")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pytorch3d.io.experimental_gltf_io._GLTFWriter object at 0x73d9140848f0>
+key = 'indices'
+
+    def _write_accessor_json(self, key: str) -> Tuple[int, np.ndarray]:
+        name = "Node-Mesh_%s" % key
+        byte_offset = 0
+        if key == "positions":
+            data = self.mesh.verts_packed().cpu().numpy()
+            component_type = _ComponentType.FLOAT
+            element_type = "VEC3"
+            buffer_view = 0
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texcoords":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_uvs_list()[0].cpu().numpy()
+            data[:, 1] = 1 - data[:, -1]  # flip y tex-coordinate
+            element_type = "VEC2"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 2 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texvertices":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_features_list()[0].cpu().numpy()
+            element_type = "VEC3"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "indices":
+            component_type = _ComponentType.UNSIGNED_SHORT
+            data = (
+                self.mesh.faces_packed()
+                .cpu()
+                .numpy()
+                .astype(_ITEM_TYPES[component_type])
+            )
+            element_type = "SCALAR"
+            buffer_view = 1
+>           element_min = list(map(int, np.min(data, keepdims=True)))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: only 0-dimensional arrays can be converted to Python scalars
+
+pytorch3d/io/experimental_gltf_io.py:656: TypeError
+_____________________ TestMeshGltfIO.test_save_ico_sphere ______________________
+
+self = <tests.test_io_gltf.TestMeshGltfIO testMethod=test_save_ico_sphere>
+
+    def test_save_ico_sphere(self):
+        """
+        save the ico_sphere mesh in a glb file
+        """
+        ico_sphere_mesh = ico_sphere(level=3)
+        glb = DATA_DIR / "ico_sphere.glb"
+>       _write(ico_sphere_mesh, glb)
+
+tests/test_io_gltf.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_io_gltf.py:53: in _write
+    io.save_mesh(mesh, path, **kwargs)
+pytorch3d/io/pluggable.py:167: in save_mesh
+    success = mesh_interpreter.save(
+pytorch3d/io/experimental_gltf_io.py:876: in save
+    writer.save()
+pytorch3d/io/experimental_gltf_io.py:745: in save
+    idx_byte, idx_data = self._write_accessor_json("indices")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pytorch3d.io.experimental_gltf_io._GLTFWriter object at 0x73d8a2aa1430>
+key = 'indices'
+
+    def _write_accessor_json(self, key: str) -> Tuple[int, np.ndarray]:
+        name = "Node-Mesh_%s" % key
+        byte_offset = 0
+        if key == "positions":
+            data = self.mesh.verts_packed().cpu().numpy()
+            component_type = _ComponentType.FLOAT
+            element_type = "VEC3"
+            buffer_view = 0
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texcoords":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_uvs_list()[0].cpu().numpy()
+            data[:, 1] = 1 - data[:, -1]  # flip y tex-coordinate
+            element_type = "VEC2"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 2 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texvertices":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_features_list()[0].cpu().numpy()
+            element_type = "VEC3"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "indices":
+            component_type = _ComponentType.UNSIGNED_SHORT
+            data = (
+                self.mesh.faces_packed()
+                .cpu()
+                .numpy()
+                .astype(_ITEM_TYPES[component_type])
+            )
+            element_type = "SCALAR"
+            buffer_view = 1
+>           element_min = list(map(int, np.min(data, keepdims=True)))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: only 0-dimensional arrays can be converted to Python scalars
+
+pytorch3d/io/experimental_gltf_io.py:656: TypeError
+_________________________ TestMeshGltfIO.test_save_toy _________________________
+
+self = <tests.test_io_gltf.TestMeshGltfIO testMethod=test_save_toy>
+
+    def test_save_toy(self):
+        """
+        Construct a simple mesh and save it to a glb file in TexturesVertex mode.
+        """
+    
+        example = {}
+        example["POSITION"] = torch.tensor(
+            [
+                [
+                    [0.0, 0.0, 0.0],
+                    [-1.0, 0.0, 0.0],
+                    [-1.0, 0.0, 1.0],
+                    [0.0, 0.0, 1.0],
+                    [0.0, 1.0, 0.0],
+                    [-1.0, 1.0, 0.0],
+                    [-1.0, 1.0, 1.0],
+                    [0.0, 1.0, 1.0],
+                ]
+            ]
+        )
+        example["indices"] = torch.tensor(
+            [
+                [
+                    [1, 4, 2],
+                    [4, 3, 2],
+                    [3, 7, 2],
+                    [7, 6, 2],
+                    [3, 4, 7],
+                    [4, 8, 7],
+                    [8, 5, 7],
+                    [5, 6, 7],
+                    [5, 2, 6],
+                    [5, 1, 2],
+                    [1, 5, 4],
+                    [5, 8, 4],
+                ]
+            ]
+        )
+        example["indices"] -= 1
+        example["COLOR_0"] = torch.tensor(
+            [
+                [
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                ]
+            ]
+        )
+        # example['prop'] = {'material':
+        #                       {'pbrMetallicRoughness':
+        #                           {'baseColorFactor':
+        #                                torch.tensor([[0.7, 0.7, 1, 0.5]]),
+        #                            'metallicFactor': torch.tensor([1]),
+        #                            'roughnessFactor': torch.tensor([0.1])},
+        #                    'alphaMode': 'BLEND',
+        #                    'doubleSided': True}}
+    
+        texture = TexturesVertex(example["COLOR_0"])
+        mesh = Meshes(
+            verts=example["POSITION"], faces=example["indices"], textures=texture
+        )
+    
+        glb = DATA_DIR / "example_write_texturesvertex.glb"
+>       _write(mesh, glb)
+
+tests/test_io_gltf.py:384: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_io_gltf.py:53: in _write
+    io.save_mesh(mesh, path, **kwargs)
+pytorch3d/io/pluggable.py:167: in save_mesh
+    success = mesh_interpreter.save(
+pytorch3d/io/experimental_gltf_io.py:876: in save
+    writer.save()
+pytorch3d/io/experimental_gltf_io.py:745: in save
+    idx_byte, idx_data = self._write_accessor_json("indices")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pytorch3d.io.experimental_gltf_io._GLTFWriter object at 0x73d8a2aa0f80>
+key = 'indices'
+
+    def _write_accessor_json(self, key: str) -> Tuple[int, np.ndarray]:
+        name = "Node-Mesh_%s" % key
+        byte_offset = 0
+        if key == "positions":
+            data = self.mesh.verts_packed().cpu().numpy()
+            component_type = _ComponentType.FLOAT
+            element_type = "VEC3"
+            buffer_view = 0
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texcoords":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_uvs_list()[0].cpu().numpy()
+            data[:, 1] = 1 - data[:, -1]  # flip y tex-coordinate
+            element_type = "VEC2"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 2 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "texvertices":
+            component_type = _ComponentType.FLOAT
+            # pyrefly: ignore [missing-attribute]
+            data = self.mesh.textures.verts_features_list()[0].cpu().numpy()
+            element_type = "VEC3"
+            buffer_view = 2
+            element_min = list(map(float, np.min(data, axis=0)))
+            element_max = list(map(float, np.max(data, axis=0)))
+            byte_per_element = 3 * _DTYPE_BYTES[_ITEM_TYPES[_ComponentType.FLOAT]]
+        elif key == "indices":
+            component_type = _ComponentType.UNSIGNED_SHORT
+            data = (
+                self.mesh.faces_packed()
+                .cpu()
+                .numpy()
+                .astype(_ITEM_TYPES[component_type])
+            )
+            element_type = "SCALAR"
+            buffer_view = 1
+>           element_min = list(map(int, np.min(data, keepdims=True)))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: only 0-dimensional arrays can be converted to Python scalars
+
+pytorch3d/io/experimental_gltf_io.py:656: TypeError
+_____________ TestRenderMeshes.test_simple_sphere_elevated_camera ______________
+
+self = <tests.test_render_meshes.TestRenderMeshes testMethod=test_simple_sphere_elevated_camera>
+
+    def test_simple_sphere_elevated_camera(self):
+        """
+        Test output of phong and gouraud shading matches a reference image using
+        the default values for the light sources.
+    
+        The rendering is performed with a camera that has non-zero elevation.
+        """
+>       self.test_simple_sphere(elevated_camera=True)
+
+tests/test_render_meshes.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_render_meshes.py:241: in test_simple_sphere
+    self.assertClose(rgb, image_ref, atol=0.05)
+tests/common_testing.py:216: in assertClose
+    self.fail(err)
+E   AssertionError: Not close. Max diff 0.49803921580314636. Max relative diff 1.0 Shape (512, 512, 3). At (np.int64(10), np.int64(183), np.int64(0)).
+=============================== warnings summary ===============================
+tests/implicitron/test_extending_orm_types.py:15
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/implicitron/test_extending_orm_types.py:15: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+    import pkg_resources
+
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_check_no_share_weights
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_check_share_weights
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_coarse_implicit_function_is_none
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_vs_generic_model_with_batch_size_one
+tests/implicitron/models/test_utils.py::TestUtils::test_prepare_inputs_mask_depth_true
+tests/implicitron/models/test_utils.py::TestUtils::test_prepare_inputs_mask_image_true
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_all_gm_configs
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_gm
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_idr
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/models/utils.py:71: UserWarning: Thresholding masks!
+    warnings.warn("Thresholding masks!")
+
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_check_no_share_weights
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_check_share_weights
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_coarse_implicit_function_is_none
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_vs_generic_model_with_batch_size_one
+tests/implicitron/models/test_utils.py::TestUtils::test_prepare_inputs_mask_image_true
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_all_gm_configs
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_gm
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_idr
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/models/utils.py:76: UserWarning: Masking images!
+    warnings.warn("Masking images!")
+
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_check_no_share_weights
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_check_share_weights
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_coarse_implicit_function_is_none
+tests/implicitron/models/test_overfit_model.py::TestOverfitModel::test_overfit_model_vs_generic_model_with_batch_size_one
+tests/implicitron/models/test_utils.py::TestUtils::test_prepare_inputs_mask_depth_true
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_all_gm_configs
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_gm
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/models/utils.py:86: UserWarning: Masking depths!
+    warnings.warn("Masking depths!")
+
+tests/implicitron/models/test_utils.py::TestUtils::test_weighted_sum_losses_raise_warning
+tests/implicitron/test_srn.py::TestSRN::test_lstm
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/models/utils.py:117: UserWarning: No main objective found.
+    warnings.warn("No main objective found.")
+
+tests/implicitron/test_batch_sampler.py::TestSceneBatchSampler::test_multiseq_gaps
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/dataset/scene_batch_sampler.py:129: UserWarning: Batch size smaller than self.batch_size! (This is fine for experiments with a single scene and viewpooling)
+    warnings.warn(
+
+tests/implicitron/test_circle_fitting.py::TestCircleFitting::test_minimum_inputs
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/tools/circle_fitting.py:39: UserWarning: Using torch.cross without specifying the dim arg is deprecated.
+  Please either pass the dim explicitly or simply use torch.linalg.cross.
+  The default value of dim will change to agree with that of linalg.cross in a future release. (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/aten/src/ATen/native/Cross.cpp:61.)
+    (evec[..., 1:], torch.cross(evec[..., 1], evec[..., 2])[..., None]), dim=-1
+
+tests/implicitron/test_config_use.py::TestGenericModel::test_create_gm_overrides
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_all_gm_configs
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_viewpool
+  /usr/local/lib/python3.12/dist-packages/torchvision/models/_utils.py:207: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+    warnings.warn(
+
+tests/implicitron/test_config_use.py::TestGenericModel::test_create_gm_overrides
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_all_gm_configs
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_viewpool
+  /usr/local/lib/python3.12/dist-packages/torchvision/models/_utils.py:222: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet34_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet34_Weights.DEFAULT` to get the most up-to-date weights.
+    warnings.warn(msg)
+
+tests/implicitron/test_config_use.py::TestGenericModel::test_create_gm_overrides
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_all_gm_configs
+tests/implicitron/test_forward_pass.py::TestGenericModel::test_idr
+  /usr/local/lib/python3.12/dist-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+    WeightNorm.apply(module, name, dim)
+
+tests/implicitron/test_json_index_dataset_provider_v2.py::TestJsonIndexDatasetProviderV2::test_random_dataset
+tests/implicitron/test_json_index_dataset_provider_v2.py::TestJsonIndexDatasetProviderV2::test_random_dataset
+tests/implicitron/test_json_index_dataset_provider_v2.py::TestJsonIndexDatasetProviderV2::test_random_dataset
+tests/implicitron/test_json_index_dataset_provider_v2.py::TestJsonIndexDatasetProviderV2::test_random_dataset
+  /usr/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=1404) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+tests/implicitron/test_models_renderer_base.py::TestRendererBase::test_approximate_conical_frustum_as_gaussian
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/implicitron/test_models_renderer_base.py:226: DeprecationWarning: __array_wrap__ must accept context and return_scalar arguments (positionally) in the future. (Deprecated NumPy 2.0)
+    radii**2
+
+tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_filter_medley
+tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_limit_frames_per_sequence
+tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_limit_frames_per_sequence
+tests/implicitron/test_sql_dataset.py::TestSqlDataset::test_subset_with_filters
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/implicitron/dataset/sql_dataset.py:781: FutureWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
+    index = index.groupby("sequence_name", group_keys=False).apply(
+
+tests/test_cameras.py: 5 warnings
+tests/test_cameras_alignment.py: 30 warnings
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/cameras.py:1252: PendingDeprecationWarning: SfMOrthographicCameras is deprecated,
+          Use OrthographicCameras instead.
+          SfMOrthographicCameras will be removed in future releases.
+    warnings.warn(
+
+tests/test_cameras.py::TestCamerasCommon::test_clone
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/common_testing.py:92: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+    self.assertNotEqual(tensor1.storage().data_ptr(), tensor2.storage().data_ptr())
+
+tests/test_cameras.py: 5 warnings
+tests/test_cameras_alignment.py: 30 warnings
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/cameras.py:486: PendingDeprecationWarning: OpenGLPerspectiveCameras is deprecated,
+          Use FoVPerspectiveCameras instead.
+          OpenGLPerspectiveCameras will be removed in future releases.
+    warnings.warn(
+
+tests/test_cameras.py: 5 warnings
+tests/test_cameras_alignment.py: 30 warnings
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/cameras.py:770: PendingDeprecationWarning: OpenGLOrthographicCameras is deprecated,
+          Use FoVOrthographicCameras instead.
+          OpenGLOrthographicCameras will be removed in future releases.
+    warnings.warn(
+
+tests/test_cameras.py: 5 warnings
+tests/test_cameras_alignment.py: 30 warnings
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/cameras.py:1012: PendingDeprecationWarning: SfMPerspectiveCameras is deprecated,
+          Use PerspectiveCameras instead.
+          SfMPerspectiveCameras will be removed in future releases.
+    warnings.warn(
+
+tests/test_cameras.py::TestFoVOrthographicProjection::test_orthographic_mixed_inputs_grad
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_cameras.py:1087: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+    grad_scale = torch.tensor(
+
+tests/test_cameras_alignment.py::TestCamerasAlignment::test_corresponding_cameras_alignment
+tests/test_cameras_alignment.py::TestCamerasAlignment::test_corresponding_cameras_alignment
+tests/test_points_alignment.py::TestCorrespondingPointsAlignment::test_corresponding_points_alignment
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/points_alignment.py:351: UserWarning: The size of one of the point clouds is <= dim+1. corresponding_points_alignment cannot return a unique rotation.
+    warnings.warn(
+
+tests/test_cameras_alignment.py::TestCamerasAlignment::test_corresponding_cameras_alignment
+  /usr/local/lib/python3.12/dist-packages/triton/knobs.py:504: UserWarning: TRITON_DEFAULT_FP_FUSION is unset: defaulting to FP fusion ENABLED for backward compatibility in Triton 3.9. The default will change to DISABLED in Triton 3.10; set TRITON_DEFAULT_FP_FUSION=1 to keep fusion enabled or =0 to adopt the new default early and silence this warning.
+    warn_once(FP_FUSION_DEFAULT_WARNING)
+
+tests/test_harmonic_embedding.py::TestHarmonicEmbedding::test_correct_behavior_between_ipe_and_its_estimation_from_harmonic_embedding
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_harmonic_embedding.py:152: FutureWarning: `sample_n(n)` will be deprecated. Use `sample((n,))` instead.
+    embedding_he = he_fun(rand_mvn.sample_n(num_samples))
+
+tests/test_io_obj.py::TestMeshObjIO::test_empty_save_load_obj
+tests/test_io_obj.py::TestMeshObjIO::test_join_meshes_as_batch
+tests/test_io_obj.py::TestMeshObjIO::test_load_obj_complex
+tests/test_io_obj.py::TestMeshObjIO::test_load_obj_complex_pluggable
+tests/test_io_obj.py::TestMeshObjIO::test_load_obj_normals_only
+tests/test_io_obj.py::TestMeshObjIO::test_load_obj_simple
+tests/test_io_obj.py::TestMeshObjIO::test_load_obj_tab_separated
+tests/test_io_obj.py::TestMeshObjIO::test_load_obj_textures_only
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/io/obj_io.py:547: UserWarning: No mtl file provided
+    warnings.warn("No mtl file provided")
+
+tests/test_io_obj.py::TestMeshObjIO::test_load_mtl_texture_atlas_compare_softras
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_io_obj.py:661: UserWarning: cow_texture_atlas_softras.pt not found, download from https://dl.fbaipublicfiles.com/pytorch3d/data/tests/cow_texture_atlas_softras.pt, save it at the path /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/data/cow_texture_atlas_softras.pt, and rerun
+    warnings.warn(msg)
+
+tests/test_io_obj.py::TestMeshObjIO::test_load_mtl_texture_atlas_compare_softras
+  /usr/lib/python3.12/unittest/case.py:690: DeprecationWarning: It is deprecated to return a value that is not None from a test case (<bound method TestMeshObjIO.test_load_mtl_texture_atlas_compare_softras of <tests.test_io_obj.TestMeshObjIO testMethod=test_load_mtl_texture_atlas_compare_softras>>)
+    return self.run(*args, **kwds)
+
+tests/test_io_ply.py::TestMeshPlyIO::test_bad_ply_syntax
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/io/ply_io.py:385: UserWarning: loadtxt: input contained no data: "<_io.StringIO object at 0x73d9d0044b80>"
+    data = np.loadtxt(
+
+tests/test_io_ply.py::TestMeshPlyIO::test_bad_ply_syntax
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/io/ply_io.py:385: UserWarning: loadtxt: input contained no data: "<_io.StringIO object at 0x73d9d0044940>"
+    data = np.loadtxt(
+
+tests/test_laplacian_matrices.py::TestLaplacianMatrices::test_cot_laplacian
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/laplacian_matrices.py:123: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/aten/src/ATen/Context.cpp:916.)
+    L = torch.sparse_coo_tensor(idx, cot.view(-1), (V, V), dtype=torch.float32)
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 18.25% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 19.25% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 30.21% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 4.17% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 1.04% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 23.96% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 25.00% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 1.25% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 41.25% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 10.00% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 18.75% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 21.25% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 37.50% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 10.94% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 32.81% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 28.12% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 26.56% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 15.62% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 31.25% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 50.44% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 42.86% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 36.70% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 43.69% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 40.95% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 47.12% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 42.24% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 49.53% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 32.65% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 32.23% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_perspective_n_points.py::TestPerspectiveNPoints::test_weighted_perspective_n_points
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/ops/perspective_n_points.py:160: UserWarning: 
+  EPnP: 22.12% points have z<0.
+    warnings.warn("\nEPnP: %2.2f%% points have z<0." % (neg_rate * 100.0))
+
+tests/test_raysampling.py::TestNDCRaysamplerConvention::test_ndc_convention
+tests/test_raysampling.py::TestRaysampling::test_load_state_different_resolution
+tests/test_raysampling.py::TestRaysampling::test_load_state_different_resolution
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/implicit/raysampling.py:547: PendingDeprecationWarning: NDCGridRaysampler is deprecated,
+          Use NDCMultinomialRaysampler instead.
+          NDCGridRaysampler will be removed in future releases.
+    warnings.warn(
+
+tests/test_render_meshes.py::TestRenderMeshes::test_texture_map
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/mesh/shader.py:231: PendingDeprecationWarning: TexturedSoftPhongShader is now deprecated;
+              use SoftPhongShader instead.
+    warnings.warn(
+
+tests/test_render_points.py::TestRenderPoints::test_pointcloud_with_features
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_render_points.py:292: UserWarning: pointcloud.npz not found, download from https://dl.fbaipublicfiles.com/pytorch3d/data/PittsburghBridge/pointcloud.npz, save it at the path /data/melliott/moat-testing/evidence/pr3-p3d/src/docs/tutorials/data/PittsburghBridge/pointcloud.npz, and rerun
+    warnings.warn(msg)
+
+tests/test_render_points.py::TestRenderPoints::test_pointcloud_with_features
+  /usr/lib/python3.12/unittest/case.py:690: DeprecationWarning: It is deprecated to return a value that is not None from a test case (<bound method TestRenderPoints.test_pointcloud_with_features of <tests.test_render_points.TestRenderPoints testMethod=test_pointcloud_with_features>>)
+    return self.run(*args, **kwds)
+
+tests/test_render_points.py::TestRenderPoints::test_unified_inputs_pulsar
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/points/pulsar/unified.py:69: UserWarning: Creating a `PulsarPointsRenderer` with a compositor object! This object is ignored and just allowed as an argument for interface compatibility.
+    warnings.warn(
+
+tests/test_render_volumes.py::TestRenderVolumes::test_compare_with_pointclouds_renderer
+tests/test_render_volumes.py::TestRenderVolumes::test_monte_carlo_rendering
+tests/test_render_volumes.py::TestRenderVolumes::test_rotating_cube_volume_render
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/pytorch3d/renderer/implicit/raymarching.py:188: UserWarning: One or more elements of rays_densities are outside of validrange (0.0, 1.0)
+    warnings.warn(
+
+tests/test_render_volumes.py::TestRenderVolumes::test_input_types
+tests/test_render_volumes.py::TestRenderVolumes::test_rotating_cube_volume_render
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_render_volumes.py:95: UserWarning: Using a non-tuple sequence for multidimensional indexing is deprecated and will be changed in pytorch 2.9; use x[tuple(seq)] instead of x[seq]. In pytorch 2.9 this will be interpreted as tensor index, x[torch.tensor(seq)], which will result either in an error or a different result (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/torch/csrc/autograd/python_variable_indexing.cpp:375.)
+    boundary_points_ = coord_grid[slices].reshape(-1, 3)
+
+tests/test_render_volumes.py::TestRenderVolumes::test_input_types
+tests/test_render_volumes.py::TestRenderVolumes::test_rotating_cube_volume_render
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_render_volumes.py:100: UserWarning: Using a non-tuple sequence for multidimensional indexing is deprecated and will be changed in pytorch 2.9; use x[tuple(seq)] instead of x[seq]. In pytorch 2.9 this will be interpreted as tensor index, x[torch.tensor(seq)], which will result either in an error or a different result (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/torch/csrc/autograd/python_variable_indexing.cpp:375.)
+    volume_densities[[slice(border_offset, -border_offset, 1)] * 3] = 1.0
+
+tests/test_rotation_conversions.py::TestRotationConversion::test_scriptable
+tests/test_so3.py::TestSO3::test_scriptable
+  /usr/local/lib/python3.12/dist-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_sample_farthest_points.py::TestFPS::test_sample_farthest_points_cpu
+tests/test_sample_farthest_points.py::TestFPS::test_sample_farthest_points_cuda
+tests/test_sample_farthest_points.py::TestFPS::test_sample_farthest_points_naive
+  /usr/local/lib/python3.12/dist-packages/torch/autograd/gradcheck.py:2139: UserWarning: Input #0 requires gradient and is not a double precision floating point or complex. This check will likely fail if all the inputs are not of double precision floating point or complex. 
+    _check_inputs(tupled_inputs)
+
+tests/test_sample_points_from_meshes.py::TestSamplePoints::test_multinomial
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_sample_points_from_meshes.py:199: UserWarning: The torch.cuda.*DtypeTensor constructors are no longer recommended. It's best to use methods such as torch.tensor(data, dtype=*, device='cuda') to create tensors. (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/torch/csrc/tensor/python_tensor.cpp:74.)
+    freqs = torch.cuda.FloatTensor(
+
+tests/test_sample_points_from_meshes.py::TestSamplePoints::test_multinomial
+  /usr/lib/python3.12/unittest/case.py:690: DeprecationWarning: It is deprecated to return a value that is not None from a test case (<bound method TestSamplePoints.test_multinomial of <tests.test_sample_points_from_meshes.TestSamplePoints testMethod=test_multinomial>>)
+    return self.run(*args, **kwds)
+
+tests/test_sample_points_from_meshes.py::TestSamplePoints::test_multinomial_weights
+  /usr/lib/python3.12/unittest/case.py:690: DeprecationWarning: It is deprecated to return a value that is not None from a test case (<bound method TestSamplePoints.test_multinomial_weights of <tests.test_sample_points_from_meshes.TestSamplePoints testMethod=test_multinomial_weights>>)
+    return self.run(*args, **kwds)
+
+tests/test_struct_utils.py::TestStructUtils::test_list_to_padded
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_struct_utils.py:35: UserWarning: Using a non-tuple sequence for multidimensional indexing is deprecated and will be changed in pytorch 2.9; use x[tuple(seq)] instead of x[seq]. In pytorch 2.9 this will be interpreted as tensor index, x[torch.tensor(seq)], which will result either in an error or a different result (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/torch/csrc/autograd/python_variable_indexing.cpp:375.)
+    self.assertClose(x_padded[slices], x_correct)
+
+tests/test_struct_utils.py::TestStructUtils::test_padded_to_list
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_struct_utils.py:121: UserWarning: Using a non-tuple sequence for multidimensional indexing is deprecated and will be changed in pytorch 2.9; use x[tuple(seq)] instead of x[seq]. In pytorch 2.9 this will be interpreted as tensor index, x[torch.tensor(seq)], which will result either in an error or a different result (Triggered internally at /__w/rockrel/rockrel/external-builds/pytorch/pytorch/torch/csrc/autograd/python_variable_indexing.cpp:375.)
+    self.assertClose(x_list[i], x[slices])
+
+tests/test_symeig3x3.py::TestSymEig3x3::test_gradients_cpu
+tests/test_symeig3x3.py::TestSymEig3x3::test_gradients_gpu
+  /data/melliott/moat-testing/evidence/pr3-p3d/src/tests/test_symeig3x3.py:198: UserWarning: Anomaly Detection has been enabled. This mode will increase the runtime and should only be enabled for debugging.
+    with torch.autograd.detect_anomaly():
+
+tests/test_vis.py: 48 warnings
+  /usr/local/lib/python3.12/dist-packages/_plotly_utils/basevalidators.py:206: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    v_numpy = np.array(v)
+
+tests/test_vis.py: 30 warnings
+  /usr/local/lib/python3.12/dist-packages/_plotly_utils/basevalidators.py:62: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    return to_scalar_or_list(np.array(v))
+
+tests/test_vis.py: 18 warnings
+  /usr/local/lib/python3.12/dist-packages/_plotly_utils/basevalidators.py:133: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments. To learn more, see the migration guide https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword
+    np.array(v), kind=kind, force_numeric=force_numeric
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/pulsar/test_forward.py::TestForward::test_principal_point - Valu...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_load_save_load_cow_texturesvertex
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_cow - TypeError: only...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_ico_sphere - TypeErro...
+FAILED tests/test_io_gltf.py::TestMeshGltfIO::test_save_toy - TypeError: only...
+FAILED tests/test_render_meshes.py::TestRenderMeshes::test_simple_sphere_elevated_camera
+6 failed, 921 passed, 61 skipped, 359 warnings, 240 subtests passed in 250.01s (0:04:10)
