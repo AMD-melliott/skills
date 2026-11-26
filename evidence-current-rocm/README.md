@@ -9,7 +9,7 @@ Every ROCm fact cited by the four `cuda-to-rocm` branches below, re-run on ROCm 
 | `cuda-to-rocm/existing-amd-port` | [existing-amd-port and fresh-copy-validation](#existing-amd-port-and-fresh-copy-validation) |
 | `cuda-to-rocm/fresh-copy-validation` | [existing-amd-port and fresh-copy-validation](#existing-amd-port-and-fresh-copy-validation) |
 
-Agent-behaviour results (blind ports and evals) are not ROCm facts and were not re-run; see [Behaviour results](#behaviour-results).
+Agent-behavior results (blind ports and evals) are not ROCm facts and were not re-run; see [Behavior results](#behavior-results).
 
 **Setup.**
 - All runs were sequential on MI300X GPU 7 (gfx942), using stock `rocm/dev-ubuntu-24.04:<ver>-full` images and `rocm/pytorch:rocm10.2.0_ubuntu24.04_py3.12_pytorch_release_2.15.0`.
@@ -91,7 +91,7 @@ The cuCollections ignore test needs CMake 4: upstream pulls rapids-cmake `main`,
 - **libhipcxx strong CAS acting as weak for 1- and 2-byte types.** It is in the `amd-develop` head and in the `hipccl` that ROCm 10.2.0 bundles. Triage: the compiler builtins are correct (strong 0%, weak 75%/50%), so the defect is in the wrapper. Repro: [`repros/libhipcxx-cas/`](repros/libhipcxx-cas).
 - **libhipcxx `atomic_ref` on an under-aligned 8-byte type fails to build, including the bundled `hipccl`.** This is a portability gap against libcu++, not a miscompile.
 
-## Behaviour results
+## Behavior results
 
 From blind, fresh-context ports and n=3 blind-graded evals (ROCm 7.2.1 and 10.1.0; not re-run):
 
